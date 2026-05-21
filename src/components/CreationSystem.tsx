@@ -1,60 +1,67 @@
 import { Layers, Library, GitMerge, WandSparkles } from "lucide-react";
-import { TierHaloPortraitFrame } from "@/components/rarity/TierHaloPortraitFrame";
+import { LandingTierSpecimen } from "@/components/landing/LandingTierSpecimen";
 import {
   COMPANION_RARITIES,
-  defaultProfileGradientForRarity,
   rarityDisplayLabel,
   rarityTierCaptionColor,
   type CompanionRarity,
 } from "@/lib/companionRarity";
-import { companionImages } from "@/data/companionImages";
-import { PORTRAIT_CARD_ASPECT_CLASS } from "@/lib/portraitAspect";
+import { LANDING_TIER_PERKS, LANDING_TIER_SUMMARY } from "@/data/landingRarityBenefits";
 import { cn } from "@/lib/utils";
 
-const TIER_LADDER_PORTRAIT =
-  companionImages["kira-lux"] ?? companionImages["jax-harlan"] ?? Object.values(companionImages)[0];
-
-function TierLadderMiniCard({ rarity }: { rarity: CompanionRarity }) {
-  const { from, to } = defaultProfileGradientForRarity(rarity);
+function TierSpectrumCell({ rarity }: { rarity: CompanionRarity }) {
   const isAbyssal = rarity === "abyssal";
 
   return (
-    <div className="flex flex-col items-center gap-2 min-w-0 w-full max-w-[5.5rem] sm:max-w-[6.25rem] mx-auto">
-      <TierHaloPortraitFrame
-        variant="compact"
-        frameStyle="clean"
-        rarity={rarity}
-        gradientFrom={from}
-        gradientTo={to}
-        rarityFrameBleed
-        aspectClassName={cn(PORTRAIT_CARD_ASPECT_CLASS, "w-full")}
-        className="w-full"
-      >
-        {TIER_LADDER_PORTRAIT ? (
-          <img
-            src={TIER_LADDER_PORTRAIT}
-            alt=""
-            className="absolute inset-0 z-[1] h-full w-full object-cover object-top"
-            loading="lazy"
-            draggable={false}
-          />
-        ) : (
-          <div
-            className="absolute inset-0 z-0"
-            style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
-          />
-        )}
-        <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/70 via-black/15 to-transparent pointer-events-none" />
-      </TierHaloPortraitFrame>
+    <div className="flex flex-col items-center gap-1 min-w-0 w-full max-w-[4.25rem] sm:max-w-[4.75rem] mx-auto">
+      <LandingTierSpecimen rarity={rarity} size="compact" />
       <span
         className={cn(
-          "font-gothic text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] truncate w-full text-center",
+          "font-gothic text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.14em] w-full text-center",
           isAbyssal && "gradient-vice-text",
         )}
         style={isAbyssal ? undefined : { color: rarityTierCaptionColor(rarity) }}
       >
         {rarityDisplayLabel(rarity)}
       </span>
+    </div>
+  );
+}
+
+function TierPerksStrip() {
+  const col = "grid grid-cols-[5.5rem_3.5rem_2.5rem_3.5rem] sm:grid-cols-[6rem_4rem_3rem_4rem] gap-x-2 gap-y-0.5";
+
+  return (
+    <div className="mt-5 max-w-md sm:max-w-lg mx-auto overflow-x-auto px-1">
+      <div className="rounded-xl border border-white/[0.06] bg-card/50 backdrop-blur-sm px-3 py-2.5 w-max min-w-full sm:w-full sm:min-w-0">
+        <div
+          className={cn(
+            col,
+            "text-[9px] sm:text-[10px] uppercase tracking-[0.12em] text-muted-foreground/75 mb-1.5 border-b border-white/[0.06] pb-1.5",
+          )}
+        >
+          <span className="font-medium text-foreground/70">Seal</span>
+          <span className="text-center">Patterns</span>
+          <span className="text-center">Traits</span>
+          <span className="text-center">Stats</span>
+        </div>
+        {LANDING_TIER_PERKS.map((row) => {
+          const isAbyssal = row.rarity === "abyssal";
+          return (
+            <div key={row.rarity} className={cn(col, "text-[9px] sm:text-[10px] py-0.5 items-center")}>
+              <span
+                className={cn("font-gothic font-semibold", isAbyssal && "gradient-vice-text")}
+                style={isAbyssal ? undefined : { color: rarityTierCaptionColor(row.rarity) }}
+              >
+                {rarityDisplayLabel(row.rarity)}
+              </span>
+              <span className="text-center text-muted-foreground/90 tabular-nums">{row.patterns}</span>
+              <span className="text-center text-muted-foreground/90 tabular-nums">{row.traits}</span>
+              <span className="text-center text-muted-foreground/90 tabular-nums">{row.stats}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -94,14 +101,18 @@ export default function CreationSystem() {
         </div>
 
         <div className="mb-10 sm:mb-12">
-          <p className="text-center text-[10px] sm:text-xs uppercase tracking-[0.35em] text-muted-foreground/80 mb-5">
-            Common → Abyssal
+          <p className="text-center text-[10px] sm:text-xs uppercase tracking-[0.35em] text-muted-foreground/80 mb-4">
+            Spectrum · Common → Abyssal
           </p>
-          <div className="grid grid-cols-3 gap-x-2 gap-y-6 sm:grid-cols-6 sm:gap-x-3 max-w-3xl mx-auto px-1">
+          <div className="grid grid-cols-3 gap-x-2 gap-y-3 sm:grid-cols-6 sm:gap-x-2 max-w-3xl mx-auto px-1">
             {COMPANION_RARITIES.map((rarity) => (
-              <TierLadderMiniCard key={rarity} rarity={rarity} />
+              <TierSpectrumCell key={rarity} rarity={rarity} />
             ))}
           </div>
+          <p className="mt-5 text-xs sm:text-sm text-muted-foreground/90 leading-relaxed text-center max-w-2xl mx-auto px-2">
+            {LANDING_TIER_SUMMARY}
+          </p>
+          <TierPerksStrip />
         </div>
 
         <div className="grid sm:grid-cols-3 gap-5 sm:gap-6">
