@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ImageIcon, Loader2, Sparkles, Video, X } from "lucide-react";
+import { ImageIcon, Loader2, Sparkles, Trash2, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import type { CompanionGalleryRow } from "@/hooks/useCompanionGeneratedImages";
 import { isVideoPortraitUrl, portraitUrlsEquivalent, stablePortraitDisplayUrl } from "@/lib/companionMedia";
@@ -9,6 +9,16 @@ import { ZoomableImageViewport } from "@/components/ZoomableImageViewport";
 import { loadImageNaturalSize } from "@/lib/chatImageSettings";
 import { isAcceptableChatPortraitUpload } from "@/lib/portraitAspect";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Props = {
   companionName: string;
@@ -20,14 +30,18 @@ type Props = {
   selectedLoopSourceId?: string | null;
   onSelectForLoop?: (row: CompanionGalleryRow | null) => void;
   compact?: boolean;
+  canDelete?: boolean;
+  onDelete?: (row: CompanionGalleryRow) => Promise<void>;
 };
 
 type GalleryFilter = "all" | "stills" | "clips";
 
-/** True when row is a motion clip: DB flag or URL looks like MP4/WebM/MOV. */
+/** True when row is a motion clip (not a chat still mis-tagged in the UI). */
 export function companionGalleryRowIsClip(r: CompanionGalleryRow): boolean {
+  if (r.is_video === true) return true;
+  if (r.is_video === false) return false;
   const u = stablePortraitDisplayUrl(r.image_url) ?? r.image_url;
-  return Boolean(r.is_video) || isVideoPortraitUrl(u);
+  return isVideoPortraitUrl(u);
 }
 
 export function CompanionGalleryGrid({
@@ -39,8 +53,12 @@ export function CompanionGalleryGrid({
   selectedLoopSourceId = null,
   onSelectForLoop,
   compact,
+  canDelete = false,
+  onDelete,
 }: Props) {
   const [settingId, setSettingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<CompanionGalleryRow | null>(null);
   const [lightbox, setLightbox] = useState<CompanionGalleryRow | null>(null);
   const [filter, setFilter] = useState<GalleryFilter>("all");
 
@@ -55,6 +73,43 @@ export function CompanionGalleryGrid({
     else if (filter === "clips") list = cl;
     return { stills: st, clips: cl, showFilterTabs: tabs, filtered: list };
   }, [images, compact, filter]);
+
+  const deleteWarning = useMemo(() => {
+    if (!pendingDelete || !onDelete) return null;
+    const isPortrait =
+      !companionGalleryRowIsClip(pendingDelete) &&
+      Boolean(normalizedCurrent) &&
+      portraitUrlsEquivalent(pendingDelete.image_url, normalizedCurrent ?? undefined);
+    const isLoopSource = selectedLoopSourceId === pendingDelete.id;
+    if (isPortrait && isLoopSource) {
+      return "This image is your current portrait and the selected loop source frame. Deleting it cannot be undone.";
+    }
+    if (isPortrait) {
+      return "This image is your current profile portrait. Deleting it cannot be undone.";
+    }
+    if (isLoopSource) {
+      return "This still is selected as the frame for loop generation. Deleting it cannot be undone.";
+    }
+    if (companionGalleryRowIsClip(pendingDelete)) {
+      return "Delete this loop clip from your gallery? The file will be removed from this companion's gallery.";
+    }
+    return "Delete this image from your gallery? This cannot be undone.";
+  }, [pendingDelete, onDelete, normalizedCurrent, selectedLoopSourceId]);
+
+  const confirmDelete = async () => {
+    if (!pendingDelete || !onDelete) return;
+    setDeletingId(pendingDelete.id);
+    try {
+      await onDelete(pendingDelete);
+      if (lightbox?.id === pendingDelete.id) setLightbox(null);
+      toast.success(companionGalleryRowIsClip(pendingDelete) ? "Clip removed" : "Image removed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete.");
+    } finally {
+      setDeletingId(null);
+      setPendingDelete(null);
+    }
+  };
 
   const handleSetPortrait = async (row: CompanionGalleryRow) => {
     if (companionGalleryRowIsClip(row)) {
@@ -203,6 +258,28 @@ export function CompanionGalleryGrid({
                   Card art
                 </span>
               ) : null}
+              {canDelete && onDelete && !row.id.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX) ? (
+                <button
+                  type="button"
+                  title="Delete from gallery"
+                  disabled={deletingId === row.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete(row);
+                  }}
+                  className={cn(
+                    "absolute right-1.5 top-1.5 z-[3] flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white/90 hover:bg-red-950/80 hover:border-red-400/40 hover:text-red-100",
+                    compact && "h-5 w-5",
+                    isVideo && "top-8 sm:top-9",
+                  )}
+                >
+                  {deletingId === row.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <X className="h-3 w-3" />
+                  )}
+                </button>
+              ) : null}
               {isVideo ? (
                 <span
                   className={cn(
@@ -256,7 +333,7 @@ export function CompanionGalleryGrid({
                     {compact
                       ? selectedLoopSourceId === row.id
                         ? "Clear"
-                        : "Clip"
+                        : "Loop"
                       : selectedLoopSourceId === row.id
                         ? "Clear clip source"
                         : "Use for profile clip"}
@@ -314,6 +391,28 @@ export function CompanionGalleryGrid({
   return (
     <>
       {scrollShell}
+
+      <AlertDialog open={Boolean(pendingDelete)} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <AlertDialogContent className="border-white/10 bg-[#0c0a10]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-gothic text-lg">Delete gallery item?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">{deleteWarning}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AnimatePresence>
         {lightbox ? (

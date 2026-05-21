@@ -81,6 +81,7 @@ import { consumeChatMessageQuota, spendForgeCoins } from "@/lib/forgeCoinsClient
 import { nextTextMessageFc, remainingFreeMessages } from "@/lib/chatDailyQuota";
 import { LIVE_CALL_CREDITS_PER_MINUTE } from "@/lib/liveCallBilling";
 import { stashAndNavigateToLiveCall } from "@/lib/navigateToLiveCall";
+import { deleteCompanionGalleryImage } from "@/lib/deleteCompanionGalleryImage";
 import { setCompanionPortraitFromGalleryUrl } from "@/lib/setCompanionPortraitFromGallery";
 import { useLovensePairing } from "@/hooks/useLovensePairing";
 import { useWindowVisibleRefresh } from "@/hooks/useWindowVisibleRefresh";
@@ -1115,6 +1116,12 @@ export function useChatSessionController() {
     });
     await queryClient.invalidateQueries({ queryKey: ["companions"] });
     await queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
+    await queryClient.invalidateQueries({ queryKey: ["companion-generated-images", user.id, id] });
+  };
+
+  const handleDeleteGalleryImage = async (row: { id: string }) => {
+    if (!user?.id || !id) return;
+    await deleteCompanionGalleryImage({ userId: user.id, companionId: id, imageId: row.id });
     await queryClient.invalidateQueries({ queryKey: ["companion-generated-images", user.id, id] });
   };
 
@@ -2663,6 +2670,7 @@ export function useChatSessionController() {
     relationship,
     queryClient,
     handlePortraitFromGallery,
+    handleDeleteGalleryImage,
     refreshToys,
     pairingQrUrl,
     pairingLoading,

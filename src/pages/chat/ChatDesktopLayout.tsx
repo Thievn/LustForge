@@ -72,6 +72,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
     galleryImages,
     galleryImagesLoading,
     handlePortraitFromGallery,
+    handleDeleteGalleryImage,
     setInput,
     requestSimilarStillFromGallery,
     relationship,
@@ -473,6 +474,8 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
           loading={galleryImagesLoading}
           currentPortraitUrl={portraitStillUrl}
           onSetAsPortrait={handlePortraitFromGallery}
+          canDelete
+          onDelete={handleDeleteGalleryImage}
         />
       ) : null}
 

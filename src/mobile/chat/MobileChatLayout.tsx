@@ -75,6 +75,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
     galleryImages,
     galleryImagesLoading,
     handlePortraitFromGallery,
+    handleDeleteGalleryImage,
     setInput,
     relationship,
     toyUtilityBusy,
@@ -518,6 +519,8 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
           loading={galleryImagesLoading}
           currentPortraitUrl={portraitStillUrl}
           onSetAsPortrait={handlePortraitFromGallery}
+          canDelete
+          onDelete={handleDeleteGalleryImage}
         />
       ) : null}
 

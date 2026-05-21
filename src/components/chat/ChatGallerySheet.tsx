@@ -10,6 +10,8 @@ type Props = {
   loading: boolean;
   currentPortraitUrl: string | null | undefined;
   onSetAsPortrait: (imageUrl: string) => Promise<void>;
+  canDelete?: boolean;
+  onDelete?: (row: CompanionGalleryRow) => Promise<void>;
 };
 
 export function ChatGallerySheet({
@@ -20,6 +22,8 @@ export function ChatGallerySheet({
   loading,
   currentPortraitUrl,
   onSetAsPortrait,
+  canDelete = false,
+  onDelete,
 }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -44,6 +48,8 @@ export function ChatGallerySheet({
             currentPortraitUrl={currentPortraitUrl}
             onSetAsPortrait={onSetAsPortrait}
             compact
+            canDelete={canDelete}
+            onDelete={onDelete}
           />
         </div>
       </SheetContent>

@@ -45,6 +45,7 @@ import {
 import { prependCanonicalPortraitIfMissing } from "@/lib/companionGalleryWithCanonical";
 import { clearUserPortraitOverrideStill } from "@/lib/clearUserPortraitOverrideStill";
 import { setCompanionPortraitFromGalleryUrl } from "@/lib/setCompanionPortraitFromGallery";
+import { deleteCompanionGalleryImage } from "@/lib/deleteCompanionGalleryImage";
 import { syncProfileLoopVideoToProfile } from "@/lib/syncProfileLoopVideoToProfile";
 import {
   enrichCompanionWithGalleryLoop,
@@ -1184,6 +1185,21 @@ const CompanionProfile = () => {
                     selectedLoopSourceId={loopFromGeneratedImageId}
                     onSelectForLoop={(row) => setLoopFromGeneratedImageId(row?.id ?? null)}
                     compact
+                    canDelete
+                    onDelete={async (row) => {
+                      if (!user?.id || !id) return;
+                      await deleteCompanionGalleryImage({
+                        userId: user.id,
+                        companionId: id,
+                        imageId: row.id,
+                      });
+                      if (loopFromGeneratedImageId === row.id) {
+                        setLoopFromGeneratedImageId(null);
+                      }
+                      await queryClient.invalidateQueries({
+                        queryKey: ["companion-generated-images", user.id, id],
+                      });
+                    }}
                   />
                 </section>
               </CollapsibleContent>

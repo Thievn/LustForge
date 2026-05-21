@@ -12,6 +12,7 @@ import {
   profileLoopToastId,
   resumePendingProfileLoopJob,
 } from "@/lib/invokeGenerateProfileLoopVideo";
+import { syncProfileLoopVideoToProfile } from "@/lib/syncProfileLoopVideoToProfile";
 import { PROFILE_LOOP_VIDEO_FC } from "@/lib/forgeEconomy";
 import { profileLoopMotionInvalidReason } from "@/lib/profileLoopVideoSafety";
 import { cn } from "@/lib/utils";
@@ -102,6 +103,11 @@ export function ProfileLoopingVideoUpsell({
           description: "Your profile portrait should update now.",
           duration: 6000,
         });
+        try {
+          await syncProfileLoopVideoToProfile(companionId);
+        } catch {
+          /* cache update below still applies */
+        }
         onSuccess?.({ publicUrl: result.publicUrl });
         onBalanceMaybeChanged?.();
       } catch (e: unknown) {

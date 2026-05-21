@@ -249,24 +249,48 @@ async function resolveBestKnownLoopVideoUrl(
     const u = typeof g.image_url === "string" ? g.image_url.trim() : "";
     if (u && isLoopVideoStorageUrl(u)) return u;
   }
-  return await resolveStorageLoopPublicUrl(svc, companionId);
+  return await resolveStorageLoopPublicUrl(svc, companionId, sessionUserId);
 }
 
-/** Latest MP4 under profile-loops/{companionId}/ when DB rows were never wired. */
+function profileLoopStorageFolder(companionId: string): string {
+  const safeId = companionId.replace(/[^a-zA-Z0-9-_]/g, "_").slice(0, 120);
+  return `profile-loops/${safeId}`;
+}
+
+/** Latest MP4 under profile-loops/{companionId}/; also registers all clips in gallery when userId provided. */
 async function resolveStorageLoopPublicUrl(
   svc: ReturnType<typeof createClient>,
   companionId: string,
+  galleryUserId: string,
 ): Promise<string | null> {
-  const safeId = companionId.replace(/[^a-zA-Z0-9-_]/g, "_").slice(0, 120);
-  const folder = `profile-loops/${safeId}`;
+  return syncAllStorageLoopClipsToGallery(svc, galleryUserId, companionId, "Profile loop sync");
+}
+
+/**
+ * Registers every saved profile-loops MP4 in the companion gallery (newest first).
+ * Returns the newest public URL for profile hero wiring.
+ */
+async function syncAllStorageLoopClipsToGallery(
+  svc: ReturnType<typeof createClient>,
+  galleryUserId: string,
+  companionId: string,
+  motionNotes: string,
+): Promise<string | null> {
+  const folder = profileLoopStorageFolder(companionId);
   const { data: files, error } = await svc.storage.from("companion-images").list(folder, {
-    limit: 12,
+    limit: 100,
     sortBy: { column: "created_at", order: "desc" },
   });
   if (error || !files?.length) return null;
-  const hit = files.find((f) => typeof f.name === "string" && /\.(mp4|webm|mov)$/i.test(f.name));
-  if (!hit?.name) return null;
-  return svc.storage.from("companion-images").getPublicUrl(`${folder}/${hit.name}`).data.publicUrl;
+  let latest: string | null = null;
+  for (const f of files) {
+    const name = typeof f.name === "string" ? f.name.trim() : "";
+    if (!name || !/\.(mp4|webm|mov)$/i.test(name)) continue;
+    const publicUrl = svc.storage.from("companion-images").getPublicUrl(`${folder}/${name}`).data.publicUrl;
+    if (!latest) latest = publicUrl;
+    await ensureGalleryVideoRow(svc, galleryUserId, companionId, publicUrl, motionNotes);
+  }
+  return latest;
 }
 
 async function ensureGalleryVideoRow(
@@ -564,6 +588,7 @@ async function persistProfileLoopAfterPublicUrl(args: PersistArgs): Promise<void
         ? (String((row as { user_id?: unknown }).user_id ?? "").trim() || sessionUser.id)
         : sessionUser.id;
   await ensureGalleryVideoRow(svc, galleryUserId, companionId, publicUrl, motionNotes);
+  await syncAllStorageLoopClipsToGallery(svc, galleryUserId, companionId, motionNotes);
 }
 
 async function uploadMp4FromXaiUrl(
@@ -797,7 +822,16 @@ async function attachKnownLoopVideoToProfile(args: {
   if ("error" in loaded) return loaded.error;
   const { table, rowPk, row, isDiscoverListedForgeTemplate } = loaded;
 
-  const publicUrl = await resolveBestKnownLoopVideoUrl(svc, sessionUser.id, companionId, row);
+  const galleryUserId =
+    companionId.startsWith("cc-")
+      ? (String((row as { user_id?: unknown }).user_id ?? "").trim() || sessionUser.id)
+      : sessionUser.id;
+  await syncAllStorageLoopClipsToGallery(svc, galleryUserId, companionId, motionNotes);
+
+  let publicUrl = await resolveBestKnownLoopVideoUrl(svc, sessionUser.id, companionId, row);
+  if (!publicUrl || !isLoopVideoStorageUrl(publicUrl)) {
+    publicUrl = await resolveStorageLoopPublicUrl(svc, companionId, galleryUserId);
+  }
   if (!publicUrl || !isLoopVideoStorageUrl(publicUrl)) {
     return jsonResponse({
       success: true,
