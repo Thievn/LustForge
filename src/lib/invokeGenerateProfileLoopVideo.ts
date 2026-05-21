@@ -22,10 +22,11 @@ export type ProfileLoopVideoResult = {
 };
 
 const PROFILE_LOOP_INVOKE_TIMEOUT_MS = 90_000;
-const PROFILE_LOOP_WALL_CLOCK_MS = 12 * 60_000;
-const PROFILE_LOOP_POLL_MAX = 150;
+/** Match server `IN_FLIGHT_JOB_MS` — Grok I2V often needs well over 12 minutes. */
+const PROFILE_LOOP_WALL_CLOCK_MS = 45 * 60_000;
+const PROFILE_LOOP_POLL_MAX = 200;
 /** Auto-resume stored jobs only if younger than this (avoids zombie "Rendering…"). */
-export const PROFILE_LOOP_RESUME_MAX_MS = 15 * 60_000;
+export const PROFILE_LOOP_RESUME_MAX_MS = 45 * 60_000;
 
 type StoredProfileLoopJob = { jobId: string; companionId: string; savedAt: number };
 
@@ -308,7 +309,7 @@ async function runProfileLoopPoll(
           : loadProfileLoopJobId(resolvedCompanionId);
       if (jobId && resolvedCompanionId) saveProfileLoopJobId(resolvedCompanionId, jobId);
       throw new Error(
-        "Profile loop video is still rendering after 12 minutes — reopen this profile to resume.",
+        "Profile loop video is still rendering after 45 minutes — reopen this profile to resume.",
       );
     }
 

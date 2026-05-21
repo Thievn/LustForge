@@ -288,7 +288,7 @@ const CompanionProfile = () => {
     let cancelled = false;
     void (async () => {
       try {
-        const result = await syncProfileLoopVideoToProfile(id);
+        const result = await syncProfileLoopVideoToProfile(id, { repair: true });
         if (cancelled || !result.synced) return;
         void queryClient.invalidateQueries({ queryKey: ["companions"] });
         void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
@@ -367,7 +367,7 @@ const CompanionProfile = () => {
     let cancelled = false;
     void (async () => {
       try {
-        const result = await syncProfileLoopVideoToProfile(id);
+        const result = await syncProfileLoopVideoToProfile(id, { repair: true });
         if (cancelled || !result.synced) return;
         void queryClient.invalidateQueries({ queryKey: ["companions"] });
         void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
@@ -1079,7 +1079,7 @@ const CompanionProfile = () => {
                 }
                 if (id) {
                   try {
-                    await syncProfileLoopVideoToProfile(id);
+                    await syncProfileLoopVideoToProfile(id, { repair: true });
                   } catch {
                     /* invalidate below still refreshes UI */
                   }

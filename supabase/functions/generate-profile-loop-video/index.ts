@@ -96,8 +96,8 @@ type PersistArgs = {
 };
 
 const FINALIZING_STUCK_MS = 12 * 60_000;
-/** Fail/refund pending jobs stuck longer than this (xAI or client zombie). */
-const PENDING_STUCK_MS = 22 * 60_000;
+/** Fail pending jobs only after this long (Grok I2V often needs 5–15+ min). */
+const PENDING_STUCK_MS = 6 * 60 * 60_000;
 
 function isLoopVideoStorageUrl(url: string): boolean {
   const u = url.trim();
@@ -764,8 +764,102 @@ async function reconcileStaleInFlightProfileLoopJob(args: {
     return true;
   }
 
-  await failProfileLoopJob(svc, job, sessionUser.id, "Grok did not finish in time — try again.");
-  return true;
+  /* Still processing on Grok — keep job pending for client poll / sync recovery. */
+  return false;
+}
+
+/** Re-poll failed jobs that still have an xAI request id (timeout left them failed with no MP4). */
+async function tryRecoverFailedProfileLoopJob(args: {
+  svc: ReturnType<typeof createClient>;
+  sessionUser: { id: string };
+  companionId: string;
+  adminUser: boolean;
+  xaiKey: string;
+}): Promise<Response | null> {
+  const { svc, sessionUser, companionId, adminUser, xaiKey } = args;
+  const { data: rows } = await svc
+    .from("profile_loop_video_jobs")
+    .select("*")
+    .eq("user_id", sessionUser.id)
+    .eq("companion_id", companionId)
+    .eq("status", "failed")
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  for (const raw of rows ?? []) {
+    const job = raw as ProfileLoopJobRow;
+    const jobId = String(job.id ?? "").trim();
+    const rid = String(job.xai_request_id ?? "").trim();
+    if (!jobId || !rid) continue;
+
+    const pr = await pollGrokVideoRequestOnce(xaiKey, rid);
+    if (pr.status === "done") {
+      await svc
+        .from("profile_loop_video_jobs")
+        .update({
+          status: "pending",
+          error_message: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", jobId);
+
+      const { data: claimed } = await svc
+        .from("profile_loop_video_jobs")
+        .update({
+          status: "finalizing",
+          xai_video_url: pr.videoUrl,
+          duration_seconds: pr.duration ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", jobId)
+        .eq("status", "pending")
+        .select("*")
+        .maybeSingle();
+
+      if (claimed?.id) {
+        try {
+          const { publicUrl, durationSeconds } = await finalizeProfileLoopJob(
+            svc,
+            sessionUser,
+            claimed as ProfileLoopJobRow,
+            pr.videoUrl,
+          );
+          return jsonResponse({
+            success: true,
+            phase: "complete",
+            synced: true,
+            publicUrl,
+            durationSeconds,
+            source: "recover",
+          });
+        } catch (e) {
+          console.error("recover finalize failed job:", e);
+        }
+      }
+      continue;
+    }
+
+    if (pr.status === "processing") {
+      await svc
+        .from("profile_loop_video_jobs")
+        .update({
+          status: "pending",
+          error_message: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", jobId);
+      return jsonResponse({
+        success: true,
+        phase: "poll",
+        jobId,
+        pollAfterMs: 4500,
+        resumed: true,
+        workerPhase: "rendering",
+      });
+    }
+  }
+
+  return null;
 }
 
 async function loadCompanionRowForLoop(
@@ -1012,13 +1106,14 @@ async function handleProfileLoopJobPoll(args: {
   const pr = await pollGrokVideoRequestOnce(xaiKey, rid);
   if (pr.status === "processing") {
     if (job.status === "pending" && profileLoopJobAgeMs(job) > PENDING_STUCK_MS) {
-      await failProfileLoopJob(
-        svc,
-        job,
-        sessionUser.id,
-        "Grok did not finish in time — try again.",
-      );
-      return jsonResponse({ error: "Grok did not finish in time — try again." }, 500);
+      return jsonResponse({
+        success: true,
+        phase: "poll",
+        jobId,
+        pollAfterMs: 6000,
+        workerPhase: pollWorkerPhaseForJob(job),
+        message: "Still rendering on Grok — keep this page open or try again later.",
+      });
     }
     await svc.from("profile_loop_video_jobs").update({ updated_at: new Date().toISOString() }).eq("id", jobId);
     return jsonResponse({
@@ -1129,6 +1224,17 @@ async function handleSyncProfileLoopVideo(args: {
 }): Promise<Response> {
   const { svc, sessionUser, companionId, adminUser, xaiKey, motionNotes } = args;
 
+  if (xaiKey) {
+    const recovered = await tryRecoverFailedProfileLoopJob({
+      svc,
+      sessionUser,
+      companionId,
+      adminUser,
+      xaiKey,
+    });
+    if (recovered) return recovered;
+  }
+
   const { data: inFlight } = await svc
     .from("profile_loop_video_jobs")
     .select("*")
@@ -1228,6 +1334,18 @@ async function handleSyncProfileLoopVideo(args: {
           });
         }
       }
+    }
+    const inFlightStatus = String(inFlight.status ?? "");
+    if (inFlightStatus === "pending" || inFlightStatus === "finalizing") {
+      return jsonResponse({
+        success: true,
+        phase: "poll",
+        jobId: String(inFlight.id ?? ""),
+        pollAfterMs: 4500,
+        resumed: true,
+        workerPhase: pollWorkerPhaseForJob(inFlight as ProfileLoopJobRow),
+        synced: false,
+      });
     }
   }
 

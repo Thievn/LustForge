@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   cancelProfileLoopVideo,
   clearProfileLoopJobId,
+  clearProfileLoopResumeStarted,
   dismissProfileLoopToast,
   hasPendingProfileLoopJob,
   invokeGenerateProfileLoopVideo,
@@ -78,6 +79,40 @@ export function ProfileLoopingVideoUpsell({
   useEffect(() => {
     setPendingJob(hasPendingProfileLoopJob(companionId));
   }, [companionId]);
+
+  /** Server may still have an in-flight Grok job even when the client toast/poll stopped. */
+  useEffect(() => {
+    if (!companionId.trim() || disabled) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await syncProfileLoopVideoToProfile(companionId, { repair: true });
+        if (cancelled) return;
+        if (result.synced && result.publicUrl?.trim()) {
+          clearProfileLoopJobId(companionId);
+          setPendingJob(false);
+          onSuccess?.({ publicUrl: result.publicUrl.trim() });
+          onBalanceMaybeChanged?.();
+          toast.success("Looping portrait video saved", {
+            id: toastId,
+            description: "Your profile portrait should update now.",
+            duration: 6000,
+          });
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "";
+        if (/failed|expired|cancelled/i.test(msg)) {
+          clearProfileLoopJobId(companionId);
+          setPendingJob(false);
+        }
+      } finally {
+        if (!cancelled) setPendingJob(hasPendingProfileLoopJob(companionId));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [companionId, disabled, onBalanceMaybeChanged, onSuccess, toastId]);
 
   useEffect(() => {
     return () => {
@@ -155,11 +190,7 @@ export function ProfileLoopingVideoUpsell({
     const stored = loadProfileLoopJob(companionId);
     void (async () => {
       try {
-        if (stored) {
-          await cancelProfileLoopVideo(companionId, stored.jobId);
-        } else {
-          clearProfileLoopJobId(companionId);
-        }
+        await cancelProfileLoopVideo(companionId, stored?.jobId);
         toast.info("Loop generation cancelled. You can start a new one when ready.");
       } catch (e: unknown) {
         clearProfileLoopJobId(companionId);
@@ -205,12 +236,14 @@ export function ProfileLoopingVideoUpsell({
       } finally {
         abortRef.current = null;
         setBusy(false);
+        clearProfileLoopResumeStarted(companionId);
         setPendingJob(hasPendingProfileLoopJob(companionId));
         if (!hasPendingProfileLoopJob(companionId)) dismissProfileLoopToast(companionId);
       }
     })();
     return () => {
       abortRef.current?.abort();
+      clearProfileLoopResumeStarted(companionId);
       dismissProfileLoopToast(companionId);
     };
   }, [companionId, disabled, onBalanceMaybeChanged, onSuccess, pollStatusToast, toastId]);
@@ -335,14 +368,15 @@ export function ProfileLoopingVideoUpsell({
               />
               <p className="text-[10px] text-muted-foreground/75">Max {MOTION_MAX} characters.</p>
             </div>
-            {busy ? (
+            {busy || pendingJob ? (
               <button
                 type="button"
                 onClick={cancelPoll}
-                className="flex w-full min-h-[40px] items-center justify-center gap-2 rounded-xl border border-white/20 bg-black/50 px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-white/10"
+                disabled={false}
+                className="flex w-full min-h-[40px] items-center justify-center gap-2 rounded-xl border border-white/20 bg-black/50 px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-white/10 disabled:opacity-50"
               >
                 <X className="h-4 w-4" />
-                Cancel waiting (job may still finish)
+                {busy ? "Cancel waiting (job may still finish)" : "Clear stuck rendering & cancel job"}
               </button>
             ) : null}
             <button

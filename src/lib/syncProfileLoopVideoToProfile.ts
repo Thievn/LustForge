@@ -1,6 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getEdgeFunctionInvokeMessage } from "@/lib/edgeFunction";
-import { profileLoopVideoResponseSucceeded } from "@/lib/invokeGenerateProfileLoopVideo";
+import {
+  invokeGenerateProfileLoopVideo,
+  profileLoopVideoResponseSucceeded,
+  saveProfileLoopJobId,
+} from "@/lib/invokeGenerateProfileLoopVideo";
 
 export type SyncProfileLoopResult = {
   synced: boolean;
@@ -29,6 +33,23 @@ export async function syncProfileLoopVideoToProfile(
   }
 
   const d = data && typeof data === "object" ? (data as Record<string, unknown>) : null;
+  if (d?.success === true && d.phase === "poll" && typeof d.jobId === "string") {
+    const jobId = d.jobId.trim();
+    saveProfileLoopJobId(cid, jobId);
+    try {
+      const polled = await invokeGenerateProfileLoopVideo({
+        companionId: cid,
+        jobId,
+      });
+      const url = polled.publicUrl?.trim();
+      if (url) return { synced: true, publicUrl: url };
+    } catch {
+      return {
+        synced: false,
+        message: "Loop is still rendering on Grok — keep this page open or tap Generate loop video.",
+      };
+    }
+  }
   if (d?.success === true && d.synced === false) {
     return {
       synced: false,
