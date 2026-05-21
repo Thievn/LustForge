@@ -36,19 +36,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useMemo, useCallback, useRef, type ReactNode } from "react";
 import { getCompanionBackstoryParagraphs } from "@/lib/companionBackstory";
 import {
-  profileAnimatedPortraitUrl,
   profileStillPortraitUrl,
   isVideoPortraitUrl,
   isLoopVideoStorageUrl,
   isEligibleLoopPortraitVideoUrl,
-  shouldShowProfileLoopVideo,
   portraitUrlsEquivalent,
-  stablePortraitDisplayUrl,
 } from "@/lib/companionMedia";
 import { prependCanonicalPortraitIfMissing } from "@/lib/companionGalleryWithCanonical";
 import { clearUserPortraitOverrideStill } from "@/lib/clearUserPortraitOverrideStill";
 import { setCompanionPortraitFromGalleryUrl } from "@/lib/setCompanionPortraitFromGallery";
 import { syncProfileLoopVideoToProfile } from "@/lib/syncProfileLoopVideoToProfile";
+import {
+  profileLoopLightboxAnimated,
+  resolveProfileLoopDisplayState,
+  shouldAttemptProfileLoopHeal,
+} from "@/lib/profileLoopDisplay";
 import { CompanionGalleryGrid } from "@/components/companion/CompanionGalleryGrid";
 import type { CompanionRarity } from "@/lib/companionRarity";
 import { RarityTierCaption } from "@/components/rarity/RarityTierCaption";
@@ -217,9 +219,11 @@ const CompanionProfile = () => {
 
   const loopMp4SourceUrl = useMemo(() => {
     const u = dbCompDisplay?.animated_image_url?.trim();
-    if (u && isLoopVideoStorageUrl(u)) return u;
-    return null;
-  }, [dbCompDisplay?.animated_image_url]);
+    if (!u) return null;
+    return isEligibleLoopPortraitVideoUrl(u, Boolean(dbCompDisplay?.profile_loop_video_enabled))
+      ? u
+      : null;
+  }, [dbCompDisplay?.animated_image_url, dbCompDisplay?.profile_loop_video_enabled]);
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const isDropLanding = searchParams.get("drop") === "1";
   const weeklyDropId = searchParams.get("wd");
@@ -317,11 +321,11 @@ const CompanionProfile = () => {
     if (discoverFreeCommonClaimed !== false) return discoverListFc;
     return 0;
   }, [user?.id, rarity, discoverListFc, discoverFreeCommonClaimed]);
-  const animatedPortrait = profileAnimatedPortraitUrl(dbCompDisplay);
-  const loopVideoSrc = useMemo(() => {
-    if (!animatedPortrait) return null;
-    return stablePortraitDisplayUrl(animatedPortrait) ?? animatedPortrait;
-  }, [animatedPortrait]);
+  const profileLoopState = useMemo(
+    () => resolveProfileLoopDisplayState(dbCompDisplay, { playbackFailed: loopPlaybackFailed }),
+    [dbCompDisplay, loopPlaybackFailed],
+  );
+  const { animatedPortrait, loopVideoSrc, showLoopVideo } = profileLoopState;
   useEffect(() => {
     setLoopPlaybackFailed(false);
     loopRepairAttemptedRef.current = false;
@@ -330,10 +334,18 @@ const CompanionProfile = () => {
   /** Loop enabled in DB but no playable URL — heal wiring once per profile visit. */
   useEffect(() => {
     if (!user?.id || !id || consumeFeatureLocked) return;
-    const enabled = Boolean(dbCompDisplay?.profile_loop_video_enabled);
-    const hasEligible =
-      Boolean(loopVideoSrc) && isEligibleLoopPortraitVideoUrl(loopVideoSrc, true);
-    if (!enabled || hasEligible || loopHealAttemptedRef.current) return;
+    if (
+      !shouldAttemptProfileLoopHeal({
+        userId: user.id,
+        companionId: id,
+        dbDisplay: dbCompDisplay,
+        override: displayOverride ?? undefined,
+        baseDb: dbComp,
+        loopVideoSrc,
+      }) ||
+      loopHealAttemptedRef.current
+    )
+      return;
     loopHealAttemptedRef.current = true;
     let cancelled = false;
     void (async () => {
@@ -356,7 +368,9 @@ const CompanionProfile = () => {
     user?.id,
     id,
     consumeFeatureLocked,
-    dbCompDisplay?.profile_loop_video_enabled,
+    dbCompDisplay,
+    displayOverride,
+    dbComp,
     loopVideoSrc,
     queryClient,
   ]);
@@ -386,13 +400,7 @@ const CompanionProfile = () => {
       setLoopPlaybackFailed(true);
     })();
   }, [id, user?.id, queryClient]);
-  const showLoopVideo = shouldShowProfileLoopVideo(dbCompDisplay, dbCompDisplay?.profile_loop_video_enabled);
-  const lightboxAnimated =
-    showLoopVideo && animatedPortrait && isLoopVideoStorageUrl(animatedPortrait)
-      ? animatedPortrait
-      : animatedPortrait && !isLoopVideoStorageUrl(animatedPortrait)
-        ? animatedPortrait
-        : undefined;
+  const lightboxAnimated = profileLoopLightboxAnimated(dbCompDisplay);
   const { data: galleryImages = [], isLoading: galleryImagesLoading } = useCompanionGeneratedImages(id, user?.id);
   const stillForProfile = useMemo(() => profileStillPortraitUrl(dbCompDisplay, id), [dbCompDisplay, id]);
   const canonicalCardStillUrl = useMemo(
@@ -413,12 +421,7 @@ const CompanionProfile = () => {
     return !portraitUrlsEquivalent(canonicalCardStillUrl, stillForProfile);
   }, [user?.id, canonicalCardStillUrl, stillForProfile]);
 
-  const loopVideoActive = Boolean(
-    showLoopVideo &&
-      loopVideoSrc &&
-      isEligibleLoopPortraitVideoUrl(loopVideoSrc, true) &&
-      !loopPlaybackFailed,
-  );
+  const loopVideoActive = profileLoopState.loopVideoActive;
   const portraitAspectClass = loopVideoActive
     ? PROFILE_LOOP_VIDEO_ASPECT_CLASS
     : PORTRAIT_CARD_ASPECT_CLASS;

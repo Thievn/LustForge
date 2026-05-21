@@ -25,6 +25,17 @@ describe("mergeCompanionDisplayWithUserOverride", () => {
     expect(merged?.animated_image_url).toContain("profile-loops");
   });
 
+  it("accepts extensionless https override URL when loop is enabled", () => {
+    const merged = mergeCompanionDisplayWithUserOverride(baseDb, {
+      portrait_url: "https://example.com/my-still.jpg",
+      animated_portrait_url:
+        "https://tyaplrrlirlbqrfjqryo.supabase.co/storage/v1/object/public/companion-images/profile-loops/cc-abc/1730000000",
+      profile_loop_video_enabled: true,
+    });
+    expect(merged?.profile_loop_video_enabled).toBe(true);
+    expect(merged?.animated_image_url).toContain("profile-loops");
+  });
+
   it("does not use canonical loop when override disables loop", () => {
     const dbWithLoop = {
       ...baseDb,
