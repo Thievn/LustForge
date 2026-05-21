@@ -77,7 +77,20 @@ UPDATE public.custom_characters c
 SET
   animated_image_url = l.public_url,
   profile_loop_video_enabled = true
-FROM latest_gallery_loop l
+FROM (
+  SELECT DISTINCT ON (g.user_id, g.companion_id)
+    g.user_id,
+    g.companion_id,
+    g.image_url AS public_url
+  FROM public.generated_images g
+  WHERE g.is_video = true
+    AND btrim(coalesce(g.image_url, '')) <> ''
+    AND (
+      g.image_url LIKE '%/profile-loops/%'
+      OR g.image_url ~* '\.(mp4|webm|mov)(\?|$)'
+    )
+  ORDER BY g.user_id, g.companion_id, g.created_at DESC
+) l
 WHERE ('cc-' || c.id::text) = l.companion_id
   AND l.user_id = c.user_id
   AND NOT (coalesce(c.is_public, false) AND coalesce(c.approved, false))
