@@ -71,6 +71,7 @@ export function shouldAttemptProfileLoopHeal(input: {
   override: CompanionDisplayOverrideRow | null | undefined;
   baseDb: DbCompanion | null | undefined;
   loopVideoSrc: string | null;
+  galleryHasLoopVideo?: boolean;
 }): boolean {
   if (!input.userId || !input.companionId) return false;
   const hasEligible = Boolean(
@@ -80,7 +81,37 @@ export function shouldAttemptProfileLoopHeal(input: {
   const intent = Boolean(
     input.dbDisplay?.profile_loop_video_enabled ||
       input.override?.profile_loop_video_enabled ||
-      input.baseDb?.profile_loop_video_enabled,
+      input.baseDb?.profile_loop_video_enabled ||
+      input.galleryHasLoopVideo,
   );
   return intent;
+}
+
+export type GalleryLoopRow = {
+  image_url: string;
+  is_video?: boolean | null;
+};
+
+/** Loop MP4 exists in gallery but not yet on profile row — still play while sync catches up. */
+export function enrichCompanionWithGalleryLoop(
+  db: DbCompanion | null,
+  gallery: GalleryLoopRow[],
+): DbCompanion | null {
+  if (!db?.id) return db;
+  const existing = db.animated_image_url?.trim();
+  if (existing && profileLoopPlaybackEligible(existing, true)) return db;
+  for (const row of gallery) {
+    if (!row.is_video) continue;
+    const url = row.image_url?.trim();
+    if (!url) continue;
+    const looksLikeLoop =
+      isLoopVideoStorageUrl(url) || /\.(mp4|webm|mov)(\?|$)/i.test(url);
+    if (!looksLikeLoop) continue;
+    return {
+      ...db,
+      animated_image_url: stablePortraitDisplayUrl(url) ?? url,
+      profile_loop_video_enabled: true,
+    };
+  }
+  return db;
 }

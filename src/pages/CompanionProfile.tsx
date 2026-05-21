@@ -47,6 +47,7 @@ import { clearUserPortraitOverrideStill } from "@/lib/clearUserPortraitOverrideS
 import { setCompanionPortraitFromGalleryUrl } from "@/lib/setCompanionPortraitFromGallery";
 import { syncProfileLoopVideoToProfile } from "@/lib/syncProfileLoopVideoToProfile";
 import {
+  enrichCompanionWithGalleryLoop,
   profileLoopLightboxAnimated,
   resolveProfileLoopDisplayState,
   shouldAttemptProfileLoopHeal,
@@ -209,10 +210,15 @@ const CompanionProfile = () => {
 
   const { dbComp, forgeLookupBusy: forgeRowFetching } = useForgeCompanionOverlay(id, dbCompanions, isLoading);
   const { data: displayOverride } = useCompanionDisplayOverride(id, user?.id);
+  const { data: galleryImages = [], isLoading: galleryImagesLoading } = useCompanionGeneratedImages(id, user?.id);
   const dbCompStripped = useMemo(() => stripDiscoverForgeTemplateCanonicalLoop(dbComp), [dbComp]);
-  const dbCompDisplay = useMemo(
+  const dbCompMerged = useMemo(
     () => mergeCompanionDisplayWithUserOverride(dbCompStripped, displayOverride ?? undefined) ?? dbCompStripped,
     [dbCompStripped, displayOverride],
+  );
+  const dbCompDisplay = useMemo(
+    () => enrichCompanionWithGalleryLoop(dbCompMerged, galleryImages) ?? dbCompMerged,
+    [dbCompMerged, galleryImages],
   );
 
   const companion = dbCompDisplay ? dbToCompanion(dbCompDisplay) : null;
@@ -321,6 +327,15 @@ const CompanionProfile = () => {
     if (discoverFreeCommonClaimed !== false) return discoverListFc;
     return 0;
   }, [user?.id, rarity, discoverListFc, discoverFreeCommonClaimed]);
+  const galleryHasLoopVideo = useMemo(
+    () =>
+      galleryImages.some((g) => {
+        if (!g.is_video) return false;
+        const u = g.image_url?.trim() ?? "";
+        return Boolean(u && (isLoopVideoStorageUrl(u) || /\.(mp4|webm|mov)(\?|$)/i.test(u)));
+      }),
+    [galleryImages],
+  );
   const profileLoopState = useMemo(
     () => resolveProfileLoopDisplayState(dbCompDisplay, { playbackFailed: loopPlaybackFailed }),
     [dbCompDisplay, loopPlaybackFailed],
@@ -342,6 +357,7 @@ const CompanionProfile = () => {
         override: displayOverride ?? undefined,
         baseDb: dbComp,
         loopVideoSrc,
+        galleryHasLoopVideo,
       }) ||
       loopHealAttemptedRef.current
     )
@@ -372,6 +388,7 @@ const CompanionProfile = () => {
     displayOverride,
     dbComp,
     loopVideoSrc,
+    galleryHasLoopVideo,
     queryClient,
   ]);
 
@@ -401,7 +418,6 @@ const CompanionProfile = () => {
     })();
   }, [id, user?.id, queryClient]);
   const lightboxAnimated = profileLoopLightboxAnimated(dbCompDisplay);
-  const { data: galleryImages = [], isLoading: galleryImagesLoading } = useCompanionGeneratedImages(id, user?.id);
   const stillForProfile = useMemo(() => profileStillPortraitUrl(dbCompDisplay, id), [dbCompDisplay, id]);
   const canonicalCardStillUrl = useMemo(
     () => (id && dbCompStripped ? profileStillPortraitUrl(dbCompStripped, id) : null),

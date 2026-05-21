@@ -34,13 +34,26 @@ export function mergeCompanionDisplayWithUserOverride(
   const baseAnim = baseAnimRaw ? stablePortraitDisplayUrl(baseAnimRaw) ?? baseAnimRaw : null;
   const baseLoopOn = loopActive(baseAnim, db.profile_loop_video_enabled);
 
-  const usePrivateLoop =
-    overrideLoopOn || (override.profile_loop_video_enabled && !anim && baseLoopOn);
-  const resolvedAnim = overrideLoopOn
-    ? anim
-    : override.profile_loop_video_enabled && !anim && baseLoopOn
-      ? baseAnim
-      : null;
+  /** Toggle off: clip kept on override row but profile_loop_video_enabled = false. */
+  const userTurnedOffLoop = Boolean(
+    !override.profile_loop_video_enabled && anim && profileLoopPlaybackEligible(anim, true),
+  );
+
+  const usePrivateLoop = userTurnedOffLoop
+    ? false
+    : overrideLoopOn ||
+      (override.profile_loop_video_enabled && !anim && baseLoopOn) ||
+      (!anim && baseLoopOn);
+
+  const resolvedAnim = userTurnedOffLoop
+    ? null
+    : overrideLoopOn
+      ? anim
+      : override.profile_loop_video_enabled && !anim && baseLoopOn
+        ? baseAnim
+        : !anim && baseLoopOn
+          ? baseAnim
+          : null;
 
   return {
     ...db,
