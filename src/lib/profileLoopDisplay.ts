@@ -37,9 +37,14 @@ export function resolveProfileLoopDisplayState(
   db: DbCompanion | null | undefined,
   options?: { playbackFailed?: boolean },
 ): ProfileLoopDisplayState {
-  const enabled = Boolean(db?.profile_loop_video_enabled);
   const animatedPortrait = profileAnimatedPortraitUrl(db ?? undefined);
   const loopVideoSrc = resolveProfileLoopVideoSrc(animatedPortrait);
+  const loopFlag = db?.profile_loop_video_enabled;
+  const loopUrlLooksLikeVideo = Boolean(
+    loopVideoSrc && isLoopVideoStorageUrl(loopVideoSrc),
+  );
+  // Legacy rows: loop URL saved but flag never set — play unless user explicitly disabled.
+  const enabled = loopFlag === true || (loopFlag !== false && loopUrlLooksLikeVideo);
   const showLoopVideo = Boolean(
     enabled && loopVideoSrc && profileLoopPlaybackEligible(loopVideoSrc, true),
   );
