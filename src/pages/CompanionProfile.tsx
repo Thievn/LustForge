@@ -1064,7 +1064,7 @@ const CompanionProfile = () => {
               onToggleGallery={() => setGalleryOpen((o) => !o)}
               sourceGeneratedImageId={loopFromGeneratedImageId}
               onClearLoopSource={() => setLoopFromGeneratedImageId(null)}
-              onSuccess={(result) => {
+              onSuccess={async (result) => {
                 const loopUrl = result?.publicUrl?.trim();
                 if (loopUrl && user?.id && id) {
                   queryClient.setQueryData(
@@ -1075,6 +1075,13 @@ const CompanionProfile = () => {
                       profile_loop_video_enabled: true,
                     }),
                   );
+                }
+                if (id) {
+                  try {
+                    await syncProfileLoopVideoToProfile(id);
+                  } catch {
+                    /* invalidate below still refreshes UI */
+                  }
                 }
                 void queryClient.invalidateQueries({ queryKey: ["companions"] });
                 void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user?.id, id] });

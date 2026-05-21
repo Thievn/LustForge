@@ -221,7 +221,7 @@ async function resolveBestKnownLoopVideoUrl(
     .eq("companion_id", companionId)
     .maybeSingle();
   const ovAnim = typeof ov?.animated_portrait_url === "string" ? ov.animated_portrait_url.trim() : "";
-  if (ovAnim && isLoopVideoStorageUrl(ovAnim) && Boolean(ov?.profile_loop_video_enabled)) {
+  if (ovAnim && isLoopVideoStorageUrl(ovAnim)) {
     return ovAnim;
   }
 
@@ -249,7 +249,24 @@ async function resolveBestKnownLoopVideoUrl(
     const u = typeof g.image_url === "string" ? g.image_url.trim() : "";
     if (u && isLoopVideoStorageUrl(u)) return u;
   }
-  return null;
+  return await resolveStorageLoopPublicUrl(svc, companionId);
+}
+
+/** Latest MP4 under profile-loops/{companionId}/ when DB rows were never wired. */
+async function resolveStorageLoopPublicUrl(
+  svc: ReturnType<typeof createClient>,
+  companionId: string,
+): Promise<string | null> {
+  const safeId = companionId.replace(/[^a-zA-Z0-9-_]/g, "_").slice(0, 120);
+  const folder = `profile-loops/${safeId}`;
+  const { data: files, error } = await svc.storage.from("companion-images").list(folder, {
+    limit: 12,
+    sortBy: { column: "created_at", order: "desc" },
+  });
+  if (error || !files?.length) return null;
+  const hit = files.find((f) => typeof f.name === "string" && /\.(mp4|webm|mov)$/i.test(f.name));
+  if (!hit?.name) return null;
+  return svc.storage.from("companion-images").getPublicUrl(`${folder}/${hit.name}`).data.publicUrl;
 }
 
 async function ensureGalleryVideoRow(
