@@ -349,6 +349,30 @@ async function failProfileLoopJob(
     .eq("id", jobId);
 }
 
+/** Fail every in-flight job for this companion except one we are actively finishing. */
+async function failSupersededPendingProfileLoopJobs(
+  svc: ReturnType<typeof createClient>,
+  sessionUserId: string,
+  companionId: string,
+  reason: string,
+  keepJobId?: string,
+): Promise<void> {
+  let q = svc
+    .from("profile_loop_video_jobs")
+    .update({
+      status: "failed",
+      error_message: reason,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", sessionUserId)
+    .eq("companion_id", companionId)
+    .in("status", ["pending", "finalizing"]);
+  if (keepJobId?.trim()) {
+    q = q.neq("id", keepJobId.trim());
+  }
+  await q;
+}
+
 async function resolvePortraitStillForLoop(
   svc: ReturnType<typeof createClient>,
   sessionUserId: string,
@@ -840,6 +864,16 @@ async function tryRecoverFailedProfileLoopJob(args: {
     }
 
     if (pr.status === "processing") {
+      const ageMs = profileLoopJobAgeMs(job);
+      if (ageMs > 48 * 60 * 60_000) {
+        await failProfileLoopJob(
+          svc,
+          job,
+          sessionUser.id,
+          "Grok video request too old — generate a fresh loop.",
+        );
+        continue;
+      }
       await svc
         .from("profile_loop_video_jobs")
         .update({
@@ -856,6 +890,10 @@ async function tryRecoverFailedProfileLoopJob(args: {
         resumed: true,
         workerPhase: "rendering",
       });
+    }
+
+    if (pr.status === "failed" || pr.status === "expired") {
+      continue;
     }
   }
 
@@ -996,6 +1034,12 @@ async function handleCancelProfileLoopVideo(args: {
     return jsonResponse({ success: true, cancelled: false, message: "Job is not in progress." });
   }
   await failProfileLoopJob(svc, job as ProfileLoopJobRow, sessionUser.id, "Cancelled by user.");
+  await failSupersededPendingProfileLoopJobs(
+    svc,
+    sessionUser.id,
+    companionId,
+    "Cancelled by user.",
+  );
   return jsonResponse({ success: true, cancelled: true });
 }
 
@@ -1337,15 +1381,34 @@ async function handleSyncProfileLoopVideo(args: {
     }
     const inFlightStatus = String(inFlight.status ?? "");
     if (inFlightStatus === "pending" || inFlightStatus === "finalizing") {
-      return jsonResponse({
-        success: true,
-        phase: "poll",
-        jobId: String(inFlight.id ?? ""),
-        pollAfterMs: 4500,
-        resumed: true,
-        workerPhase: pollWorkerPhaseForJob(inFlight as ProfileLoopJobRow),
-        synced: false,
-      });
+      const rid = String(inFlight.xai_request_id ?? "").trim();
+      if (rid && xaiKey) {
+        const pr = await pollGrokVideoRequestOnce(xaiKey, rid);
+        if (pr.status === "expired" || pr.status === "failed") {
+          const reason =
+            pr.status === "expired"
+              ? "Grok video: request expired before completion."
+              : `Grok video failed: ${pr.message}`;
+          await failProfileLoopJob(svc, inFlight as ProfileLoopJobRow, sessionUser.id, reason);
+        }
+      }
+      const { data: stillInFlight } = await svc
+        .from("profile_loop_video_jobs")
+        .select("id, status")
+        .eq("id", String(inFlight.id ?? ""))
+        .maybeSingle();
+      const stillSt = String(stillInFlight?.status ?? "");
+      if (stillSt === "pending" || stillSt === "finalizing") {
+        return jsonResponse({
+          success: true,
+          phase: "poll",
+          jobId: String(inFlight.id ?? ""),
+          pollAfterMs: 4500,
+          resumed: true,
+          workerPhase: pollWorkerPhaseForJob(inFlight as ProfileLoopJobRow),
+          synced: false,
+        });
+      }
     }
   }
 
@@ -1606,6 +1669,18 @@ Deno.serve(async (req) => {
   }
 
   const inFlightSince = new Date(Date.now() - IN_FLIGHT_JOB_MS).toISOString();
+  await svc
+    .from("profile_loop_video_jobs")
+    .update({
+      status: "failed",
+      error_message: "Previous loop request expired — start a fresh generation.",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", sessionUser.id)
+    .eq("companion_id", companionId)
+    .in("status", ["pending", "finalizing"])
+    .lt("created_at", inFlightSince);
+
   const { data: existingJob } = await svc
     .from("profile_loop_video_jobs")
     .select("*")
@@ -1662,6 +1737,13 @@ Deno.serve(async (req) => {
     table === "custom_characters" &&
     Boolean((row as { is_public?: unknown }).is_public) &&
     Boolean((row as { approved?: unknown }).approved);
+
+  await failSupersededPendingProfileLoopJobs(
+    svc,
+    sessionUser.id,
+    companionId,
+    "Superseded by a new loop generation.",
+  );
 
   try {
     const fullFromBuilder = buildProfilePageLoopVideoPrompt(row, motionNotes);

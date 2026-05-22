@@ -134,11 +134,24 @@ export async function pollGrokVideoRequestOnce(
     headers: { Authorization: `Bearer ${apiKey}` },
   });
   const pollText = await pollRes.text();
+  if (!pollRes.ok) {
+    if (pollRes.status === 404) {
+      return { status: "expired" };
+    }
+    const snippet = pollText.trim().slice(0, 240);
+    return {
+      status: "failed",
+      message: snippet ? `Grok poll HTTP ${pollRes.status}: ${snippet}` : `Grok poll HTTP ${pollRes.status}`,
+    };
+  }
   let data: VideoStatusResponse;
   try {
     data = JSON.parse(pollText) as VideoStatusResponse;
   } catch {
-    return { status: "processing" };
+    return {
+      status: "failed",
+      message: `Grok poll returned non-JSON: ${pollText.trim().slice(0, 240)}`,
+    };
   }
 
   if (data.status === "done" && data.video?.url) {
