@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-05-23T03:47:36.683Z",
+  "generatedAt": "2026-05-23T04:54:23.248Z",
   "items": [
     {
       "id": "dashboard",
@@ -79,6 +79,12 @@
       "kind": "route",
       "label": "/buy-credits",
       "path": "/buy-credits"
+    },
+    {
+      "id": "route-toys",
+      "kind": "route",
+      "label": "/toys",
+      "path": "/toys"
     },
     {
       "id": "admin",

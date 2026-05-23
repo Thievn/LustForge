@@ -4,7 +4,7 @@
  */
 import type { Companion } from "@/data/companions";
 import type { DbCompanion } from "@/hooks/useCompanions";
-import { resolveChatArtStyleLabel } from "@/lib/chatArtStyle";
+import { resolveChatArtStyleLabel, isAnimeArtStyleLabel } from "@/lib/chatArtStyle";
 import { forgeActiveTabForImagine } from "@/lib/forgeActiveTabFromDbCompanion";
 import {
   forgeBodyCategoryIdForType,
@@ -100,7 +100,7 @@ export function buildCompanionVisualIdentityCapsule(companion: Companion, dbComp
   const bodyType = normalizeForgeBodyType(resolvedBody);
   let art = (resolveChatArtStyleLabel(dbComp) || "Photorealistic").trim() || "Photorealistic";
   const forgeTab = forgeActiveTabForImagine(dbComp);
-  if (forgeTab === "anime_temptation" && !/\b(anime|manga|cel|2d|illustrat)\b/i.test(art)) {
+  if (forgeTab === "anime_temptation" && !isAnimeArtStyleLabel(art)) {
     art = "Anime Style";
   }
   const silCat = forgeBodyCategoryIdForType(bodyType);

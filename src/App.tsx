@@ -27,6 +27,7 @@ const LiveCallPage = lazy(() => import("./pages/LiveCallPage"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Admin = lazy(() => import("./pages/Admin"));
 const BuyCredits = lazy(() => import("./pages/BuyCredits"));
+const Toys = lazy(() => import("./pages/Toys"));
 
 function ProfileLoopToastRouteGuard() {
   const location = useLocation();
@@ -270,6 +271,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/toys" element={<Toys />} />
               <Route
                 path="/admin"
                 element={

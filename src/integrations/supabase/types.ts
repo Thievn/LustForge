@@ -70,6 +70,69 @@ export type Database = {
           },
         ]
       }
+      affiliate_shop_products: {
+        Row: {
+          affiliate_url: string
+          badge: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          affiliate_url?: string
+          badge?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          affiliate_url?: string
+          badge?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      affiliate_shop_settings: {
+        Row: {
+          hero_subtitle: string
+          hero_title: string
+          id: number
+          sync_section_body: string
+          updated_at: string
+        }
+        Insert: {
+          hero_subtitle?: string
+          hero_title?: string
+          id?: number
+          sync_section_body?: string
+          updated_at?: string
+        }
+        Update: {
+          hero_subtitle?: string
+          hero_title?: string
+          id?: number
+          sync_section_body?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       backstory_regen_queue: {
         Row: {
           backstory_chars: number

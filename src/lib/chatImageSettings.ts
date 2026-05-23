@@ -11,9 +11,12 @@ import {
 } from "@/lib/chatLikenessAnchors";
 import {
   CHARACTER_REFERENCE_INTRO_LINES,
-  IMAGINE_QUALITY_NEGATIVE_LINE,
-  IMAGINE_QUALITY_POSITIVE_LINE,
 } from "@/lib/characterReferenceImagePrompt";
+import {
+  buildChatStillMenuQualityBlock,
+  MOMENTS_TILE_ART_MEDIUM_BINDING,
+} from "@/lib/momentsArtStylePolicy";
+import { resolveChatArtStyleLabel, type ChatArtStyleDbInput } from "@/lib/chatArtStyle";
 
 const AUTO_IMAGE_KEY = "lustforge-chat-auto-image";
 
@@ -79,12 +82,13 @@ ${CHAT_LIKENESS_SUBJECT_ANCHOR}`;
 /** Default human anatomy; fantasy / non-human only when CHARACTER APPEARANCE explicitly says so. */
 export const CHAT_MOMENTS_ANATOMY_DEFAULT_BLOCK = `**#2 ANATOMY (default = human):** Exactly **two arms, two legs**, **five fingers per hand**, one face, natural joint count; **at most one tail** unless appearance text specifies multiple. **Unless CHARACTER APPEARANCE explicitly describes otherwise** (e.g. wings, extra limbs, tentacles, naga lower body, digit count, amputation) — do **not** add extra arms, legs, fingers, mirrored phantom limbs, fused or melted hands, stacked heads, or duplicate faces.`;
 
-/** Appended for Grok Imagine when a chat still tile supplies `styledSceneExtension` (Moments gallery). Likeness + anatomy first so they are not buried under quality fluff. */
-export const CHAT_STILL_MENU_QUALITY_AND_ANATOMY = `${CHAT_MOMENTS_ANATOMY_DEFAULT_BLOCK}
+/** Appended for every Moments gallery tile (Selfie + Sensual) — art-aware quality line. */
+export function buildChatStillMenuQualityAndAnatomy(artStyleLabel: string): string {
+  return `${CHAT_MOMENTS_ANATOMY_DEFAULT_BLOCK}
 
-**#3 RENDER QUALITY:** ${IMAGINE_QUALITY_POSITIVE_LINE}
+${MOMENTS_TILE_ART_MEDIUM_BINDING}
 
-**Avoid:** ${IMAGINE_QUALITY_NEGATIVE_LINE}
+${buildChatStillMenuQualityBlock(artStyleLabel)}
 
 **Scene vs card:** Outfit, pose, background, props, light = **this menu + chat** only — do not copy roster packshot wardrobe, room, or crop.
 
@@ -93,6 +97,10 @@ ${CHAT_LIKENESS_STILL_MENU_IDENTITY_TAIL}
 ${CHAT_IMAGINE_SELFIE_NO_PHONE_BLOCK}
 
 ${CHAT_IMAGINE_NO_DEFAULT_CHAIR_BLOCK}`;
+}
+
+/** @deprecated Use `buildChatStillMenuQualityAndAnatomy(artLabel)` — static block used photoreal quality tags on all tiles. */
+export const CHAT_STILL_MENU_QUALITY_AND_ANATOMY = buildChatStillMenuQualityAndAnatomy("Photorealistic");
 
 /** Moments FAB tiers: Selfie (SFW) + Sensual (internal key \`lewd\`). */
 export const FAB_SELFIE = {
@@ -426,9 +434,18 @@ export function resolveChatImageGenerationPrompt(args: {
   appearanceReference?: string | null;
   /** DB `character_reference` — wins over appearanceReference when set. */
   characterReference?: string | null;
+  /** Forge art style label — locks render medium for every menu tile. */
+  artStyleLabel?: string | null;
+  /** When set, resolves art style via `resolveChatArtStyleLabel` if `artStyleLabel` omitted. */
+  artStyleDb?: ChatArtStyleDbInput | null;
 }): string {
   const menu = args.menuImagePrompt?.trim();
   const styled = args.styledSceneExtension?.trim();
+  const artLabel =
+    (args.artStyleLabel?.trim() ||
+      resolveChatArtStyleLabel(args.artStyleDb ?? null) ||
+      "Photorealistic").trim();
+  const menuQuality = buildChatStillMenuQualityAndAnatomy(artLabel);
   const appearanceRef =
     (args.characterReference?.trim() || args.appearanceReference?.trim() || "").trim();
   if (menu) {
@@ -443,13 +460,13 @@ export function resolveChatImageGenerationPrompt(args: {
     if (styled) {
       const tileLabel = args.menuTileLabel?.trim();
       const fused = (
-        `— Requested framing (from menu) —\n${subjectAnchor}${CHAT_STILL_MENU_QUALITY_AND_ANATOMY}${lewdLighting}${tierRails}\n\nMENU_TILE_SCENE:\n${styled}\n\n**PRIMARY SCENE (execute literally — place / pose / wardrobe):**\n${styled}${tileLabel ? `\n\n**Tile:** ${tileLabel}` : ""}\n\n**Tier tone only (not location):**\n${menu}${coherence}`
+        `— Requested framing (from menu) —\n${subjectAnchor}${menuQuality}${lewdLighting}${tierRails}\n\nMENU_TILE_SCENE:\n${styled}\n\n**PRIMARY SCENE (execute literally — place / pose / wardrobe):**\n${styled}${tileLabel ? `\n\n**Tile:** ${tileLabel}` : ""}\n\n**Tier tone only (not location):**\n${menu}${coherence}`
       ).trim();
       return appearanceRef ? wrapFabSceneWithAppearanceLock(fused, appearanceRef) : fused;
     }
     // Tier-only (FAB / media bar): same anatomy + likeness rails as gallery tiles; tier string carries exposure + pose hints.
     const tierOnly = (
-      `— Requested framing (from menu) —\n${subjectAnchor}${menu}\n\n${CHAT_STILL_MENU_QUALITY_AND_ANATOMY}${lewdLighting}${tierRails}${coherence}`
+      `— Requested framing (from menu) —\n${subjectAnchor}${menu}\n\n${menuQuality}${lewdLighting}${tierRails}${coherence}`
     ).trim();
     return appearanceRef ? wrapFabSceneWithAppearanceLock(tierOnly, appearanceRef) : tierOnly;
   }

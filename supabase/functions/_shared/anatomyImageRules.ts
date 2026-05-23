@@ -2,6 +2,11 @@
  * Context-aware anatomy policy for Grok Imagine (forge + chat).
  * Default: strict photoreal human proportions. Non-human forge body types authorize matching silhouettes.
  */
+import {
+  effectiveForgeArtStyleLabelForCharacterData,
+  isAnimeArtStyleLabel,
+  isStylizedNonPhotorealArtLabel,
+} from "./forgeAnimeStyleDna.ts";
 
 export type AnatomyVariant =
   | "strict_realistic"
@@ -149,8 +154,10 @@ function bodyTypeText(characterData: Record<string, unknown>): string {
 }
 
 function artStyleLabel(characterData: Record<string, unknown>): string {
-  const raw = characterData.artStyleLabel ?? characterData.art_style_label;
-  return String(raw ?? "").trim();
+  return effectiveForgeArtStyleLabelForCharacterData(
+    String(characterData.artStyleLabel ?? characterData.art_style_label ?? ""),
+    characterData,
+  );
 }
 
 function tagsBlob(characterData: Record<string, unknown>): string {
@@ -213,6 +220,9 @@ export function resolveAnatomyVariant(characterData: Record<string, unknown>): A
 
   const label = artStyleLabel(characterData);
   const labelLo = label.toLowerCase();
+  if (isAnimeArtStyleLabel(label) || isStylizedNonPhotorealArtLabel(label)) {
+    return "stylized_medium";
+  }
   if (
     STYLIZED_ART_STYLE_LABELS.some(
       (s) => s.toLowerCase() === labelLo || labelLo.includes(s.toLowerCase()),

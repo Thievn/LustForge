@@ -946,6 +946,7 @@ export function useChatSessionController() {
         menuTileLabel: preset.label,
         appearanceReference: companion.appearanceReference ?? null,
         characterReference: companion.characterReference ?? null,
+        artStyleDb: dbComp,
       });
       const { prompt, portraitConsistencyLock, visualIdentityCapsule } = buildMasterChatImagePrompt({
         companion,
@@ -2098,6 +2099,7 @@ export function useChatSessionController() {
       menuTileLabel: options?.menuTileLabel ?? null,
       appearanceReference: companion.appearanceReference ?? null,
       characterReference: companion.characterReference ?? null,
+      artStyleDb: dbComp,
     });
     const styledExt = options?.styledSceneExtension?.trim();
     const requestingImage = mediaRoute === "image";
@@ -2549,6 +2551,7 @@ export function useChatSessionController() {
         menuImagePrompt: null,
         appearanceReference: companion?.appearanceReference ?? null,
         characterReference: companion?.characterReference ?? null,
+        artStyleDb: dbComp ?? null,
       })
     : "";
   const rawDraftMediaRoute = input.trim() ? inferChatMediaRoute(input, false) : "text";

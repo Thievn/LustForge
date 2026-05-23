@@ -1,5 +1,6 @@
 import type { FabSelfieTier } from "@/lib/chatImageSettings";
 import { CHAT_LIKENESS_SUBJECT_FEATURES_INLINE } from "@/lib/chatLikenessAnchors";
+import { MOMENTS_TILE_ART_MEDIUM_BINDING } from "@/lib/momentsArtStylePolicy";
 
 /** Chat still picker tiers — mirrors `FabSelfieTier` (Selfie + Sensual). */
 export type ChatStillMenuTier = FabSelfieTier;
@@ -11,12 +12,12 @@ export type ChatStillMenuCategory = {
   tier: ChatStillMenuTier;
 };
 
-/** Scene line only — global quality / anatomy / likeness rules are appended in `resolveChatImageGenerationPrompt` when a tile is chosen. */
+/** Scene line only — global quality / anatomy / likeness / art-medium rules are appended in `resolveChatImageGenerationPrompt`. */
 const momentPortrait = (scene: string) =>
-  `Natural vertical portrait moment — **this roster companion only** (not a generic lookalike); lock ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE} to CHARACTER APPEARANCE + portrait likeness URL when supplied; gender presentation from CHARACTER APPEARANCE. **Not a selfie shot:** no smartphone, camera, screen, lens reflection, or arm-extended front-camera pose — render a natural editorial or candid pose in-scene (standing, leaning, seated on scene furniture, walking, etc.) as described below. ${scene} Outfit, pose, background, and props belong **only** to this scene — do not copy catalog-card wardrobe, backdrop, or packshot pose.`;
+  `${MOMENTS_TILE_ART_MEDIUM_BINDING} Natural vertical portrait moment — **this roster companion only** (not a generic lookalike); lock ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE} to CHARACTER APPEARANCE + portrait likeness URL when supplied; gender presentation from CHARACTER APPEARANCE. **Not a selfie shot:** no smartphone, camera, screen, lens reflection, or arm-extended front-camera pose — render a natural in-character pose in-scene (standing, leaning, seated on scene furniture, walking, etc.) as described below. ${scene} Outfit, pose, background, and props belong **only** to this scene — do not copy catalog-card wardrobe, backdrop, or packshot pose.`;
 
 const lewd = (scene: string) =>
-  `Tasteful editorial-adult shot — **this roster companion only** (not a generic lookalike); lock ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE} to CHARACTER APPEARANCE + portrait likeness URL when supplied; gender presentation from CHARACTER APPEARANCE. **Suggestive wardrobe only** (lingerie, sheer, short shorts, tanks, wet fabric with coverage, silk sheets) — **no bare skin below tasteful coverage, no visible genitals, no explicit sexual acts, no phone in hand.** ${scene} Wardrobe, pose, and set follow this line only — not the profile marketing still’s environment or costume.`;
+  `${MOMENTS_TILE_ART_MEDIUM_BINDING} Tasteful sensual shot — **this roster companion only** (not a generic lookalike); lock ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE} to CHARACTER APPEARANCE + portrait likeness URL when supplied; gender presentation from CHARACTER APPEARANCE. **Suggestive wardrobe only** (lingerie, sheer, short shorts, tanks, wet fabric with coverage, silk sheets) — **no bare skin below tasteful coverage, no visible genitals, no explicit sexual acts, no phone in hand.** ${scene} Wardrobe, pose, and set follow this line only — not the profile marketing still’s environment or costume.`;
 
 export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
   {

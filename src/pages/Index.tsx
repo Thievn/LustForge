@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ParticleBackground from "@/components/ParticleBackground";
 import Navbar from "@/components/Navbar";
@@ -67,7 +68,7 @@ const Index = () => {
           <p><strong className="text-foreground/80">18+ Only.</strong> By using LustForge AI, you confirm you are at least 18 years of age. All characters are AI-generated fiction. No real persons are depicted. All interactions are consensual fantasy simulations.</p>
           <p>Safe-word support is available in every session. We do not store private chat logs on our servers. Your privacy is paramount. For data deletion requests, contact <a href="mailto:support@lustforge.app" className="text-primary hover:underline">support@lustforge.app</a>.</p>
           <p>© 2026 LustForge AI · <span className="text-primary">Premium</span> coming soon</p>
-          <p className="tracking-widest uppercase">Powered by <span className="text-primary/80 text-glow-pink font-medium">Grok</span> • <span className="text-accent/80 text-glow-teal font-medium">Lovense</span></p>
+          <p className="tracking-widest uppercase">Powered by <span className="text-primary/80 text-glow-pink font-medium">Grok</span> • <Link to="/toys" className="text-accent/80 text-glow-teal font-medium hover:text-accent transition-colors hover:drop-shadow-[0_0_8px_rgba(0,255,200,0.35)]">Lovense</Link></p>
         </div>
       </footer>
     </div>

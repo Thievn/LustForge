@@ -41,6 +41,24 @@ export function buildAnimeTemptationStyleLead(tier: ForgeAnimeStyleTier): string
 /** Match whether a prompt already includes the dominant anime style lock (client + server). */
 export const FORGE_ANIME_STYLE_LOCK_REGEX = /ultra-detailed\s+2D\s+anime\s+style/i;
 
+/** Same regex as Edge — keep in sync with `supabase/functions/_shared/forgeAnimeStyleDna.ts`. */
+export function isAnimeArtStyleLabel(art: string | null | undefined): boolean {
+  if (!art?.trim()) return false;
+  return /\b(anime|manga|cel[-\s]?shad|ghibli|hentai|yaoi|yuri|chibi|2d\s+anime|screentone|cyber-goth\s+anime)\b/i.test(art);
+}
+
+const PHOTOREAL_ART_RE =
+  /\b(photoreal|hyper-real|cinematic\s+photography|studio\s+portrait|boudoir\s+photography|dark\s+moody\s+realism|high\s+fashion\s+editorial|film\s+noir)\b/i;
+
+export function isStylizedNonPhotorealArtLabel(art: string | null | undefined): boolean {
+  if (!art?.trim()) return false;
+  if (isAnimeArtStyleLabel(art)) return true;
+  if (PHOTOREAL_ART_RE.test(art)) return false;
+  return /\b(illustrat|watercolor|oil\s+paint|pixel\s+art|comic|cartoon|fantasy\s+art|digital\s+painting|baroque|gothic\s+victorian|surreal|pinup|vaporwave|synthwave|glitch|neon\s+cyberpunk|dark\s+fantasy\s+art|grunge)\b/i.test(
+    art,
+  );
+}
+
 /** Same tab resolution as Edge `effectiveForgeArtStyleLabelForCharacterData` (shallow characterData). */
 export function effectiveForgeArtStyleLabelForCharacterData(
   artStyle: string,
@@ -50,5 +68,28 @@ export function effectiveForgeArtStyleLabelForCharacterData(
     characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab ?? "";
   if (isAnimeTemptationForgeTabId(tab)) return "Anime Style";
   const s = String(artStyle ?? "").trim();
+  if (s && isAnimeArtStyleLabel(s)) return "Anime Style";
   return s || "Photorealistic";
+}
+
+/** Art-style lock for chat menu stills when full theme DNA is suppressed (Edge mirror). */
+export function buildArtStyleOnlyLockPrefix(
+  characterData: Record<string, unknown>,
+  tier: ForgeAnimeStyleTier = "full",
+): string {
+  const art = effectiveForgeArtStyleLabelForCharacterData(
+    String(characterData.artStyleLabel ?? characterData.art_style_label ?? ""),
+    characterData as { selectedForgeTab?: unknown; selected_forge_tab?: unknown; activeForgeTab?: unknown },
+  );
+  const tab =
+    characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab ?? "";
+  const animeLane = isAnimeTemptationForgeTabId(tab) || isAnimeArtStyleLabel(art);
+  if (animeLane) {
+    return `[ART STYLE — 2D ANIME LOCK — HIGHEST PRIORITY]\n${buildAnimeTemptationStyleLead(tier)}`;
+  }
+  if (isStylizedNonPhotorealArtLabel(art)) {
+    return `ART_STYLE_LOCK (binding — stylized illustration): Render every element in **${art}** — same medium, line weight, shading, and color read as the roster portrait. **Forbidden:** photoreal skin, 3D CGI, Octane/Unreal render, or stock photography unless the portrait itself is photographic.`;
+  }
+  if (!art) return "";
+  return `ART_STYLE_LOCK (binding — match roster portrait): Render every element in **${art}** — same medium, line weight, shading model, color grading, and material read as the profile portrait. **Forbidden:** drifting to generic stock photography or a mismatched illustration style.`;
 }

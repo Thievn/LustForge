@@ -16,7 +16,9 @@ import {
   buildArtStyleOnlyLockPrefix,
   effectiveForgeArtStyleLabelForCharacterData,
   FORGE_ANIME_STYLE_LOCK_REGEX,
+  isAnimeArtStyleLabel,
   isAnimeTemptationForgeTabId,
+  isStylizedNonPhotorealArtLabel,
 } from "../_shared/forgeAnimeStyleDna.ts";
 import { buildForgeStyleDnaPrefix } from "../_shared/forgeTabStyleDna.ts";
 import { forgePortraitBodyTypeContract } from "../_shared/forgeBodyTypeContract.ts";
@@ -32,6 +34,7 @@ import {
 import { CHAT_LIKENESS_EDGE_SAME_SUBJECT, CHAT_LIKENESS_SUBJECT_FEATURES_INLINE } from "../_shared/chatLikenessAnchors.ts";
 import { publicApiTeaserGuardResponse } from "../_shared/publicApiTeaserGate.ts";
 import { enrichImaginePromptUniversal } from "../_shared/characterReferenceImagePrompt.ts";
+import { buildMomentsCreateImageLead } from "../_shared/momentsArtStylePolicy.ts";
 import { resolveCharacterReferenceForImagine } from "../_shared/resolveCharacterReferenceFromDb.ts";
 import { assertUserUnlockedCompanionForSpend } from "../_shared/requireCompanionFcUnlock.ts";
 import { rewritePromptForImagine } from "../_shared/safeImagePromptRewriter.ts";
@@ -256,11 +259,16 @@ serve(async (req) => {
       characterData,
     }).slice(0, 6000);
 
-    const anatomyVariant = resolveAnatomyVariant(characterData as Record<string, unknown>);
+    const cd = characterData as Record<string, unknown>;
+    const cdForArt = { ...cd };
+    const artRawEarly = String(cdForArt.artStyleLabel ?? cdForArt.art_style_label ?? "").trim();
+    cdForArt.artStyleLabel = effectiveForgeArtStyleLabelForCharacterData(artRawEarly, cdForArt);
+    cdForArt.art_style_label = cdForArt.artStyleLabel;
+
+    const anatomyVariant = resolveAnatomyVariant(cdForArt);
     const anatomyDirective = buildAnatomyRewriterDirective(anatomyVariant);
     const anatomyKeyRules = buildAnatomyImagineKeyRules(anatomyVariant);
 
-    const cd = characterData as Record<string, unknown>;
     const isChatSessionStill = String(characterData.style ?? "").trim() === "chat-session";
     const suppressForgeDna =
       cd.suppressForgeStyleDnaForChatMenuPreset === true ||
@@ -297,16 +305,19 @@ serve(async (req) => {
       : "";
     /** Chat stills use **generations** only — `/v1/images/edits` with the roster portrait locked couch/room/crop and ignored user-requested cabins, beaches, etc. */
     const tabForAnime = cd.selectedForgeTab ?? cd.selected_forge_tab ?? cd.activeForgeTab;
-    const isAnime = isAnimeTemptationForgeTabId(tabForAnime);
     const tierRewrite = effectiveTier === "forge_preview_sfw" ? "preview" : "full";
-    const dnaPrefix =
-      suppressForgeDna && isChatSessionStill
-        ? buildArtStyleOnlyLockPrefix(cdScene)
-        : buildForgeStyleDnaPrefix(cd, tierRewrite);
     const cdScene = { ...cd };
     const artRaw = String(cdScene.artStyleLabel ?? cdScene.art_style_label ?? "").trim();
     cdScene.artStyleLabel = effectiveForgeArtStyleLabelForCharacterData(artRaw, cdScene);
     cdScene.art_style_label = cdScene.artStyleLabel;
+    const artLabelForLead = String(cdScene.artStyleLabel ?? "").trim();
+    const isAnime =
+      isAnimeTemptationForgeTabId(tabForAnime) || isAnimeArtStyleLabel(artLabelForLead);
+    const isStylizedArt = isAnime || isStylizedNonPhotorealArtLabel(artLabelForLead);
+    const dnaPrefix =
+      suppressForgeDna && isChatSessionStill
+        ? buildArtStyleOnlyLockPrefix(cdScene, tierRewrite)
+        : buildForgeStyleDnaPrefix(cd, tierRewrite);
     const sceneBlock = maybeAppendForgeStyleSceneBlock(String(prompt), cdScene);
     const promptHasAnimeLock = isAnime && FORGE_ANIME_STYLE_LOCK_REGEX.test(String(prompt));
     const animeRewriteLead = isAnime && !promptHasAnimeLock ? buildAnimeTemptationStyleLead(tierRewrite) : "";
@@ -314,7 +325,6 @@ serve(async (req) => {
       cd.is_nexus_hybrid === true ||
       cd.isNexusHybrid === true ||
       cd.is_nexus_merge_child === true;
-    const artLabelForLead = String(cdScene.artStyleLabel ?? "").trim();
     const chatPortraitConsistencyLead =
       isChatSessionStill && !isPortrait
         ? [
@@ -530,6 +540,11 @@ serve(async (req) => {
         ? `Single subject — ${subjectTag}${subBody ? ` · body type: ${subBody}` : ""}. **Chat gallery menu still:** **Likeness** = same person as Character Details / any **HTTPS roster still** in the prompt (face, hair, eyes, skin, tattoos, species) plus written bible — **not** a remaster or resize of that card. CHARACTER DETAILS = **identity** (read the bible; **ignore** card outfit/room/pose embedded in prose when they conflict PRIMARY SCENE). **Do not** match swimsuit, beach, marketing-still palette, or catalog framing unless PRIMARY SCENE demands it. **PRIMARY SCENE** = sole wardrobe, set, pose, props, lens.`
         : baseDescription;
 
+    const createImageLead = buildMomentsCreateImageLead({
+      artLabel: artLabelForLead,
+      subjectDescription: imagingSubjectDescription,
+    });
+
     const finalPromptRaw = effectiveTier === "forge_preview_sfw"
       ? `${animeFinalLead}
 ${PORTRAIT_IMAGE_DESIGN_BRIEF}
@@ -566,7 +581,9 @@ ${chatMenuSceneLock && isChatSessionStill ? "- **Gallery menu lock:** PRIMARY SC
 ${
             isAnime
               ? "- **2D anime discipline:** Render as authentic flat/soft-cel **2D anime illustration** matching PRIMARY SCENE — preserve stylized proportions, line art, and anime eyes; do not convert to photoreal or 3D."
-              : "- **Chibi / exaggerated card art:** If written lore implies super-deformed or stylized art, still render a **coherent photoreal adult human** who matches the **described** face, hair, and vibe — believable anatomy unless PRIMARY SCENE explicitly asks for stylized output."
+              : isStylizedArt
+                ? `- **Stylized art discipline:** Render in **${artLabelForLead || "the roster portrait medium"}** — match the profile’s illustrated / painterly lane; do not convert to photoreal, 3D CGI, or stock photography.`
+                : "- **Photoreal lane:** When the roster portrait is photographic, use believable editorial photography — coherent anatomy and skin texture unless PRIMARY SCENE explicitly asks for stylized output."
           }
 ${portraitLock && !isChatSessionStill ? `- **Portrait / roster continuity** (Character Details) wins over casual drift in PRIMARY SCENE — same character, same body-type label, same art style family unless RAW_TEXT explicitly requests a deliberate alternate.` : ""}
 ${portraitLock && isChatSessionStill ? `- **Character bible** (written profile) anchors identity; PRIMARY SCENE wins on pose, wardrobe, location, and lighting unless the user explicitly overrides.` : ""}
@@ -592,7 +609,7 @@ ${scenarioBinding ? `\n${scenarioBinding}\n` : ""}
 PRIMARY SCENE (authoritative — identity locked above; execute menu tile literally; no roster-card remake):
 ${safeRewritten}
 
-Create a highly detailed, cinematic, vertical 2:3 (trading-card) image of ${imagingSubjectDescription}.
+${createImageLead}
 
 ${characterDetailsBlock}
 
@@ -600,7 +617,7 @@ ${adultVisualRules}`.trim();
         }
         return `${adultHead}
 
-Create a highly detailed, cinematic, vertical 2:3 (trading-card) image of ${imagingSubjectDescription}.
+${createImageLead}
 
 ${characterDetailsBlock}
 
@@ -615,6 +632,10 @@ ${safeRewritten}`.trim();
       corePrompt: finalPromptRaw,
       characterReference: charRefResolved,
       forceRefPrepend: menuSceneLockEffective && isChatSessionStill,
+      artStyleLabel: artLabelForLead,
+      menuGalleryStill: menuSceneLockEffective && isChatSessionStill,
+      characterData: cdScene,
+      tier: tierRewrite,
     });
     const finalPromptClamped = clampPromptForImagine(finalPromptRawEnriched, GROK_IMAGINE_PROMPT_SOFT_LIMIT);
     const finalPrompt = sanitizeGrokImagineLexicon(finalPromptClamped);

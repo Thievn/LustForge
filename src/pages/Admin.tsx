@@ -62,6 +62,7 @@ import { AdminCelebrityParodyPanel } from "@/components/admin/AdminCelebrityParo
 import CompanionManager from "@/components/admin/CompanionManager";
 import AdminForgeAssistant from "@/components/admin/AdminForgeAssistant";
 import XMarketingHub from "@/components/admin/XMarketingHub";
+import AdminAffiliateShopPanel from "@/components/admin/AdminAffiliateShopPanel";
 import AdminTheNexus from "@/components/AdminTheNexus";
 import { getGaMeasurementId } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -80,6 +81,7 @@ type AdminSection =
   | "nexus"
   | "characters"
   | "xmarketing"
+  | "affiliate"
   | "weeklydrops"
   | "users"
   | "waitlist"
@@ -93,6 +95,7 @@ const ADMIN_SECTION_IDS = new Set<AdminSection>([
   "nexus",
   "characters",
   "xmarketing",
+  "affiliate",
   "weeklydrops",
   "users",
   "waitlist",
@@ -113,6 +116,7 @@ const NAV: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] =
   { id: "nexus", label: "The Nexus", icon: Orbit },
   { id: "characters", label: "Hall of cards", icon: Palette },
   { id: "xmarketing", label: "X Marketing Hub", icon: Megaphone },
+  { id: "affiliate", label: "Affiliate Shop", icon: ShoppingBag },
   { id: "weeklydrops", label: "Weekly Drops", icon: CalendarClock },
   { id: "users", label: "User Management", icon: Users },
   { id: "waitlist", label: "Waitlist", icon: ScrollText },
@@ -962,6 +966,7 @@ function AdminShell() {
             </div>
           )}
           {section === "xmarketing" && <XMarketingHub />}
+          {section === "affiliate" && <AdminAffiliateShopPanel />}
           {section === "weeklydrops" && (
             <WeeklyDropsSection
               rows={weeklyDrops}

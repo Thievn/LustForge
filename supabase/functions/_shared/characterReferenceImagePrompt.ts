@@ -1,5 +1,11 @@
 /** Deno copy — keep in sync with `src/lib/characterReferenceImagePrompt.ts`. */
 
+import {
+  buildMomentsArtStylePromptPrefix,
+  resolveImagineQualityPositiveLine,
+  stylizedAntiPhotorealNegativeTail,
+} from "./momentsArtStylePolicy.ts";
+
 export const IMAGINE_QUALITY_POSITIVE_LINE =
   "masterpiece, best quality, ultra detailed, sharp focus, beautiful cinematic lighting, highly detailed skin texture, 8k";
 
@@ -16,9 +22,18 @@ export const CHARACTER_REFERENCE_INTRO_LINES = [
 export function enrichImaginePromptUniversal(o: {
   corePrompt: string;
   characterReference?: string | null;
-  /** Gallery menu stills: always prepend compact ref at the very top (clamp may drop body duplicates). */
   forceRefPrepend?: boolean;
+  artStyleLabel?: string | null;
+  menuGalleryStill?: boolean;
+  characterData?: Record<string, unknown> | null;
+  tier?: "full" | "preview";
 }): string {
+  const artLabel = (o.artStyleLabel ?? "").trim() || "Photorealistic";
+  const tier = o.tier ?? "full";
+  const artPrefix =
+    o.menuGalleryStill && o.characterData
+      ? buildMomentsArtStylePromptPrefix(o.characterData, tier)
+      : "";
   const refFull = o.characterReference?.replace(/\s+/g, " ").trim() ?? "";
   const ref = o.forceRefPrepend && refFull.length > 1500
     ? `${refFull.slice(0, 1500).trimEnd()}…`
@@ -32,14 +47,15 @@ export function enrichImaginePromptUniversal(o: {
       /\bMAIN PORTRAIT CONSISTENCY\b/i.test(body));
   const hasQualityStem =
     /\b8k\b/i.test(body) && /\bmasterpiece\b/i.test(body) && /\bultra\s+detailed\b/i.test(body);
-  const head = hasQualityStem ? "" : `${IMAGINE_QUALITY_POSITIVE_LINE}.\n\n`;
+  const qualityLine = resolveImagineQualityPositiveLine(artLabel);
+  const head = hasQualityStem ? "" : `${qualityLine}.\n\n`;
   const lock =
     ref && !skipDuplicateRefLock
       ? `${CHARACTER_REFERENCE_INTRO_LINES}
 
 ${ref}
 
-Keep the exact same face, hair, eyes, body type, skin tone, distinctive marks, and rendering style as that portrait and reference text.
+Keep the exact same face, hair, eyes, body type, skin tone, distinctive marks, and **${artLabel}** rendering style as that portrait and reference text.
 
 Now generate this new scene:
 
@@ -48,6 +64,8 @@ Now generate this new scene:
   const hasNeg =
     /\bnegative\s+prompt\b/i.test(body) ||
     (/\bmissing\s+limbs\b/i.test(body) && /\bwatermark\b/i.test(body));
-  const tail = hasNeg ? "" : `\n\nNegative prompt (avoid): ${IMAGINE_QUALITY_NEGATIVE_LINE}`;
-  return `${head}${lock}${body}${tail}`.trim();
+  const artifactNeg = hasNeg ? "" : `\n\nNegative prompt (avoid): ${IMAGINE_QUALITY_NEGATIVE_LINE}`;
+  const mediumNeg = stylizedAntiPhotorealNegativeTail(artLabel);
+  const prefix = artPrefix ? `${artPrefix}\n\n` : "";
+  return `${prefix}${head}${lock}${body}${artifactNeg}${mediumNeg}`.trim();
 }
