@@ -94,6 +94,9 @@
   .animate-rarity-neon-inner-breathe {
     animation: rarity-neon-inner-breathe 4s ease-in-out infinite alternate;
   }
+  .animate-toys-cta-glow {
+    animation: toys-cta-glow 3.2s ease-in-out infinite;
+  }
   .glow-pink {
     box-shadow: 0 0 15px hsl(330 100% 58% / 0.4), 0 0 45px hsl(330 100% 58% / 0.15);
   }
@@ -131,6 +134,9 @@
   .animate-rarity-neon-inner-breathe {
     animation: none;
   }
+  .animate-toys-cta-glow {
+    animation: none;
+  }
 }
 
 @keyframes abyssal-pulse {
@@ -142,6 +148,24 @@
   50% {
     filter: brightness(1.12) drop-shadow(0 0 22px rgba(255, 45, 123, 0.95)) drop-shadow(0 0 52px rgba(168, 85, 247, 0.55))
       drop-shadow(0 0 40px rgba(0, 255, 212, 0.28));
+  }
+}
+
+@keyframes toys-cta-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 14px rgba(255, 45, 123, 0.22),
+      0 0 32px rgba(255, 45, 123, 0.1),
+      0 0 48px rgba(168, 85, 247, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 22px rgba(255, 45, 123, 0.38),
+      0 0 44px rgba(255, 45, 123, 0.16),
+      0 0 56px rgba(168, 85, 247, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14);
   }
 }
 

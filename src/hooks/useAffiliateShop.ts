@@ -1,9 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import type {
+  AffiliateImageAspect,
+  AffiliateImageFit,
+  AffiliateMediaType,
+} from "@/lib/affiliateProductMedia";
 
 export type AffiliateShopSettings = Database["public"]["Tables"]["affiliate_shop_settings"]["Row"];
 export type AffiliateShopProduct = Database["public"]["Tables"]["affiliate_shop_products"]["Row"];
+
+export type { AffiliateImageAspect, AffiliateImageFit, AffiliateMediaType };
 
 export const DEFAULT_AFFILIATE_SHOP_SETTINGS: Pick<
   AffiliateShopSettings,

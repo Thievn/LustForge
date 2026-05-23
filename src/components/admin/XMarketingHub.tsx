@@ -46,6 +46,7 @@ import { resolveChatArtStyleLabel } from "@/lib/chatArtStyle";
 import { appendXProfileLinkToTweet } from "@/lib/xMarketingProfileTweetAppend";
 import { isPlatformAdmin } from "@/config/auth";
 import { MarketingHubTabStrip, MarketingHubZernioPanels } from "@/components/admin/xmarketing/MarketingHubZernio";
+import { LovensePromoPanel } from "@/components/admin/xmarketing/LovensePromoPanel";
 import { MarketingTweetPreview } from "@/components/admin/xmarketing/MarketingTweetPreview";
 import { XMarketingHeroCard } from "@/components/admin/xmarketing/XMarketingHeroCard";
 import {
@@ -121,6 +122,7 @@ const QUICK_ACTIONS: { id: string; label: string; kind: string }[] = [
   { id: "q4", label: "Tease post (safe)", kind: "sexual_tease" },
   { id: "q5", label: "Community / replies", kind: "community" },
   { id: "q6", label: "Rarity / TCG flex", kind: "rarity_drop" },
+  { id: "q7", label: "Lovense shop", kind: "lovense_shop" },
 ];
 
 /** Grok: preferred post shape (in addition to tone). */
@@ -1109,7 +1111,7 @@ export default function XMarketingHub() {
             <MarketingHubTabStrip hubTab={hubTab} onHubTab={setHubTab} />
           </div>
 
-          {hubTab !== "compose" ? (
+          {hubTab !== "compose" && hubTab !== "lovense" ? (
             <MarketingHubZernioPanels
               hubTab={hubTab}
               onHubTab={setHubTab}
@@ -1120,6 +1122,10 @@ export default function XMarketingHub() {
               onComposePickVarChange={setComposePickVar}
               mediaUrlsForZernio={mediaUrlsForZernio}
             />
+          ) : null}
+
+          {hubTab === "lovense" ? (
+            <LovensePromoPanel roster={roster} rosterLoading={rosterLoading} siteOrigin={siteOrigin} />
           ) : null}
 
           {hubTab === "compose" ? (

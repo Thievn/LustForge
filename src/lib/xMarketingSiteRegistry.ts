@@ -34,9 +34,21 @@ export const SITE_MARKETING_SURFACES: MarketableSiteSurface[] = [
     ],
   },
   {
+    id: "lovense-shop",
+    label: "Lovense Shop",
+    pitch: "Shop syncable Lovense toys on LustForge — /toys affiliate page, app-controlled hardware paired with chat.",
+    path: "/toys",
+    category: "commerce",
+    angles: [
+      { id: "lv4", label: "Shop syncable toys", prompt: "Drive to /toys — premium hardware that syncs with AI companions in chat." },
+      { id: "lv5", label: "Prepare for launch", prompt: "Pre-launch FOMO: get toys ready before LustForge opens — tasteful urgency." },
+      { id: "lv6", label: "Companion + toy combo", prompt: "Pair a companion persona with Lovense hardware — framed promo, sync fantasy." },
+    ],
+  },
+  {
     id: "lovense",
     label: "Lovense integration",
-    pitch: "Pair real toys — chat chrome, Lovense hub, vibration patterns tied to companions and rarity.",
+    pitch: "Pair real toys in chat — Lovense hub, vibration patterns tied to companions and rarity.",
     path: "/dashboard?nav=toy",
     category: "product",
     angles: [

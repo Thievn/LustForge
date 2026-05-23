@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Flame, Shield, LogOut, UserRound, Menu, Sparkles } from "lucide-react";
+import { Flame, Shield, LogOut, UserRound, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { isPlatformAdmin } from "@/config/auth";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
@@ -51,9 +52,6 @@ const Navbar = () => {
   const sheetLinkClass =
     "flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06] active:bg-white/[0.08] touch-manipulation";
 
-  const toysLinkClass =
-    "hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-[#FF2D7B]/30 bg-[#FF2D7B]/[0.06] px-2.5 py-1.5 text-[11px] font-medium text-[#FF2D7B] hover:bg-[#FF2D7B]/12 hover:border-[#FF2D7B]/50 transition-all shadow-[0_0_14px_rgba(255,45,123,0.1)] hover:shadow-[0_0_20px_rgba(255,45,123,0.22)] min-h-9 touch-manipulation";
-
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 bg-[#050508]/94 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
@@ -69,11 +67,7 @@ const Navbar = () => {
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm shrink-0">
-          <Link to="/toys" className={toysLinkClass}>
-            <Sparkles className="h-3 w-3 shrink-0 opacity-90" />
-            <span className="hidden md:inline">Enhance Your Companion</span>
-            <span className="md:hidden">Shop Toys</span>
-          </Link>
+          <ShopSyncableToysButton />
           {user ? (
             <>
               <div className="hidden md:flex items-center gap-4">
@@ -127,14 +121,7 @@ const Navbar = () => {
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                   <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-                    <Link
-                      to="/toys"
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(sheetLinkClass, "text-[#FF2D7B] border border-[#FF2D7B]/25 bg-[#FF2D7B]/[0.06]")}
-                    >
-                      <Sparkles className="h-4 w-4 shrink-0" />
-                      Enhance Your Companion
-                    </Link>
+                    <ShopSyncableToysButton variant="menu" onClick={() => setMobileOpen(false)} />
                     <Link
                       to="/dashboard"
                       onClick={() => setMobileOpen(false)}
@@ -223,14 +210,7 @@ const Navbar = () => {
                 >
                   <SheetTitle className="sr-only">Menu</SheetTitle>
                   <div className="flex flex-1 flex-col gap-1 p-3">
-                    <Link
-                      to="/toys"
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(sheetLinkClass, "text-[#FF2D7B] border border-[#FF2D7B]/25 bg-[#FF2D7B]/[0.06]")}
-                    >
-                      <Sparkles className="h-4 w-4 shrink-0" />
-                      Enhance Your Companion
-                    </Link>
+                    <ShopSyncableToysButton variant="menu" onClick={() => setMobileOpen(false)} />
                     <Link to="/" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
                       Home
                     </Link>

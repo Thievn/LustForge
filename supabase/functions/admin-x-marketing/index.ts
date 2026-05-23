@@ -126,7 +126,62 @@ const QUICK_GUIDE: Record<string, string> = {
   sexual_tease: "Flirty tease that stays platform-safe: implication, tension, no graphic explicit acts.",
   community: "Invite replies, polls, or 'who would you pick' engagement — inclusive horny-adjacent tone.",
   rarity_drop: "Tease rarity tiers / Abyssal or epic drops — collector / TCG energy.",
+  lovense_shop: "Promote LustForge /toys affiliate shop — syncable Lovense hardware paired with AI chat.",
 };
+
+const LOVENSE_TEMPLATE_GUIDE: Record<string, string> = {
+  sync_focus:
+    "Emphasize real-time chat sync: pair Lovense through the app, link in LustForge chat, companion responds with vibration patterns matched to the moment. Premium, not gimmicky.",
+  fomo:
+    "Pre-launch urgency: get syncable toys ready before LustForge opens fully. Scarcity energy without inventing fake dates or countdowns.",
+  product_spotlight:
+    "Hero the named product — features, app control, discreet luxury. Classic product promo with shop CTA to /toys.",
+};
+
+function buildLovenseHashtagPool(args: {
+  campaignTemplate: string;
+  productName: string;
+  postFormat: string;
+}): string[] {
+  const out: string[] = [];
+  const add = (raw: string) => uniquePush(out, raw);
+  add("LustForge");
+  add("Lovense");
+  add("GrokAI");
+  add("SyncToys");
+  add("SmartToys");
+  add("18Plus");
+  const tpl = args.campaignTemplate.toLowerCase();
+  if (tpl === "sync_focus") add("AppControlled");
+  if (tpl === "fomo") add("ComingSoon");
+  if (tpl === "product_spotlight") add(titleToTag(args.productName));
+  if (args.postFormat === "companion_combo") add("AICompanion");
+  return out;
+}
+
+function enforceLovenseHashtags(args: {
+  variations: { text: string; hashtags: string[] }[];
+  campaignTemplate: string;
+  productName: string;
+  postFormat: string;
+}): { text: string; hashtags: string[] }[] {
+  const pool = buildLovenseHashtagPool(args);
+  return args.variations.map((v, idx) => {
+    const mergedRelated = rotatePick(pool, 3, idx * 2);
+    const finalTags: string[] = [];
+    uniquePush(finalTags, "Lovense");
+    uniquePush(finalTags, "GrokAI");
+    uniquePush(finalTags, "LustForge");
+    for (const t of mergedRelated) uniquePush(finalTags, t);
+    if (finalTags.length < 5) {
+      for (const t of v.hashtags) {
+        uniquePush(finalTags, t);
+        if (finalTags.length >= 5) break;
+      }
+    }
+    return { text: v.text, hashtags: finalTags.slice(0, 5) };
+  });
+}
 
 type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
 
@@ -194,6 +249,7 @@ function buildRelatedHashtagPool(args: {
   if (quick === "rarity_drop") add("AIDrop");
   if (quick === "promote_new") add("NewDrop");
   if (quick === "community") add("AICommunity");
+  if (quick === "lovense_shop") add("SyncToys");
 
   if (companion) {
     const rarity = typeof companion.rarity === "string" ? companion.rarity : "";
@@ -430,6 +486,108 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ reply: reply.trim() }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (mode === "generate_lovense") {
+      const tone = typeof body.tone === "string" ? body.tone : "Elegant";
+      const tweetStyle = typeof body.tweetStyle === "string" ? body.tweetStyle.trim().slice(0, 160) : "";
+      const customPrompt = typeof body.customPrompt === "string" ? body.customPrompt.trim() : "";
+      const campaignTemplate =
+        typeof body.campaignTemplate === "string" ? body.campaignTemplate.trim() : "sync_focus";
+      const postFormat = typeof body.postFormat === "string" ? body.postFormat.trim() : "product_only";
+      const shopUrl = typeof body.shopUrl === "string" ? body.shopUrl.trim() : "";
+      const heroTitle = typeof body.heroTitle === "string" ? body.heroTitle.trim() : "Enhance Your Companion";
+      const heroSubtitle = typeof body.heroSubtitle === "string" ? body.heroSubtitle.trim() : "";
+      const syncBody = typeof body.syncSectionBody === "string" ? body.syncSectionBody.trim() : "";
+      const product = body.product && typeof body.product === "object" ? body.product as Record<string, unknown> : null;
+      const companion =
+        body.companion && typeof body.companion === "object" ? body.companion as Record<string, unknown> : null;
+
+      const productName = product && typeof product.name === "string" ? product.name : "Syncable toy";
+      const productDesc = product && typeof product.description === "string" ? product.description : "";
+      const productBadge = product && typeof product.badge === "string" ? product.badge : "";
+      const companionName = companion && typeof companion.name === "string" ? companion.name : "";
+      const companionTagline = companion && typeof companion.tagline === "string" ? companion.tagline : "";
+
+      const templateLine =
+        LOVENSE_TEMPLATE_GUIDE[campaignTemplate] ?? LOVENSE_TEMPLATE_GUIDE.sync_focus;
+      const formatLine =
+        postFormat === "companion_combo" && companionName
+          ? `Post format: companion + toy combo. Weave ${companionName} (${companionTagline || "AI companion"}) pairing with Lovense hardware in chat — tasteful, premium.`
+          : "Post format: product-focused Lovense shop promo for LustForge /toys.";
+
+      const system =
+        `You are the lead social strategist for LustForge AI promoting the Lovense affiliate shop (/toys). ` +
+        `Return ONLY valid JSON (no markdown fences):\n` +
+        `{"variations":[{"text":"tweet body WITHOUT hashtags, max 220 chars","hashtags":["TagOne"]}]}\n` +
+        `Rules: exactly 3 objects in "variations". Each text ≤ 220 chars. Platform-safe adult brand voice — no explicit acts, no minors. ` +
+        `Tone: ${tone}. Do NOT paste the shop URL inside "text" — operator appends it separately.`;
+
+      const userBlock =
+        `Campaign template: ${campaignTemplate}\n${templateLine}\n\n` +
+        `${formatLine}\n\n` +
+        `Shop page: ${heroTitle}\n${heroSubtitle ? `Subtitle: ${heroSubtitle}\n` : ""}` +
+        `${syncBody ? `Sync explainer: ${syncBody.slice(0, 400)}\n` : ""}` +
+        `Featured product: ${productName}\n${productDesc ? `Description: ${productDesc.slice(0, 280)}\n` : ""}` +
+        `${productBadge ? `Badge: ${productBadge}\n` : ""}` +
+        `${shopUrl ? `Shop URL (for operator, do not duplicate in text): ${shopUrl}\n` : ""}` +
+        (tweetStyle ? `Post shape: ${tweetStyle}\n` : "") +
+        (customPrompt ? `Operator notes: ${customPrompt}\n` : "") +
+        `\nWrite 3 distinct angles (sync hook, urgency/FOMO, product hero). Premium cyber-goth luxury energy.`;
+
+      const genRes = await grokChatCompletionRaw({
+        model: defaultGrokEdgeChatModel(getEnv),
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: userBlock },
+        ],
+        temperature: 0.88,
+        max_tokens: 1536,
+      });
+
+      if (!genRes.ok || genRes.json === null) {
+        console.error("admin-x-marketing generate_lovense:", genRes.rawText);
+        return new Response(JSON.stringify({ error: "AI service error" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const content = extractGrokAssistantText(genRes.json);
+      if (!content || typeof content !== "string") {
+        return new Response(JSON.stringify({ error: "Empty AI response" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let variations: { text: string; hashtags: string[] }[];
+      try {
+        variations = parseJsonFromModel(content).variations;
+      } catch {
+        return new Response(JSON.stringify({ error: "Could not parse AI JSON. Try again." }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (variations.length < 1) {
+        return new Response(JSON.stringify({ error: "No variations returned" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const normalized = enforceLovenseHashtags({
+        variations: variations.slice(0, 3),
+        campaignTemplate,
+        productName,
+        postFormat,
+      });
+
+      return new Response(JSON.stringify({ variations: normalized }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

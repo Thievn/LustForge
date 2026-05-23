@@ -77,8 +77,12 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_aspect: string
+          image_fit: string
           image_url: string | null
           is_active: boolean
+          media_html: string | null
+          media_type: string
           name: string
           sort_order: number
           updated_at: string
@@ -89,8 +93,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_aspect?: string
+          image_fit?: string
           image_url?: string | null
           is_active?: boolean
+          media_html?: string | null
+          media_type?: string
           name: string
           sort_order?: number
           updated_at?: string
@@ -101,8 +109,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_aspect?: string
+          image_fit?: string
           image_url?: string | null
           is_active?: boolean
+          media_html?: string | null
+          media_type?: string
           name?: string
           sort_order?: number
           updated_at?: string

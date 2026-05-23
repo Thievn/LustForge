@@ -17,11 +17,22 @@ import {
   DEFAULT_AFFILIATE_SHOP_SETTINGS,
   uploadAffiliateProductImage,
   useAffiliateShop,
+  type AffiliateImageAspect,
+  type AffiliateImageFit,
+  type AffiliateMediaType,
   type AffiliateShopProduct,
 } from "@/hooks/useAffiliateShop";
+import { AffiliateProductMedia } from "@/components/affiliate/AffiliateProductMedia";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const NEON = "#FF2D7B";
@@ -35,6 +46,10 @@ type ProductDraft = {
   affiliate_url: string;
   badge: string;
   is_active: boolean;
+  image_fit: AffiliateImageFit;
+  image_aspect: AffiliateImageAspect;
+  media_type: AffiliateMediaType;
+  media_html: string;
   isNew?: boolean;
 };
 
@@ -48,6 +63,13 @@ function toDraft(row: AffiliateShopProduct): ProductDraft {
     affiliate_url: row.affiliate_url,
     badge: row.badge ?? "",
     is_active: row.is_active,
+    image_fit: row.image_fit === "cover" ? "cover" : "contain",
+    image_aspect:
+      row.image_aspect === "portrait" || row.image_aspect === "landscape" || row.image_aspect === "square"
+        ? row.image_aspect
+        : "auto",
+    media_type: row.media_type === "html" ? "html" : "image",
+    media_html: row.media_html ?? "",
   };
 }
 
@@ -61,7 +83,28 @@ function emptyDraft(sortOrder: number): ProductDraft {
     affiliate_url: "#",
     badge: "",
     is_active: true,
+    image_fit: "contain",
+    image_aspect: "auto",
+    media_type: "image",
+    media_html: "",
     isNew: true,
+  };
+}
+
+function productPayloadFromDraft(draft: ProductDraft) {
+  return {
+    sort_order: draft.sort_order,
+    name: draft.name.trim(),
+    description: draft.description.trim() || null,
+    image_url: draft.image_url.trim() || null,
+    affiliate_url: draft.affiliate_url.trim() || "#",
+    badge: draft.badge.trim() || null,
+    is_active: draft.is_active,
+    image_fit: draft.image_fit,
+    image_aspect: draft.image_aspect,
+    media_type: draft.media_type,
+    media_html: draft.media_type === "html" ? draft.media_html.trim() || null : null,
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -133,16 +176,7 @@ export default function AdminAffiliateShopPanel() {
     }
     setSavingId(draft.id);
     try {
-      const payload = {
-        sort_order: draft.sort_order,
-        name: draft.name.trim(),
-        description: draft.description.trim() || null,
-        image_url: draft.image_url.trim() || null,
-        affiliate_url: draft.affiliate_url.trim() || "#",
-        badge: draft.badge.trim() || null,
-        is_active: draft.is_active,
-        updated_at: new Date().toISOString(),
-      };
+      const payload = productPayloadFromDraft(draft);
 
       if (draft.isNew) {
         const { data, error } = await supabase
@@ -210,14 +244,9 @@ export default function AdminAffiliateShopPanel() {
         const { data, error } = await supabase
           .from("affiliate_shop_products")
           .insert({
+            ...productPayloadFromDraft(draft),
             id: draft.id,
-            sort_order: draft.sort_order,
-            name: draft.name.trim(),
-            description: draft.description.trim() || null,
-            image_url: null,
-            affiliate_url: draft.affiliate_url.trim() || "#",
-            badge: draft.badge.trim() || null,
-            is_active: draft.is_active,
+            updated_at: new Date().toISOString(),
           })
           .select("*")
           .single();
@@ -331,44 +360,55 @@ export default function AdminAffiliateShopPanel() {
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row">
-                  <div className="shrink-0">
-                    <div className="relative h-28 w-28 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
-                      {draft.image_url ? (
-                        <img src={draft.image_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                          No image
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        disabled={uploadingId === draft.id}
-                        onClick={() => fileInputRefs.current[draft.id]?.click()}
-                        className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/70 py-1.5 text-[10px] font-medium text-white hover:bg-black/85"
-                      >
-                        {uploadingId === draft.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <>
-                            <ImagePlus className="h-3 w-3" />
-                            Upload
-                          </>
-                        )}
-                      </button>
-                      <input
-                        ref={(el) => {
-                          fileInputRefs.current[draft.id] = el;
-                        }}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) void handleImageUpload(draft, file);
-                          e.target.value = "";
-                        }}
+                  <div className="shrink-0 space-y-3 w-full max-w-[220px]">
+                    <div className="overflow-hidden rounded-xl border border-white/10">
+                      <AffiliateProductMedia
+                        name={draft.name}
+                        imageUrl={draft.image_url}
+                        badge={draft.badge}
+                        imageFit={draft.image_fit}
+                        imageAspect={draft.image_aspect}
+                        mediaType={draft.media_type}
+                        mediaHtml={draft.media_html}
                       />
                     </div>
+                    {draft.media_type === "image" ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={uploadingId === draft.id}
+                          onClick={() => fileInputRefs.current[draft.id]?.click()}
+                          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/35 bg-primary/5 py-2 text-xs font-medium text-primary hover:bg-primary/10"
+                        >
+                          {uploadingId === draft.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <ImagePlus className="h-3.5 w-3.5" />
+                              Upload image
+                            </>
+                          )}
+                        </button>
+                        <input
+                          ref={(el) => {
+                            fileInputRefs.current[draft.id] = el;
+                          }}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) void handleImageUpload(draft, file);
+                            e.target.value = "";
+                          }}
+                        />
+                        <p className="text-[10px] leading-relaxed text-muted-foreground">
+                          <strong className="text-foreground/70">Tip:</strong> Lovense banners are often tall (e.g.
+                          280×800). Use <strong className="text-foreground/70">Auto</strong> aspect +{" "}
+                          <strong className="text-foreground/70">Contain</strong> fit — the card shows the full image.
+                        </p>
+                      </>
+                    ) : null}
                   </div>
 
                   <div className="grid flex-1 gap-3 sm:grid-cols-2">
@@ -396,6 +436,70 @@ export default function AdminAffiliateShopPanel() {
                         placeholder="https://www.lovense.com/r/XXXXXX"
                       />
                     </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">Media type</label>
+                      <Select
+                        value={draft.media_type}
+                        onValueChange={(v) => updateDraft(draft.id, { media_type: v as AffiliateMediaType })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="image">Image</SelectItem>
+                          <SelectItem value="html">Custom HTML</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">Image fit</label>
+                      <Select
+                        value={draft.image_fit}
+                        onValueChange={(v) => updateDraft(draft.id, { image_fit: v as AffiliateImageFit })}
+                        disabled={draft.media_type === "html"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="contain">Contain (show all)</SelectItem>
+                          <SelectItem value="cover">Cover (crop to fill)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-muted-foreground">Aspect preset</label>
+                      <Select
+                        value={draft.image_aspect}
+                        onValueChange={(v) => updateDraft(draft.id, { image_aspect: v as AffiliateImageAspect })}
+                        disabled={draft.media_type === "html"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">Auto</SelectItem>
+                          <SelectItem value="portrait">Portrait (3:4)</SelectItem>
+                          <SelectItem value="landscape">Landscape (4:3)</SelectItem>
+                          <SelectItem value="square">Square (1:1)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {draft.media_type === "html" ? (
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block text-xs text-muted-foreground">Custom HTML</label>
+                        <Textarea
+                          value={draft.media_html}
+                          onChange={(e) => updateDraft(draft.id, { media_html: e.target.value })}
+                          rows={4}
+                          placeholder='<img src="https://..." alt="Product" />'
+                          className="font-mono text-xs"
+                        />
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          For advanced embeds. Scripts are stripped for safety. HTTPS URLs only.
+                        </p>
+                      </div>
+                    ) : null}
                     <div>
                       <label className="mb-1 block text-xs text-muted-foreground">Sort order</label>
                       <Input

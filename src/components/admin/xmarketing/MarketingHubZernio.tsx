@@ -14,6 +14,7 @@ const NEON = "#FF2D7B";
 
 const TABS: { id: ZernioHubTab; label: string }[] = [
   { id: "compose", label: "Compose" },
+  { id: "lovense", label: "Lovense Promo" },
   { id: "integrations", label: "Zernio" },
   { id: "queue", label: "Queue" },
 ];

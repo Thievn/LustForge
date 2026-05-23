@@ -7,10 +7,10 @@ import {
   useAffiliateShop,
   type AffiliateShopProduct,
 } from "@/hooks/useAffiliateShop";
+import { AffiliateProductMedia } from "@/components/affiliate/AffiliateProductMedia";
 import { cn } from "@/lib/utils";
 
 function ProductCard({ product }: { product: AffiliateShopProduct }) {
-  const initial = product.name.trim().charAt(0).toUpperCase() || "?";
   const shopHref = product.affiliate_url?.trim() || "#";
   const isExternal = shopHref.startsWith("http");
 
@@ -22,30 +22,16 @@ function ProductCard({ product }: { product: AffiliateShopProduct }) {
         "transition-all duration-300 hover:border-[#FF2D7B]/35 hover:shadow-[0_0_32px_rgba(255,45,123,0.12)]",
       )}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-[#0a0a10]">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            loading="lazy"
-          />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center"
-            style={{
-              background: "linear-gradient(145deg, hsl(280 45% 18%), hsl(330 70% 22%))",
-            }}
-          >
-            <span className="font-gothic text-5xl text-white/25">{initial}</span>
-          </div>
-        )}
-        {product.badge ? (
-          <span className="absolute left-3 top-3 rounded-full border border-[#FF2D7B]/40 bg-[#050508]/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#FF2D7B] backdrop-blur-sm">
-            {product.badge}
-          </span>
-        ) : null}
-      </div>
+      <AffiliateProductMedia
+        name={product.name}
+        imageUrl={product.image_url}
+        badge={product.badge}
+        imageFit={product.image_fit}
+        imageAspect={product.image_aspect}
+        mediaType={product.media_type}
+        mediaHtml={product.media_html}
+        interactive
+      />
 
       <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
         <h3 className="font-gothic text-lg text-foreground/95">{product.name}</h3>
