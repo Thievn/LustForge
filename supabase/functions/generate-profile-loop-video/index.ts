@@ -17,13 +17,12 @@ import {
   startGrokImagineImageToVideo,
 } from "../_shared/xaiGrokVideo.ts";
 import {
+  assembleSanitizedProfileLoopVideoPrompt,
   buildMinimalProfilePageLoopVideoPrompt,
-  buildProfilePageLoopVideoPrompt,
-  sanitizePromptForVideoApi,
+  buildUltraSafeProfileLoopRetryPrompt,
 } from "../_shared/profileLoopVideoPrompt.ts";
 import {
   profilePageLoopMotionNotesViolatePolicy,
-  profileLoopMotionNotesNeedGrokRewrite,
   sanitizeProfileLoopUserMotionNotes,
 } from "../_shared/profileLoopMotionPolicy.ts";
 import { sanitizeForGrokImagine } from "../_shared/sanitizeForGrokImagine.ts";
@@ -43,6 +42,8 @@ const corsHeaders = {
 const PAID_LOOP_FC = 75;
 /** Reuse in-flight xAI jobs instead of starting duplicates on retry. */
 const IN_FLIGHT_JOB_MS = 45 * 60_000;
+
+type ProfileLoopJobRow = Record<string, unknown>;
 
 function jsonResponse(obj: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -67,17 +68,15 @@ async function resolveProfileLoopMotionNotes(
   }
   let notes = sanitizeProfileLoopUserMotionNotes(motionNotesRaw).trim().slice(0, 800);
   if (!notes) return "";
-  if (profileLoopMotionNotesNeedGrokRewrite(motionNotesRaw)) {
-    try {
-      notes = await sanitizeForGrokImagine({
-        userInput: notes,
-        companionDescription,
-        mode: "motion_notes_only",
-      });
-      notes = notes.trim().slice(0, 800);
-    } catch (e) {
-      console.warn("resolveProfileLoopMotionNotes rewrite:", e);
-    }
+  try {
+    notes = await sanitizeForGrokImagine({
+      userInput: notes,
+      companionDescription,
+      mode: "motion_notes_only",
+    });
+    notes = sanitizeProfileLoopUserMotionNotes(notes).trim().slice(0, 800);
+  } catch (e) {
+    console.warn("resolveProfileLoopMotionNotes rewrite:", e);
   }
   return notes;
 }
@@ -86,24 +85,28 @@ async function resolveProfileLoopVideoPrompt(
   row: Record<string, unknown>,
   motionNotes: string,
 ): Promise<string> {
+  const name =
+    typeof row.name === "string" && row.name.trim() ? row.name.trim().slice(0, 80) : "Character";
+  const tagline =
+    typeof row.tagline === "string" && row.tagline.trim() ? row.tagline.trim().slice(0, 140) : "";
   const companionDescription = buildCompanionDescriptionForSanitize(row, { motionNotes });
-  const draft = buildProfilePageLoopVideoPrompt(row, motionNotes);
-  const combined = sanitizePromptForVideoApi(draft);
-  const MAX_VIDEO_PROMPT = 3000;
-  const rawPrompt =
-    combined.length <= MAX_VIDEO_PROMPT
-      ? combined
-      : sanitizePromptForVideoApi(buildMinimalProfilePageLoopVideoPrompt(row, motionNotes));
+
+  const motionInput = motionNotes.trim()
+    ? `Motion direction for portrait loop: ${motionNotes.trim()}`
+    : "Subtle elegant motion from the reference portrait — soft expression, hair sway, fabric drift.";
+
+  const userInputForRewrite = [name + (tagline ? ` — ${tagline}` : ""), motionInput].join("\n");
 
   try {
-    return await sanitizeForGrokImagine({
-      userInput: rawPrompt,
+    const rewritten = await sanitizeForGrokImagine({
+      userInput: userInputForRewrite,
       companionDescription,
       mode: "profile_loop",
     });
+    return assembleSanitizedProfileLoopVideoPrompt(rewritten, row);
   } catch (e) {
     console.warn("resolveProfileLoopVideoPrompt sanitizer fallback:", e);
-    return rawPrompt;
+    return buildMinimalProfilePageLoopVideoPrompt(row, motionNotes);
   }
 }
 
@@ -118,6 +121,66 @@ function profileLoopGrokPollFailReason(
     return grokModerationUserMessage();
   }
   return `Grok video failed: ${raw}`;
+}
+
+async function tryProfileLoopModerationRetry(args: {
+  svc: ReturnType<typeof createClient>;
+  job: ProfileLoopJobRow;
+  xaiKey: string;
+}): Promise<boolean> {
+  const { svc, job, xaiKey } = args;
+  const jobId = String(job.id ?? "");
+  if (!jobId) return false;
+
+  const ctx = (job.context && typeof job.context === "object" ? job.context : {}) as Record<string, unknown>;
+  if (ctx.moderationRetried === true) return false;
+
+  const sourceImageUrl = typeof ctx.sourceImageUrl === "string" ? ctx.sourceImageUrl.trim() : "";
+  if (!sourceImageUrl) return false;
+
+  const table =
+    ctx.table === "custom_characters" ? "custom_characters" : ctx.table === "companions" ? "companions" : null;
+  const rowPk = String(ctx.rowPk ?? "").trim();
+  let row: Record<string, unknown> = { name: "Character" };
+  if (table && rowPk) {
+    const { data } = await svc.from(table).select("name, tagline").eq("id", rowPk).maybeSingle();
+    if (data && typeof data === "object") row = data as Record<string, unknown>;
+  }
+
+  const durationSec =
+    typeof ctx.durationSeconds === "number" && Number.isFinite(ctx.durationSeconds)
+      ? Math.max(5, Math.min(15, Math.round(ctx.durationSeconds)))
+      : profileVideoDurationSeconds();
+  const videoModel = (Deno.env.get("GROK_VIDEO_MODEL") ?? DEFAULT_GROK_VIDEO_MODEL).trim() ||
+    DEFAULT_GROK_VIDEO_MODEL;
+  const prompt = buildUltraSafeProfileLoopRetryPrompt(row);
+
+  try {
+    const { requestId } = await startGrokImagineImageToVideo({
+      apiKey: xaiKey,
+      prompt,
+      sourceImageUrl,
+      durationSeconds: durationSec,
+      aspectRatio: "2:3",
+      resolution: "480p",
+      model: videoModel,
+    });
+    await svc
+      .from("profile_loop_video_jobs")
+      .update({
+        xai_request_id: requestId,
+        status: "pending",
+        error_message: null,
+        context: { ...ctx, moderationRetried: true, retryPrompt: "ultra_safe" },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", jobId);
+    console.info("profile loop moderation retry started", { jobId, requestId });
+    return true;
+  } catch (e) {
+    console.error("profile loop moderation retry failed:", e);
+    return false;
+  }
 }
 
 async function refundProfileLoopFc(
@@ -173,8 +236,6 @@ function isLoopVideoStorageUrl(url: string): boolean {
   const u = url.trim();
   return /\.(mp4|webm|mov)(\?|$)/i.test(u) || u.includes("/profile-loops/");
 }
-
-type ProfileLoopJobRow = Record<string, unknown>;
 
 function parseJobTimestamp(iso: unknown): number {
   if (typeof iso !== "string" || !iso.trim()) return NaN;
@@ -852,6 +913,13 @@ async function reconcileStaleInFlightProfileLoopJob(args: {
   }
 
   if (pr.status === "failed" || pr.status === "expired") {
+    if (
+      pr.status === "failed" &&
+      (pr.moderated || isGrokModerationMessage(pr.message ?? ""))
+    ) {
+      const retried = await tryProfileLoopModerationRetry({ svc, job, xaiKey });
+      if (retried) return false;
+    }
     const reason = profileLoopGrokPollFailReason(pr);
     await failProfileLoopJob(svc, job, sessionUser.id, reason);
     return true;
@@ -1246,6 +1314,22 @@ async function handleProfileLoopJobPoll(args: {
   }
 
   if (pr.status === "failed" || pr.status === "expired") {
+    if (
+      pr.status === "failed" &&
+      (pr.moderated || isGrokModerationMessage(pr.message ?? ""))
+    ) {
+      const retried = await tryProfileLoopModerationRetry({ svc, job, xaiKey });
+      if (retried) {
+        return jsonResponse({
+          success: true,
+          phase: "poll",
+          jobId,
+          pollAfterMs: 5000,
+          workerPhase: "rendering",
+          message: "Retrying with a softer prompt after moderation…",
+        });
+      }
+    }
     const reason = profileLoopGrokPollFailReason(pr);
     const chargeFc = Math.max(0, Math.floor(Number(job.charge_fc ?? 0)));
     const alreadyRefunded = Boolean(job.refunded);
@@ -1864,6 +1948,7 @@ Deno.serve(async (req) => {
           sourceGenId,
           motionNotesForGallery: motionNotes,
           durationSeconds: durationSec,
+          sourceImageUrl: imageUrl,
         },
       })
       .select("id")

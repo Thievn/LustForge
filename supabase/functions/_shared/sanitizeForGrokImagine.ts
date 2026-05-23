@@ -7,7 +7,6 @@ import { resolveXaiApiKey } from "./resolveXaiApiKey.ts";
 import { defaultGrokRewriteModel, grokSingleChatAssistantText } from "./xaiGrokChatRaw.ts";
 import {
   I2V_MOUTH_STILL_DIRECTIVE_SHORT,
-  PROFILE_PAGE_LOOP_STYLE_DIRECTIVE,
 } from "./profileLoopVideoPrompt.ts";
 
 const getEnv = (name: string) => Deno.env.get(name);
@@ -40,7 +39,7 @@ const MODE_SUFFIX: Record<GrokSanitizeMode, string> = {
   nexus_portrait:
     "MODE: Nexus hybrid forge card portrait. Same SFW catalog rules as forge_portrait.",
   profile_loop:
-    `MODE: Profile looping portrait video (I2V). ${PROFILE_PAGE_LOOP_STYLE_DIRECTIVE} Vertical 2:3, ~8–10s seamless loop from reference still. ${I2V_MOUTH_STILL_DIRECTIVE_SHORT} Motion only — same person and scene as the still; no undress arcs; loop must close.`,
+    `MODE: Profile looping portrait video (I2V). Vertical 2:3, ~8–10s seamless loop from reference still. ${I2V_MOUTH_STILL_DIRECTIVE_SHORT} Motion only — same person and scene as the still; loop must close. Use positive editorial language only (lingerie, sheer layers, perfume-ad tease) — never mention forbidden anatomy or negated policy phrases.`,
   chat_clip:
     `MODE: Short in-chat companion video clip. ${I2V_MOUTH_STILL_DIRECTIVE_SHORT} Suggestive SFW motion; same identity as still.`,
   motion_notes_only:
@@ -117,7 +116,7 @@ export async function sanitizeForGrokImagine(args: SanitizeForGrokImagineArgs): 
         model,
         system,
         user: userContent,
-        temperature: mode === "motion_notes_only" ? 0.75 : 0.88,
+        temperature: mode === "motion_notes_only" ? 0.55 : mode === "profile_loop" ? 0.55 : 0.88,
         max_tokens: mode === "motion_notes_only" ? 400 : 900,
       }),
     );

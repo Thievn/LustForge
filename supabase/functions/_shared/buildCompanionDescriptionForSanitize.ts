@@ -1,21 +1,25 @@
 /**
  * Builds likeness-first companion description for sanitizeForGrokImagine().
  */
+import { sanitizeGrokImagineLexicon } from "./momentsPromptSanitize.ts";
 
 function sliceStr(v: unknown, max: number): string {
   if (typeof v !== "string") return "";
   const t = v.trim();
   if (!t) return "";
-  return t.length <= max ? t : `${t.slice(0, max).trimEnd()}…`;
+  const clipped = t.length <= max ? t : `${t.slice(0, max).trimEnd()}…`;
+  return sanitizeGrokImagineLexicon(clipped);
 }
 
 function joinList(v: unknown, maxItems: number): string {
   if (!Array.isArray(v)) return "";
-  return v
-    .map((x) => String(x).trim())
-    .filter(Boolean)
-    .slice(0, maxItems)
-    .join(", ");
+  return sanitizeGrokImagineLexicon(
+    v
+      .map((x) => String(x).trim())
+      .filter(Boolean)
+      .slice(0, maxItems)
+      .join(", "),
+  );
 }
 
 export function buildCompanionDescriptionForSanitize(
@@ -33,10 +37,12 @@ export function buildCompanionDescriptionForSanitize(
   );
   const gender = sliceStr(row.gender ?? row.subjectGender, 40);
   const traits = joinList(row.traits ?? row.vibe_traits, 8);
-  const portraitLock = (extras?.portraitLock ?? row.portrait_consistency_lock ?? row.portraitConsistencyLock ?? "")
-    .toString()
-    .trim()
-    .slice(0, 1200);
+  const portraitLock = sanitizeGrokImagineLexicon(
+    (extras?.portraitLock ?? row.portrait_consistency_lock ?? row.portraitConsistencyLock ?? "")
+      .toString()
+      .trim()
+      .slice(0, 1200),
+  );
 
   const parts = [
     `Identity: ${name}.`,
@@ -48,7 +54,9 @@ export function buildCompanionDescriptionForSanitize(
     traits ? `Vibe tags: ${traits}.` : "",
     tagline ? `Tagline mood: ${tagline}` : "",
     portraitLock ? `Portrait continuity lock: ${portraitLock}` : "",
-    extras?.motionNotes?.trim() ? `User motion request (rewrite safely): ${extras.motionNotes.trim().slice(0, 800)}` : "",
+    extras?.motionNotes?.trim()
+      ? `User motion request (rewrite safely): ${sanitizeGrokImagineLexicon(extras.motionNotes.trim().slice(0, 800))}`
+      : "",
   ].filter(Boolean);
 
   return parts.join("\n");
