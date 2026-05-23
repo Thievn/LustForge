@@ -1,76 +1,13 @@
 import { Link } from "react-router-dom";
-import { ExternalLink, Sparkles, Waves } from "lucide-react";
+import { Sparkles, Waves } from "lucide-react";
 import ParticleBackground from "@/components/ParticleBackground";
 import Navbar from "@/components/Navbar";
+import { AffiliateBrandedProductCard } from "@/components/affiliate/AffiliateBrandedProductCard";
 import {
   DEFAULT_AFFILIATE_SHOP_SETTINGS,
   useAffiliateShop,
-  type AffiliateShopProduct,
 } from "@/hooks/useAffiliateShop";
-import { AffiliateProductMedia } from "@/components/affiliate/AffiliateProductMedia";
 import { cn } from "@/lib/utils";
-
-function ProductCard({ product }: { product: AffiliateShopProduct }) {
-  const shopHref = product.affiliate_url?.trim() || "#";
-  const isExternal = shopHref.startsWith("http");
-
-  return (
-    <article
-      className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08]",
-        "bg-gradient-to-b from-white/[0.04] to-white/[0.015]",
-        "transition-all duration-300 hover:border-[#FF2D7B]/35 hover:shadow-[0_0_32px_rgba(255,45,123,0.12)]",
-      )}
-    >
-      <AffiliateProductMedia
-        name={product.name}
-        imageUrl={product.image_url}
-        badge={product.badge}
-        imageFit={product.image_fit}
-        imageAspect={product.image_aspect}
-        mediaType={product.media_type}
-        mediaHtml={product.media_html}
-        interactive
-      />
-
-      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-        <h3 className="font-gothic text-lg text-foreground/95">{product.name}</h3>
-        {product.description ? (
-          <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">{product.description}</p>
-        ) : null}
-        <div className="mt-auto pt-1">
-          {isExternal ? (
-            <a
-              href={shopHref}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              className={cn(
-                "inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white",
-                "border border-white/10 transition-all hover:scale-[1.02]",
-                "shadow-[0_0_20px_rgba(255,45,123,0.2)]",
-              )}
-              style={{
-                background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
-              }}
-            >
-              Shop Now
-              <ExternalLink className="h-3.5 w-3.5 opacity-80" />
-            </a>
-          ) : (
-            <span
-              className={cn(
-                "inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold",
-                "border border-white/10 bg-white/[0.04] text-muted-foreground",
-              )}
-            >
-              Shop Now
-            </span>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
 
 export default function Toys() {
   const { settings, products, isLoading } = useAffiliateShop(true);
@@ -141,11 +78,11 @@ export default function Toys() {
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-[340px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                    className="aspect-[16/9] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
                   />
                 ))}
               </div>
@@ -154,9 +91,9 @@ export default function Toys() {
                 <p className="text-muted-foreground">Products coming soon — check back after launch prep.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <AffiliateBrandedProductCard key={product.id} product={product} interactive />
                 ))}
               </div>
             )}

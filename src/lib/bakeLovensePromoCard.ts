@@ -1,8 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  LOVENSE_BG_END,
+  LOVENSE_BG_MID,
+  LOVENSE_BG_START,
+  LOVENSE_CARD_H,
+  LOVENSE_CARD_W,
+} from "@/lib/lovenseProductCardTheme";
 import { uploadFramedXMedia } from "@/lib/xMarketingFramedVideoBake";
 
-export const LOVENSE_PROMO_W = 1200;
-export const LOVENSE_PROMO_H = 675;
+export const LOVENSE_PROMO_W = LOVENSE_CARD_W;
+export const LOVENSE_PROMO_H = LOVENSE_CARD_H;
 
 function loadImageCors(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -57,9 +64,9 @@ export async function bakeLovensePromoCardPngBlob(args: BakeLovensePromoCardArgs
   if (!ctx) throw new Error("Canvas unsupported.");
 
   const bg = ctx.createLinearGradient(0, 0, LOVENSE_PROMO_W, LOVENSE_PROMO_H);
-  bg.addColorStop(0, "#0a0610");
-  bg.addColorStop(0.45, "#140818");
-  bg.addColorStop(1, "#0a0610");
+  bg.addColorStop(0, LOVENSE_BG_START);
+  bg.addColorStop(0.45, LOVENSE_BG_MID);
+  bg.addColorStop(1, LOVENSE_BG_END);
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, LOVENSE_PROMO_W, LOVENSE_PROMO_H);
 

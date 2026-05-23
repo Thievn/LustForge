@@ -22,7 +22,8 @@ import {
   type AffiliateMediaType,
   type AffiliateShopProduct,
 } from "@/hooks/useAffiliateShop";
-import { AffiliateProductMedia } from "@/components/affiliate/AffiliateProductMedia";
+import { AffiliateBrandedProductCard } from "@/components/affiliate/AffiliateBrandedProductCard";
+import { affiliateUrlForStorage, isValidAffiliateUrlInput, normalizeAffiliateUrl } from "@/lib/affiliateUrl";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -97,7 +98,7 @@ function productPayloadFromDraft(draft: ProductDraft) {
     name: draft.name.trim(),
     description: draft.description.trim() || null,
     image_url: draft.image_url.trim() || null,
-    affiliate_url: draft.affiliate_url.trim() || "#",
+    affiliate_url: affiliateUrlForStorage(draft.affiliate_url),
     badge: draft.badge.trim() || null,
     is_active: draft.is_active,
     image_fit: draft.image_fit,
@@ -359,21 +360,19 @@ export default function AdminAffiliateShopPanel() {
                   !draft.is_active && "opacity-70",
                 )}
               >
-                <div className="flex flex-col gap-4 lg:flex-row">
-                  <div className="shrink-0 space-y-3 w-full max-w-[220px]">
-                    <div className="overflow-hidden rounded-xl border border-white/10">
-                      <AffiliateProductMedia
-                        name={draft.name}
-                        imageUrl={draft.image_url}
-                        badge={draft.badge}
-                        imageFit={draft.image_fit}
-                        imageAspect={draft.image_aspect}
-                        mediaType={draft.media_type}
-                        mediaHtml={draft.media_html}
-                      />
-                    </div>
-                    {draft.media_type === "image" ? (
-                      <>
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Shop page preview</p>
+                    <AffiliateBrandedProductCard
+                      product={draft}
+                      shopHref={normalizeAffiliateUrl(draft.affiliate_url)}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-4 lg:flex-row">
+                  {draft.media_type === "image" ? (
+                    <div className="shrink-0 space-y-3 lg:w-48">
                         <button
                           type="button"
                           disabled={uploadingId === draft.id}
@@ -403,13 +402,11 @@ export default function AdminAffiliateShopPanel() {
                           }}
                         />
                         <p className="text-[10px] leading-relaxed text-muted-foreground">
-                          <strong className="text-foreground/70">Tip:</strong> Lovense banners are often tall (e.g.
-                          280×800). Use <strong className="text-foreground/70">Auto</strong> aspect +{" "}
-                          <strong className="text-foreground/70">Contain</strong> fit — the card shows the full image.
+                          <strong className="text-foreground/70">Tip:</strong> Use wide Lovense banners (~1200×675).
+                          The shop card displays them in a landscape panel — no cropping.
                         </p>
-                      </>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : null}
 
                   <div className="grid flex-1 gap-3 sm:grid-cols-2">
                     <div>
@@ -435,6 +432,16 @@ export default function AdminAffiliateShopPanel() {
                         onChange={(e) => updateDraft(draft.id, { affiliate_url: e.target.value })}
                         placeholder="https://www.lovense.com/r/XXXXXX"
                       />
+                      {!isValidAffiliateUrlInput(draft.affiliate_url) ? (
+                        <p className="mt-1 text-[10px] text-amber-400/90">
+                          Add a valid affiliate link (https://… or www.lovense.com/…). Shop Now stays disabled until
+                          saved with a real URL.
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          Saves as {normalizeAffiliateUrl(draft.affiliate_url)}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-muted-foreground">Media type</label>
@@ -515,6 +522,7 @@ export default function AdminAffiliateShopPanel() {
                       />
                       <span className="text-sm text-muted-foreground">Active on shop page</span>
                     </div>
+                  </div>
                   </div>
                 </div>
 
