@@ -85,6 +85,7 @@ import { forgeStashPayloadFromDbCompanion } from "@/lib/forgeHydrateFromDbCompan
 import { pickOne, pickRandom, randomTraitCount } from "@/lib/forgeRandomSeeds";
 import { fetchForgeNameExclusions, normalizeNameKey } from "@/lib/forgeNameEngine";
 import { pickGrokForgeCompanionName, pickLocalForgeCompanionName } from "@/lib/grokForgeCompanionName";
+import type { ForgeCompanionNamingContext } from "@/lib/buildForgeCompanionNamingBrief";
 import {
   DEFAULT_FORGE_PERSONALITY,
   type ForgePersonalityKey,
@@ -1245,6 +1246,33 @@ const CompanionCreator = forwardRef<CompanionCreatorHandle, CompanionCreatorProp
     return `${label} — ${forgeTabLiveSummary(activeForgeTab)}`;
   }, [activeForgeTab]);
 
+  const forgeNamingContext = useMemo(
+    (): Omit<ForgeCompanionNamingContext, "gender" | "forgePersonality"> => ({
+      activeForgeTab,
+      forgeThemeLine: forgeThemePrimaryLine,
+      artStyle,
+      sceneAtmosphere,
+      bodyType,
+      ethnicity,
+      traits,
+      namePrefix: namePrefix.trim() || undefined,
+      tagline: tagline.trim() || undefined,
+      narrativeAppearance: narrativeAppearance.trim() || undefined,
+    }),
+    [
+      activeForgeTab,
+      forgeThemePrimaryLine,
+      artStyle,
+      sceneAtmosphere,
+      bodyType,
+      ethnicity,
+      traits,
+      namePrefix,
+      tagline,
+      narrativeAppearance,
+    ],
+  );
+
   const deepRandomizeForgeFocusTab = useCallback(
     (opts: { wildChaos: boolean }) => {
       const tab = activeForgeTab;
@@ -1558,15 +1586,18 @@ User flavor notes: ${extraNotes || "none"}`;
           userId,
           gender,
           forgePersonality,
+          namingContext: forgeNamingContext,
           reservedNormalizedKeys: ex,
         });
         nameGenSessionReserved.current.add(normalizeNameKey(n));
         setName(n);
-        toast.success(
-          source === "grok"
-            ? "The forge sealed a new name — the field stays yours to edit."
-            : "A fallback name spun up — try again when the veil is clear.",
-        );
+        if (source === "grok") {
+          toast.success("The forge sealed a new name — the field stays yours to edit.");
+        } else {
+          toast.warning(
+            "Naming fell back to a local reserve — try again for a theme-forged name, or edit the field.",
+          );
+        }
       } else {
         const n = pickLocalForgeCompanionName({
           gender,
@@ -1589,7 +1620,7 @@ User flavor notes: ${extraNotes || "none"}`;
     } finally {
       setNameGenBusy(false);
     }
-  }, [userId, gender, forgePersonality, supabase]);
+  }, [userId, gender, forgePersonality, forgeNamingContext, supabase]);
 
   const randomizeForgeCharacter = async () => {
     setRouletteLoading(true);
@@ -1638,11 +1669,25 @@ User flavor notes: ${extraNotes || "none"}`;
           userId,
           gender: g,
           forgePersonality: fp,
+          namingContext: {
+            activeForgeTab,
+            forgeThemeLine: forgeThemePrimaryLine,
+            artStyle: ar,
+            sceneAtmosphere: sc,
+            bodyType: bt,
+            ethnicity: eth,
+            traits: shuffled.filter((x) => TRAIT_SET.has(x)),
+          },
           reservedNormalizedKeys: ex,
         });
         lockedName = picked.name;
         nameGenSessionReserved.current.add(normalizeNameKey(lockedName));
         setName(lockedName);
+        if (picked.source === "local") {
+          toast.warning(
+            "Naming fell back to a local reserve — spin again or edit the name for a theme-forged label.",
+          );
+        }
       } catch {
         lockedName = pickLocalForgeCompanionName({
           gender: g,
@@ -1990,6 +2035,7 @@ User flavor notes: ${extraNotes || "none"}`;
             userId,
             gender,
             forgePersonality,
+            namingContext: forgeNamingContext,
             reservedNormalizedKeys: ex,
             bumpProgress: bumpCreate,
           });
@@ -2387,14 +2433,18 @@ User flavor notes: ${extraNotes || "none"}`;
       } else {
         for (let j = 0; j < batchCount; j++) {
           bumpCreate(`Naming companion ${j + 1} of ${batchCount}…`);
-          const { name: nm } = await pickGrokForgeCompanionName({
+          const { name: nm, source } = await pickGrokForgeCompanionName({
             supabase,
             userId,
             gender,
             forgePersonality,
+            namingContext: forgeNamingContext,
             reservedNormalizedKeys: nameReserve,
             bumpProgress: bumpCreate,
           });
+          if (source === "local") {
+            toast.warning(`Companion ${j + 1}: local name reserve used — rename after bind if you prefer.`);
+          }
           const nk = normalizeNameKey(nm);
           nameReserve.add(nk);
           nameGenSessionReserved.current.add(nk);

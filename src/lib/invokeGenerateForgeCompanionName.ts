@@ -1,20 +1,29 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/integrations/supabase/env";
+import type { ForgeCompanionNamingContext } from "@/lib/buildForgeCompanionNamingBrief";
 
 const FORGE_NAME_GROK_FETCH_TIMEOUT_MS = 75_000;
+
+export type GenerateForgeCompanionNameBody = {
+  gender: string;
+  avoid_names?: string[];
+  naming_brief?: string;
+} & Partial<Omit<ForgeCompanionNamingContext, "gender" | "forgePersonality">> & {
+    forgePersonality?: ForgeCompanionNamingContext["forgePersonality"];
+  };
 
 export type GenerateForgeCompanionNameResult = {
   data: { name?: string; error?: string; details?: string } | null;
   error: Error | null;
+  httpStatus?: number;
 };
 
 /**
  * Calls `generate-forge-companion-name` (Grok via Edge) with a fresh Bearer JWT.
  */
-export async function invokeGenerateForgeCompanionName(body: {
-  gender: string;
-  avoid_names?: string[];
-}): Promise<GenerateForgeCompanionNameResult> {
+export async function invokeGenerateForgeCompanionName(
+  body: GenerateForgeCompanionNameBody,
+): Promise<GenerateForgeCompanionNameResult> {
   const base = getSupabaseUrl().replace(/\/$/, "");
   const anon = getSupabaseAnonKey();
   if (!base || !anon) {
@@ -68,9 +77,9 @@ export async function invokeGenerateForgeCompanionName(body: {
             ? json.message
             : null);
       const errMsg = (fromJson || text.trim().slice(0, 700) || `HTTP ${res.status}`).trim();
-      return { data: json, error: new Error(errMsg) };
+      return { data: json, error: new Error(errMsg), httpStatus: res.status };
     }
-    return { data: json, error: null };
+    return { data: json, error: null, httpStatus: res.status };
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
       return {
@@ -78,6 +87,7 @@ export async function invokeGenerateForgeCompanionName(body: {
         error: new Error(
           `generate-forge-companion-name timed out after ${FORGE_NAME_GROK_FETCH_TIMEOUT_MS / 1000}s — check Edge logs and XAI_API_KEY / GROK_API_KEY.`,
         ),
+        httpStatus: 408,
       };
     }
     return { data: null, error: e instanceof Error ? e : new Error(String(e)) };
