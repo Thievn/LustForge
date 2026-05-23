@@ -149,6 +149,9 @@ export function ProfileLoopingVideoUpsell({
         const msg = e instanceof Error ? e.message : "Generation failed";
         if (!/cancelled/i.test(msg)) {
           toast.error(msg, { id: toastId });
+          if (/refund|content safety|moderation/i.test(msg)) {
+            onBalanceMaybeChanged?.();
+          }
         } else {
           toast.dismiss(toastId);
         }
@@ -348,7 +351,7 @@ export function ProfileLoopingVideoUpsell({
                 {sourceGeneratedImageId ? "selected gallery still" : "current portrait"}
               </span>{" "}
               as the I2V reference. Optional notes: outfit, pose, mood, setting — keep it{" "}
-              <span className="text-foreground/85">tasteful and suggestive</span> (hard NSFW wording is blocked).
+              <span className="text-foreground/85">tasteful and suggestive</span>. Spicy wording is auto-rewritten for Grok; only illegal content is blocked.
             </p>
             <div className="space-y-1.5">
               <Label

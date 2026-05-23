@@ -23,8 +23,15 @@ import {
 } from "../_shared/profileLoopVideoPrompt.ts";
 import {
   profilePageLoopMotionNotesViolatePolicy,
+  profileLoopMotionNotesNeedGrokRewrite,
   sanitizeProfileLoopUserMotionNotes,
 } from "../_shared/profileLoopMotionPolicy.ts";
+import { sanitizeForGrokImagine } from "../_shared/sanitizeForGrokImagine.ts";
+import { buildCompanionDescriptionForSanitize } from "../_shared/buildCompanionDescriptionForSanitize.ts";
+import {
+  grokModerationUserMessage,
+  isGrokModerationMessage,
+} from "../_shared/refundFcOnGenerationFailure.ts";
 import { recordFcTransaction } from "../_shared/recordFcTransaction.ts";
 import { publicApiTeaserGuardResponse } from "../_shared/publicApiTeaserGate.ts";
 
@@ -48,6 +55,69 @@ function profileVideoDurationSeconds(): number {
   const n = Math.round(Number(Deno.env.get("GROK_VIDEO_DURATION_SECONDS") ?? "8"));
   if (!Number.isFinite(n)) return 8;
   return Math.max(5, Math.min(15, n));
+}
+
+async function resolveProfileLoopMotionNotes(
+  motionNotesRaw: string,
+  companionDescription: string,
+): Promise<string> {
+  const policyErr = profilePageLoopMotionNotesViolatePolicy(motionNotesRaw);
+  if (policyErr) {
+    throw new Error(policyErr);
+  }
+  let notes = sanitizeProfileLoopUserMotionNotes(motionNotesRaw).trim().slice(0, 800);
+  if (!notes) return "";
+  if (profileLoopMotionNotesNeedGrokRewrite(motionNotesRaw)) {
+    try {
+      notes = await sanitizeForGrokImagine({
+        userInput: notes,
+        companionDescription,
+        mode: "motion_notes_only",
+      });
+      notes = notes.trim().slice(0, 800);
+    } catch (e) {
+      console.warn("resolveProfileLoopMotionNotes rewrite:", e);
+    }
+  }
+  return notes;
+}
+
+async function resolveProfileLoopVideoPrompt(
+  row: Record<string, unknown>,
+  motionNotes: string,
+): Promise<string> {
+  const companionDescription = buildCompanionDescriptionForSanitize(row, { motionNotes });
+  const draft = buildProfilePageLoopVideoPrompt(row, motionNotes);
+  const combined = sanitizePromptForVideoApi(draft);
+  const MAX_VIDEO_PROMPT = 3000;
+  const rawPrompt =
+    combined.length <= MAX_VIDEO_PROMPT
+      ? combined
+      : sanitizePromptForVideoApi(buildMinimalProfilePageLoopVideoPrompt(row, motionNotes));
+
+  try {
+    return await sanitizeForGrokImagine({
+      userInput: rawPrompt,
+      companionDescription,
+      mode: "profile_loop",
+    });
+  } catch (e) {
+    console.warn("resolveProfileLoopVideoPrompt sanitizer fallback:", e);
+    return rawPrompt;
+  }
+}
+
+function profileLoopGrokPollFailReason(
+  pr: Extract<Awaited<ReturnType<typeof pollGrokVideoRequestOnce>>, { status: "failed" | "expired" }>,
+): string {
+  if (pr.status === "expired") {
+    return "Grok video: request expired before completion.";
+  }
+  const raw = pr.message ?? "unknown";
+  if (pr.moderated || isGrokModerationMessage(raw)) {
+    return grokModerationUserMessage();
+  }
+  return `Grok video failed: ${raw}`;
 }
 
 async function refundProfileLoopFc(
@@ -782,8 +852,7 @@ async function reconcileStaleInFlightProfileLoopJob(args: {
   }
 
   if (pr.status === "failed" || pr.status === "expired") {
-    const reason =
-      pr.status === "expired" ? "Grok video: request expired before completion." : `Grok video failed: ${pr.message}`;
+    const reason = profileLoopGrokPollFailReason(pr);
     await failProfileLoopJob(svc, job, sessionUser.id, reason);
     return true;
   }
@@ -1076,7 +1145,14 @@ async function handleProfileLoopJobPoll(args: {
     const em = typeof job.error_message === "string" && job.error_message.trim()
       ? job.error_message.trim()
       : "Profile loop video failed.";
-    return jsonResponse({ error: em }, 400);
+    const userEm = isGrokModerationMessage(em) ? grokModerationUserMessage() : em;
+    return jsonResponse(
+      {
+        error: userEm,
+        code: isGrokModerationMessage(em) ? "CONTENT_MODERATION" : undefined,
+      },
+      400,
+    );
   }
 
   const updatedAtMs = job.updated_at ? Date.parse(String(job.updated_at)) : NaN;
@@ -1170,8 +1246,7 @@ async function handleProfileLoopJobPoll(args: {
   }
 
   if (pr.status === "failed" || pr.status === "expired") {
-    const reason =
-      pr.status === "expired" ? "Grok video: request expired before completion." : `Grok video failed: ${pr.message}`;
+    const reason = profileLoopGrokPollFailReason(pr);
     const chargeFc = Math.max(0, Math.floor(Number(job.charge_fc ?? 0)));
     const alreadyRefunded = Boolean(job.refunded);
     if (chargeFc > 0 && !alreadyRefunded) {
@@ -1186,7 +1261,15 @@ async function handleProfileLoopJobPoll(args: {
         updated_at: new Date().toISOString(),
       })
       .eq("id", jobId);
-    return jsonResponse({ error: reason }, 500);
+    return jsonResponse(
+      {
+        error: reason,
+        code: pr.status === "failed" && (pr.moderated || isGrokModerationMessage(pr.message))
+          ? "CONTENT_MODERATION"
+          : undefined,
+      },
+      500,
+    );
   }
 
   const { data: claimed, error: claimErr } = await svc
@@ -1385,10 +1468,7 @@ async function handleSyncProfileLoopVideo(args: {
       if (rid && xaiKey) {
         const pr = await pollGrokVideoRequestOnce(xaiKey, rid);
         if (pr.status === "expired" || pr.status === "failed") {
-          const reason =
-            pr.status === "expired"
-              ? "Grok video: request expired before completion."
-              : `Grok video failed: ${pr.message}`;
+          const reason = profileLoopGrokPollFailReason(pr);
           await failProfileLoopJob(svc, inFlight as ProfileLoopJobRow, sessionUser.id, reason);
         }
       }
@@ -1508,11 +1588,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "companionId required" }, 400);
   }
   const motionNotesRaw = typeof body.motionNotes === "string" ? body.motionNotes.trim() : "";
-  const policyErr = profilePageLoopMotionNotesViolatePolicy(motionNotesRaw);
-  if (policyErr) {
-    return jsonResponse({ error: policyErr }, 400);
-  }
-  const motionNotes = sanitizeProfileLoopUserMotionNotes(motionNotesRaw).trim().slice(0, 800);
 
   const adminUser = await isLustforgeAdminUser(sessionUser);
   const tokenCostRaw = (body as { tokenCost?: unknown }).tokenCost;
@@ -1746,13 +1821,15 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const fullFromBuilder = buildProfilePageLoopVideoPrompt(row, motionNotes);
-    const combined = sanitizePromptForVideoApi(fullFromBuilder);
-    const MAX_VIDEO_PROMPT = 3000;
-    const prompt =
-      combined.length <= MAX_VIDEO_PROMPT
-        ? combined
-        : sanitizePromptForVideoApi(buildMinimalProfilePageLoopVideoPrompt(row, motionNotes));
+    const companionDescription = buildCompanionDescriptionForSanitize(row);
+    let motionNotes: string;
+    try {
+      motionNotes = await resolveProfileLoopMotionNotes(motionNotesRaw, companionDescription);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return jsonResponse({ error: msg }, 400);
+    }
+    const prompt = await resolveProfileLoopVideoPrompt(row, motionNotes);
 
     const durationSec = profileVideoDurationSeconds();
     const videoModel = (Deno.env.get("GROK_VIDEO_MODEL") ?? DEFAULT_GROK_VIDEO_MODEL).trim() ||

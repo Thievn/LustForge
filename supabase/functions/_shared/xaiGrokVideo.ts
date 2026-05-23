@@ -33,8 +33,33 @@ type VideoStatusResponse = {
 export type GrokVideoPollResult =
   | { status: "processing" }
   | { status: "done"; videoUrl: string; duration?: number }
-  | { status: "failed"; message: string }
+  | { status: "failed"; message: string; moderated?: boolean }
   | { status: "expired" };
+
+function parseGrokVideoErrorMessage(pollText: string, httpStatus: number): { message: string; moderated: boolean } {
+  try {
+    const j = JSON.parse(pollText) as { error?: string | { message?: string }; message?: string };
+    const errField = j.error;
+    const em =
+      typeof errField === "string"
+        ? errField
+        : errField && typeof errField === "object" && "message" in errField
+          ? String((errField as { message?: string }).message ?? "")
+          : typeof j.message === "string"
+            ? j.message
+            : "";
+    const msg = em.trim() || `Grok poll HTTP ${httpStatus}`;
+    const moderated = /content moderation|moderation rejected/i.test(msg);
+    return { message: msg, moderated };
+  } catch {
+    const snippet = pollText.trim().slice(0, 240);
+    const moderated = /content moderation/i.test(snippet);
+    return {
+      message: snippet ? `Grok poll HTTP ${httpStatus}: ${snippet}` : `Grok poll HTTP ${httpStatus}`,
+      moderated,
+    };
+  }
+}
 
 function parseStartError(text: string, status: number): Error {
   try {
@@ -138,10 +163,11 @@ export async function pollGrokVideoRequestOnce(
     if (pollRes.status === 404) {
       return { status: "expired" };
     }
-    const snippet = pollText.trim().slice(0, 240);
+    const parsed = parseGrokVideoErrorMessage(pollText, pollRes.status);
     return {
       status: "failed",
-      message: snippet ? `Grok poll HTTP ${pollRes.status}: ${snippet}` : `Grok poll HTTP ${pollRes.status}`,
+      message: parsed.message,
+      moderated: parsed.moderated,
     };
   }
   let data: VideoStatusResponse;
@@ -167,7 +193,8 @@ export async function pollGrokVideoRequestOnce(
         : data.error && typeof data.error === "object" && "message" in data.error
           ? String((data.error as { message?: string }).message)
           : data.message;
-    return { status: "failed", message: em || "unknown" };
+    const msg = em || "unknown";
+    return { status: "failed", message: msg, moderated: /content moderation/i.test(msg) };
   }
   return { status: "processing" };
 }

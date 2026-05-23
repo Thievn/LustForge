@@ -66,11 +66,18 @@ export function profilePageLoopMotionNotesViolatePolicy(raw: string): string | n
       return "Those instructions aren't allowed. Keep motion notes tasteful and suggestive only.";
     }
   }
-  const sanitized = sanitizeProfileLoopUserMotionNotes(t);
-  for (const re of POST_SANITIZE_BLOCKED) {
-    if (re.test(sanitized)) {
-      return "Instructions can't include disallowed wording. Keep it suggestive and SFW — no graphic sex or nudity requests.";
-    }
-  }
   return null;
+}
+
+/** True when crude wording remains after lexicon soften — server should Grok-rewrite before I2V. */
+export function profileLoopMotionNotesNeedGrokRewrite(raw: string): boolean {
+  const t = raw.trim();
+  if (!t) return false;
+  if (profilePageLoopMotionNotesViolatePolicy(t)) return false;
+  const sanitized = sanitizeProfileLoopUserMotionNotes(t);
+  if (sanitized !== t) return true;
+  for (const re of POST_SANITIZE_BLOCKED) {
+    if (re.test(sanitized)) return true;
+  }
+  return false;
 }
