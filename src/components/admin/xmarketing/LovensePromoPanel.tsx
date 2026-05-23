@@ -76,6 +76,7 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
   const [pickVar, setPickVar] = useState(0);
   const [editedText, setEditedText] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [postBusy, setPostBusy] = useState(false);
   const [baking, setBaking] = useState(false);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [mediaPrepWarning, setMediaPrepWarning] = useState<string | null>(null);
