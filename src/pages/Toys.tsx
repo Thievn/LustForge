@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Waves } from "lucide-react";
 import ParticleBackground from "@/components/ParticleBackground";
 import Navbar from "@/components/Navbar";
-import { AffiliateBrandedProductCard } from "@/components/affiliate/AffiliateBrandedProductCard";
+import { AffiliateShopProductCard } from "@/components/affiliate/AffiliateShopProductCard";
 import {
   DEFAULT_AFFILIATE_SHOP_SETTINGS,
   useAffiliateShop,
@@ -78,12 +78,13 @@ export default function Toys() {
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="aspect-[16/9] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
-                  />
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="space-y-3 animate-pulse">
+                    <div className="aspect-[16/9] rounded-lg border border-white/[0.06] bg-white/[0.03]" />
+                    <div className="h-4 w-2/3 rounded bg-white/[0.06]" />
+                    <div className="h-10 w-full rounded-xl bg-white/[0.04]" />
+                  </div>
                 ))}
               </div>
             ) : products.length === 0 ? (
@@ -91,9 +92,9 @@ export default function Toys() {
                 <p className="text-muted-foreground">Products coming soon — check back after launch prep.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {products.map((product) => (
-                  <AffiliateBrandedProductCard key={product.id} product={product} interactive />
+                  <AffiliateShopProductCard key={product.id} product={product} interactive />
                 ))}
               </div>
             )}

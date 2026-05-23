@@ -22,7 +22,7 @@ import {
   type AffiliateMediaType,
   type AffiliateShopProduct,
 } from "@/hooks/useAffiliateShop";
-import { AffiliateBrandedProductCard } from "@/components/affiliate/AffiliateBrandedProductCard";
+import { AffiliateProductMedia } from "@/components/affiliate/AffiliateProductMedia";
 import { affiliateUrlForStorage, isValidAffiliateUrlInput, normalizeAffiliateUrl } from "@/lib/affiliateUrl";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -360,20 +360,23 @@ export default function AdminAffiliateShopPanel() {
                   !draft.is_active && "opacity-70",
                 )}
               >
-                <div className="flex flex-col gap-4">
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">Shop page preview</p>
-                    <AffiliateBrandedProductCard
-                      product={draft}
-                      shopHref={normalizeAffiliateUrl(draft.affiliate_url)}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-4 lg:flex-row">
+                <div className="flex flex-col gap-4 lg:flex-row">
                   {draft.media_type === "image" ? (
-                    <div className="shrink-0 space-y-3 lg:w-48">
-                        <button
+                    <div className="shrink-0 space-y-3 w-full max-w-[220px]">
+                      <p className="text-xs font-medium text-muted-foreground">Image preview</p>
+                      <div className="overflow-hidden rounded-lg border border-white/10">
+                        <AffiliateProductMedia
+                          name={draft.name}
+                          imageUrl={draft.image_url}
+                          badge={draft.badge}
+                          imageFit={draft.image_fit}
+                          imageAspect={draft.image_aspect}
+                          mediaType={draft.media_type}
+                          mediaHtml={draft.media_html}
+                          bare
+                        />
+                      </div>
+                      <button
                           type="button"
                           disabled={uploadingId === draft.id}
                           onClick={() => fileInputRefs.current[draft.id]?.click()}
@@ -402,8 +405,8 @@ export default function AdminAffiliateShopPanel() {
                           }}
                         />
                         <p className="text-[10px] leading-relaxed text-muted-foreground">
-                          <strong className="text-foreground/70">Tip:</strong> Use wide Lovense banners (~1200×675).
-                          The shop card displays them in a landscape panel — no cropping.
+                          <strong className="text-foreground/70">Tip:</strong> Upload your Lovense banner — the shop
+                          page sizes the frame to the image automatically.
                         </p>
                     </div>
                   ) : null}
@@ -522,7 +525,6 @@ export default function AdminAffiliateShopPanel() {
                       />
                       <span className="text-sm text-muted-foreground">Active on shop page</span>
                     </div>
-                  </div>
                   </div>
                 </div>
 

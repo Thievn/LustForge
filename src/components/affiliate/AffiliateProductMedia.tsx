@@ -23,6 +23,8 @@ export type AffiliateProductMediaProps = {
   className?: string;
   /** Enable hover scale on shop cards */
   interactive?: boolean;
+  /** Plain image only — no blur backdrop or gradient overlay */
+  bare?: boolean;
 };
 
 export function AffiliateProductMedia({
@@ -35,6 +37,7 @@ export function AffiliateProductMedia({
   mediaHtml,
   className,
   interactive = false,
+  bare = false,
 }: AffiliateProductMediaProps) {
   const imageFit = normalizeImageFit(imageFitProp);
   const imageAspect = normalizeImageAspect(imageAspectProp);
@@ -73,17 +76,7 @@ export function AffiliateProductMedia({
           />
         </>
       ) : showImage ? (
-        <>
-          <img
-            src={imageUrl!}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-50 saturate-125"
-          />
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-[#050508]/40 via-[#050508]/20 to-[#050508]/55"
-            aria-hidden
-          />
+        bare ? (
           <img
             src={imageUrl!}
             alt={name}
@@ -95,12 +88,41 @@ export function AffiliateProductMedia({
               }
             }}
             className={cn(
-              "relative z-[1] h-full w-full transition-transform duration-500",
+              "h-full w-full",
               imageFit === "cover" ? "object-cover" : "object-contain",
-              interactive && "group-hover:scale-[1.03]",
+              interactive && "transition-transform duration-300 group-hover:scale-[1.02]",
             )}
           />
-        </>
+        ) : (
+          <>
+            <img
+              src={imageUrl!}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-50 saturate-125"
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-b from-[#050508]/40 via-[#050508]/20 to-[#050508]/55"
+              aria-hidden
+            />
+            <img
+              src={imageUrl!}
+              alt={name}
+              loading="lazy"
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (imageAspect === "auto") {
+                  setDetectedRatio(clampAutoAspectRatio(img.naturalWidth, img.naturalHeight));
+                }
+              }}
+              className={cn(
+                "relative z-[1] h-full w-full transition-transform duration-500",
+                imageFit === "cover" ? "object-cover" : "object-contain",
+                interactive && "group-hover:scale-[1.03]",
+              )}
+            />
+          </>
+        )
       ) : (
         <div
           className="flex h-full w-full items-center justify-center"
