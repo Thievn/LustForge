@@ -513,7 +513,7 @@ export function LiveVoicePanel({
               />
             ) : null}
             <p className="text-[9px] text-muted-foreground/80 mt-0.5 leading-tight line-clamp-1">
-              {hasDevice ? "Grok steers intensity; toy runs the preset." : "Link a toy for hardware ramp."}
+              {hasDevice ? "She steers intensity; toy runs the preset." : "Link a toy for hardware ramp."}
             </p>
           </div>
         ) : null}

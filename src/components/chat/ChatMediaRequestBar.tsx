@@ -53,7 +53,7 @@ export function ChatMediaRequestBar({
             Photos & clips
           </div>
           <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground/90">
-            Stills = Grok Imagine ({MOMENTS_GALLERY_SUBTITLE.toLowerCase()}). {CHAT_VIDEO_TIMING_USER_NOTE} Type in chat is detected automatically — no
+            Stills = Moments ({MOMENTS_GALLERY_SUBTITLE.toLowerCase()}). {CHAT_VIDEO_TIMING_USER_NOTE} Type in chat is detected automatically — no
             &quot;generating…&quot; spam.
           </p>
         </div>

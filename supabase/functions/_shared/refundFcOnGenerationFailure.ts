@@ -44,9 +44,9 @@ export async function refundFcOnGenerationFailure(args: {
 
 /** User-facing message when Grok blocks content moderation. */
 export function grokModerationUserMessage(): string {
-  return "Grok blocked this for content safety — your FC were refunded. We already retried with a softer prompt; try a more covered gallery still or leave motion notes blank.";
+  return "This request was blocked for content safety — your FC were refunded. We already retried with a softer prompt; try a more covered gallery still or leave motion notes blank.";
 }
 
 export function isGrokModerationMessage(msg: string): boolean {
-  return /content moderation|content safety|moderation rejected/i.test(msg);
+  return /content moderation|content safety|moderation rejected|grok blocked/i.test(msg);
 }

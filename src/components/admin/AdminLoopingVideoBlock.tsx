@@ -78,7 +78,7 @@ export function AdminLoopingVideoBlock({
         Looping portrait video
       </div>
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        Same engine as Discover: current still as reference, optional tasteful custom notes (spicy wording auto-rewritten for Grok; only illegal content blocked). Successful clips are written to the owner&apos;s companion gallery when applicable.
+        Same engine as Discover: current still as reference, optional tasteful custom notes (spicy wording softened in the prompt; only illegal content blocked). Successful clips are written to the owner&apos;s companion gallery when applicable.
       </p>
       {showMotionNotes ? (
         <div className="space-y-1.5">

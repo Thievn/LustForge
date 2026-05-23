@@ -65,7 +65,7 @@ export function ProfileLoopingVideoUpsell({
     (status: "starting" | "rendering" | "saving" | "complete") => {
       const msg =
         status === "starting"
-          ? "Starting loop video on Grok…"
+          ? "Starting loop video…"
           : status === "rendering"
             ? "Rendering motion (often 3–8 min)…"
             : status === "saving"
@@ -80,7 +80,7 @@ export function ProfileLoopingVideoUpsell({
     setPendingJob(hasPendingProfileLoopJob(companionId));
   }, [companionId]);
 
-  /** Server may still have an in-flight Grok job even when the client toast/poll stopped. */
+  /** Server may still have an in-flight job even when the client toast/poll stopped. */
   useEffect(() => {
     if (!companionId.trim() || disabled) return;
     let cancelled = false;
@@ -93,11 +93,6 @@ export function ProfileLoopingVideoUpsell({
           setPendingJob(false);
           onSuccess?.({ publicUrl: result.publicUrl.trim() });
           onBalanceMaybeChanged?.();
-          toast.success("Looping portrait video saved", {
-            id: toastId,
-            description: "Your profile portrait should update now.",
-            duration: 6000,
-          });
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "";
@@ -133,11 +128,7 @@ export function ProfileLoopingVideoUpsell({
           signal: controller.signal,
           onPollStatus: pollStatusToast,
         });
-        toast.success(hasExistingLoopVideo ? "Loop video updated" : "Looping portrait video saved", {
-          id: toastId,
-          description: "Your profile portrait should update now.",
-          duration: 6000,
-        });
+        toast.dismiss(toastId);
         try {
           await syncProfileLoopVideoToProfile(companionId);
         } catch {
@@ -161,7 +152,7 @@ export function ProfileLoopingVideoUpsell({
         setPendingJob(hasPendingProfileLoopJob(companionId));
       }
     },
-    [companionId, hasExistingLoopVideo, onBalanceMaybeChanged, onSuccess, pollStatusToast, toastId],
+    [companionId, onBalanceMaybeChanged, onSuccess, pollStatusToast, toastId],
   );
 
   const run = async () => {
@@ -223,10 +214,7 @@ export function ProfileLoopingVideoUpsell({
           onPollStatus: pollStatusToast,
         });
         if (result) {
-          toast.success("Looping portrait video saved", {
-            id: toastId,
-            description: "Your profile portrait should update now.",
-          });
+          toast.dismiss(toastId);
           onSuccess?.({ publicUrl: result.publicUrl });
           onBalanceMaybeChanged?.();
         } else {
@@ -296,7 +284,7 @@ export function ProfileLoopingVideoUpsell({
                 </div>
                 <p className="mt-0.5 truncate text-[11px] text-muted-foreground/90">
                   {busy
-                    ? "Grok is rendering — usually 3–8 min"
+                    ? "Rendering motion — usually 3–8 min"
                     : pendingJob
                       ? "Job in progress — reopen to resume"
                       : open
@@ -350,8 +338,8 @@ export function ProfileLoopingVideoUpsell({
               <span className="font-medium text-foreground/85">
                 {sourceGeneratedImageId ? "selected gallery still" : "current portrait"}
               </span>{" "}
-              as the I2V reference. Optional notes: outfit, pose, mood, setting — keep it{" "}
-              <span className="text-foreground/85">tasteful and suggestive</span>. Spicy wording is auto-rewritten for Grok; only illegal content is blocked.
+              as the motion reference. Optional notes: outfit, pose, mood, setting — keep it{" "}
+              <span className="text-foreground/85">tasteful and suggestive</span>. Spicy wording is softened automatically in the prompt; only illegal content is blocked.
             </p>
             <div className="space-y-1.5">
               <Label

@@ -56,7 +56,7 @@ export function ChatVoiceSettingsSheet({
         <DialogHeader className="space-y-2 border-b border-white/[0.07] px-5 pb-4 pt-5">
           <DialogTitle className="font-gothic text-xl tracking-tight">Voice · {companionName}</DialogTitle>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Grok reads {companionName}&apos;s lines aloud. Right now you&apos;re hearing{" "}
+            {companionName} reads her lines aloud. Right now you&apos;re hearing{" "}
             <span className="font-medium text-foreground">{effectiveLabel}</span>.
           </p>
         </DialogHeader>

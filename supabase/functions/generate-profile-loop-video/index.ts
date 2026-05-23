@@ -114,13 +114,13 @@ function profileLoopGrokPollFailReason(
   pr: Extract<Awaited<ReturnType<typeof pollGrokVideoRequestOnce>>, { status: "failed" | "expired" }>,
 ): string {
   if (pr.status === "expired") {
-    return "Grok video: request expired before completion.";
+    return "Video render expired before completion.";
   }
   const raw = pr.message ?? "unknown";
   if (pr.moderated || isGrokModerationMessage(raw)) {
     return grokModerationUserMessage();
   }
-  return `Grok video failed: ${raw}`;
+  return `Video render failed: ${raw}`;
 }
 
 async function tryProfileLoopModerationRetry(args: {
@@ -1300,7 +1300,7 @@ async function handleProfileLoopJobPoll(args: {
         jobId,
         pollAfterMs: 6000,
         workerPhase: pollWorkerPhaseForJob(job),
-        message: "Still rendering on Grok — keep this page open or try again later.",
+        message: "Still rendering — keep this page open or try again later.",
       });
     }
     await svc.from("profile_loop_video_jobs").update({ updated_at: new Date().toISOString() }).eq("id", jobId);

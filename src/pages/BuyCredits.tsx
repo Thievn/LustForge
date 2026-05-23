@@ -265,8 +265,8 @@ export default function BuyCredits() {
                       Live Voice today).
                     </li>
                     <li>
-                      <span className="text-white/90 font-semibold">Moments still</span> (selfie or sensual chat still, Grok
-                      Imagine + tasteful rewrite) — {CHAT_IMAGE_LEWD_FC} FC each
+                      <span className="text-white/90 font-semibold">Moments still</span> (selfie or sensual chat still, tasteful
+                      rewrite) — {CHAT_IMAGE_LEWD_FC} FC each
                     </li>
                     <li>
                       <span className="text-white/90 font-semibold">Forge portrait preview</span> — {FORGE_PREVIEW_FC} FC ·{" "}

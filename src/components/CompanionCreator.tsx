@@ -1564,8 +1564,8 @@ User flavor notes: ${extraNotes || "none"}`;
         setName(n);
         toast.success(
           source === "grok"
-            ? "Grok sealed a new name — the field stays yours to edit."
-            : "A fallback name spun up — try again for a Grok name when the veil is clear.",
+            ? "The forge sealed a new name — the field stays yours to edit."
+            : "A fallback name spun up — try again when the veil is clear.",
         );
       } else {
         const n = pickLocalForgeCompanionName({
@@ -1984,7 +1984,7 @@ User flavor notes: ${extraNotes || "none"}`;
             "Loading existing forge names",
           );
           for (const k of nameGenSessionReserved.current) ex.add(k);
-          bumpCreate("Grok is naming your companion…");
+          bumpCreate("Naming your companion…");
           const { name: invented, source } = await pickGrokForgeCompanionName({
             supabase,
             userId,
@@ -1998,14 +1998,14 @@ User flavor notes: ${extraNotes || "none"}`;
           setName(invented);
           bumpCreate(
             source === "grok"
-              ? "Grok sealed a name — still yours to rewrite before the bind."
+              ? "The forge sealed a name — still yours to rewrite before the bind."
               : "A fallback name sealed — still yours to rewrite before the bind.",
           );
           if (source === "local") {
             toast.warning(
               isAdmin
-                ? "Grok naming fell back to local ink — glance Character management for echoes you may want to break."
-                : "Grok naming hushed — local name for now; you may rename once she’s bound.",
+                ? "Naming fell back to local ink — glance Character management for echoes you may want to break."
+                : "Naming hushed — local name for now; you may rename once she’s bound.",
             );
           }
         } catch {
@@ -2386,7 +2386,7 @@ User flavor notes: ${extraNotes || "none"}`;
         batchFirstNames.push(forgeName);
       } else {
         for (let j = 0; j < batchCount; j++) {
-          bumpCreate(`Grok is naming companion ${j + 1} of ${batchCount}…`);
+          bumpCreate(`Naming companion ${j + 1} of ${batchCount}…`);
           const { name: nm } = await pickGrokForgeCompanionName({
             supabase,
             userId,
@@ -3417,7 +3417,7 @@ User flavor notes: ${extraNotes || "none"}`;
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Portrait pose</p>
                     <p className="text-[11px] text-muted-foreground/85 mt-0.5">
-                      Dramatic staging for Grok Imagine — search or pick by group. Stays SFW; must match your card
+                      Dramatic staging for portrait generation — search or pick by group. Stays SFW; must match your card
                       gender and theme. Combined with Card pose above for camera discipline.
                     </p>
                   </div>
@@ -3702,7 +3702,7 @@ User flavor notes: ${extraNotes || "none"}`;
                     <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff7eb3]/90">Personality &amp; voice</p>
                     <h3 className="font-gothic text-xl sm:text-2xl text-white leading-tight">Personalities</h3>
                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                      Voice, flirt cadence, and relationship frame — separate from silhouette and wardrobe. Feeds Grok chat and
+                      Voice, flirt cadence, and relationship frame — separate from silhouette and wardrobe. Feeds chat personality and
                       Live Call the same way it will for players.
                     </p>
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
