@@ -60,8 +60,8 @@ export function incrementFreeNsfwImagesUsed(userId: string, companionId: string)
 /** Paid chat clip (Grok Imagine video ~5–15s). Same as `CHAT_SHORT_VIDEO_FC` in forgeEconomy. */
 export { CHAT_SHORT_VIDEO_FC as CHAT_VIDEO_TOKEN_COST } from "@/lib/forgeEconomy";
 
-/** Binding for every FAB / gallery still that reads as a “selfie” — keeps Grok from painting a phone in hand. */
-export const CHAT_IMAGINE_SELFIE_NO_PHONE_BLOCK = `**No phone in frame:** arm-extended POV, mirror, tripod, or partner-held camera only — zero smartphone / screen / case visible.`;
+/** Binding for Moments Selfie tab tiles — category name only; output must be a natural pose, never a literal selfie. */
+export const CHAT_IMAGINE_SELFIE_NO_PHONE_BLOCK = `**No phone / no selfie shot (binding):** Zero smartphone, camera, screen, lens reflection, or “taking a selfie” pose. **Forbidden:** arm extended toward camera, mirror-selfie composition, phone in hand. Render a **natural portrait pose** in the menu scene (editorial, candid, flirty, or sensual as the tile describes). The Moments label “Selfie” is **category only** — not instruction to depict a selfie.`;
 
 /** Sensual tier — short; avoids burying likeness lines elsewhere. */
 export const CHAT_IMAGINE_LEWD_TASTEFUL_BLOCK = `**Sensual tier:** lingerie, sheer with coverage, silk, editorial tease — perfume-ad only; **not** explicit acts. **Hard no:** bare genitals, porn staging, phone in hand, deformed anatomy, extra fingers or duplicated limbs.`;
@@ -105,7 +105,7 @@ export const FAB_SELFIE = {
       "A cute selfie would make my day...",
     ],
     imagePrompt:
-      "**Selfie tier (SFW):** Same person as main portrait — face, hair, eyes, body, art style **unchanged**. New outfit + location from **Requested framing** only; fully clothed; no lingerie focus. POV/mirror/tripod — no phone visible. **Reject:** generic model, catalog room remaster, random chair portrait.",
+      "**Selfie tier (SFW):** Same person as main portrait — face, hair, eyes, body, **art style unchanged**. New outfit + location from **Requested framing** only; fully clothed; no lingerie focus. Natural portrait pose in-scene — **not** a literal selfie, **no phone/camera**. **Reject:** generic model, catalog room remaster, random chair portrait, wrong art medium.",
   },
   lewd: {
     display: [
@@ -116,7 +116,7 @@ export const FAB_SELFIE = {
       "Don't be shy... let me see more of you 💋",
     ],
     imagePrompt:
-      "**Sensual tier:** Same person as main portrait — identity locked; not a different body or face. Lingerie / sheer / editorial tease only; no explicit acts; no phone. New pose + set from **Requested framing** only. **Reject:** generic glam model, sofa packshot, extra limbs or bad hands.",
+      "**Sensual tier:** Same person as main portrait — identity and **art style** locked; not a different body, face, or medium. Lingerie / sheer / editorial tease only; no explicit acts; natural pose — **no phone/camera/selfie shot**. New pose + set from **Requested framing** only. **Reject:** generic glam model, sofa packshot, extra limbs or bad hands, art-style drift.",
   },
 } as const;
 

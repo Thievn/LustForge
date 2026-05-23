@@ -141,7 +141,7 @@ function shotVariationBlock(mood: FabSelfieTier, seed: number): string {
   const lens = [
     "35mm storytelling lens, gentle distortion control",
     "50mm portrait, creamy bokeh, natural perspective",
-    "24mm environmental portrait, slight wide — arm-extended front-camera POV or mirror shot with **no smartphone visible**",
+    "24mm environmental portrait, slight wide — subject in scene, natural stance",
     "85mm compression, flattering face flattening",
   ] as const;
   const sfwSets = [
@@ -153,7 +153,7 @@ function shotVariationBlock(mood: FabSelfieTier, seed: number): string {
   const sfwPose = [
     "Slight hip shift + relaxed shoulders; eyes to lens.",
     "Three-quarter turn with chin low — friendly confidence.",
-    "One hand in hair, arm-extended POV — **no phone or screen visible**.",
+    "One hand in hair, natural candid stance — **no phone or camera**.",
     "Doorway or wall lean — engaged smile; **no chair** unless scene names one.",
   ] as const;
   const lewdSets = [
@@ -263,7 +263,7 @@ export function buildMasterChatImagePrompt(args: MasterImagePromptArgs): {
     seeds,
     menuSceneLock
       ? "Where the preset is silent on a detail, infer one tasteful fill-in that still matches that exact scene (not a genre switch)."
-      : "Translate these into: fabric choices, set dressing, what they'd plausibly wear in-scene, how they relate to the lens (arm-extended POV, mirror glance, tripod) — **no smartphone visible** unless a period-accurate film camera is explicitly scene-appropriate — how bold or shy the expression is, and the emotional temperature of the light.",
+      : "Translate these into: fabric choices, set dressing, what they'd plausibly wear in-scene, natural body language toward the lens, how bold or shy the expression is, and the emotional temperature of the light — **no smartphone or camera props** unless period-accurate and scene-appropriate.",
   ].join("\n");
 
   const scene = [
@@ -292,8 +292,8 @@ export function buildMasterChatImagePrompt(args: MasterImagePromptArgs): {
     "— CAPTURE / FRAMING —",
     CHAT_IMAGINE_NO_DEFAULT_CHAIR_BLOCK,
     menuSceneLock
-      ? "Single-subject, vertical 2:3; match camera grammar implied by **Requested framing (from menu)** (natural selfie POV, mirror, tripod, environmental shot, etc.) — **avoid a visible smartphone in hand** — and the time period; premium lens, coherent depth of field."
-      : "Single-subject, vertical 2:3 card-style natural selfie POV, mirror, tripod, or partner-held frame — **no phone visible** — matching the time period; premium lens, coherent depth of field.",
+      ? "Single-subject, vertical 2:3; match camera grammar implied by **Requested framing (from menu)** (environmental portrait, editorial three-quarter, natural candid, etc.) — **not** a literal selfie or visible phone — and the time period; premium lens, coherent depth of field."
+      : "Single-subject, vertical 2:3 card-style natural portrait in-scene — **no phone, no selfie pose** — matching the time period; premium lens, coherent depth of field.",
     nonPhotorealArtLane
       ? `Match art direction: **${art}** — same rendering discipline and material read throughout the frame. Body-type anchor: ${bodyType}.`
       : "Photographic realism; match art direction:" + ` ${art}. Body-type anchor: ${bodyType}.`,

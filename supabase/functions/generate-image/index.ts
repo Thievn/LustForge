@@ -13,6 +13,7 @@ import { sanitizeGrokImagineLexicon } from "../_shared/momentsPromptSanitize.ts"
 import { maybeAppendForgeStyleSceneBlock } from "../_shared/forgePortraitAugmentation.ts";
 import {
   buildAnimeTemptationStyleLead,
+  buildArtStyleOnlyLockPrefix,
   effectiveForgeArtStyleLabelForCharacterData,
   FORGE_ANIME_STYLE_LOCK_REGEX,
   isAnimeTemptationForgeTabId,
@@ -298,7 +299,10 @@ serve(async (req) => {
     const tabForAnime = cd.selectedForgeTab ?? cd.selected_forge_tab ?? cd.activeForgeTab;
     const isAnime = isAnimeTemptationForgeTabId(tabForAnime);
     const tierRewrite = effectiveTier === "forge_preview_sfw" ? "preview" : "full";
-    const dnaPrefix = suppressForgeDna && isChatSessionStill ? "" : buildForgeStyleDnaPrefix(cd, tierRewrite);
+    const dnaPrefix =
+      suppressForgeDna && isChatSessionStill
+        ? buildArtStyleOnlyLockPrefix(cdScene)
+        : buildForgeStyleDnaPrefix(cd, tierRewrite);
     const cdScene = { ...cd };
     const artRaw = String(cdScene.artStyleLabel ?? cdScene.art_style_label ?? "").trim();
     cdScene.artStyleLabel = effectiveForgeArtStyleLabelForCharacterData(artRaw, cdScene);
@@ -358,10 +362,16 @@ serve(async (req) => {
       const executionHead = [
         "[EXECUTION — CHARACTER FIRST, THEN MENU TILE — READ FIRST]",
         CHAT_LIKENESS_EDGE_SAME_SUBJECT,
+        artLabelForLead
+          ? `**Step 0 — Art style (non-negotiable):** Match **${artLabelForLead}** and the roster portrait’s rendering discipline — same illustrated / anime / photoreal lane as the profile; do not substitute a different medium or stock-photo look.`
+          : "**Step 0 — Art style (non-negotiable):** Match the roster portrait’s rendering discipline — do not drift to an unrelated medium.",
+        "**No selfie / no phone:** Moments “Selfie” is a menu category only — render a natural pose in the scene. **Forbidden:** smartphone visible, arm-extended front-camera framing, mirror-selfie composition, or subject holding a camera.",
         "**Step 1 — Identity:** Match FORGE_VISUAL_IDENTITY, CHARACTER REFERENCE, and Character Details — same face, hair, eyes, skin tone, tattoos, piercings, species marks, ears, tail, wings, and body type as the profile / roster portrait. **Not** a substitute model.",
         "**Step 2 — Scene:** Render **MENU_TILE_SCENE** / **Requested framing (from menu)** literally — location, pose, wardrobe, props, camera — **without** copying the portrait’s room, sofa, or catalog crop.",
         "**Forbidden default:** facing-camera standing glam bust, neutral catalog three-quarter, phone-mirror bathroom headshot, or “same silhouette as a roster card” unless the menu text explicitly demands that.",
-      ].join("\n\n");
+      ]
+        .filter(Boolean)
+        .join("\n\n");
       const anatomyHead = anatomyDirective
         ? `ANATOMY_POLICY (must obey — do not contradict in the image):\n${anatomyDirective}`
         : "";
@@ -446,7 +456,7 @@ serve(async (req) => {
     const menuSceneClothingLine =
       "**PRIMARY SCENE + menu preset only:** every garment, fabric state, coverage, jewelry, and prop worn or held must match the user’s chosen gallery category — **not** the roster/profile card outfit, **not** a generic bikini/studio wrap unless the menu text explicitly calls for it.";
     const menuScenePoseLine =
-      "**PRIMARY SCENE + menu preset only:** full-body stance, limb angles, weight shift, prop interaction, gaze direction, and camera geometry (selfie arm, mirror, tripod, environmental wide shot, etc.) must match the menu category — **forbidden:** repeating the catalog portrait pose, head-and-shoulders stock framing, or a neutral three-quarter “card photo” unless the menu asks for that exact framing.";
+      "**PRIMARY SCENE + menu preset only:** full-body stance, limb angles, weight shift, prop interaction, gaze direction, and camera geometry must match the menu category — **forbidden:** repeating the catalog portrait pose, head-and-shoulders stock framing, arm-extended selfie/phone pose, visible smartphone or camera, or a neutral three-quarter “card photo” unless the menu asks for that exact framing.";
 
     const effectiveClothing =
       menuSceneLockEffective && !String(characterData.clothing ?? "").trim().startsWith("**PRIMARY SCENE")

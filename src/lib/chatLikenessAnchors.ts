@@ -27,7 +27,7 @@ export const CHAT_LIKENESS_FREEFORM_IDENTITY_LEAD = `**IDENTITY (typed request �
  * Opening block for menu-tier chat still prompts (`resolveChatImageGenerationPrompt`).
  * Keeps old + new cards consistent: subject vs scene.
  */
-export const CHAT_LIKENESS_MENU_PRESET_IDENTITY_LEAD = `**EVERY PRESET (selfie / lewd / FAB):** The woman in frame must be **this exact companion** — match roster portrait + CHARACTER APPEARANCE for ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE}. **Forbidden:** inventing a new photoreal face that merely fits the outfit or location.`;
+export const CHAT_LIKENESS_MENU_PRESET_IDENTITY_LEAD = `**EVERY PRESET (selfie / lewd / FAB):** The subject in frame must be **this exact companion** — match roster portrait + CHARACTER APPEARANCE for ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE}. **Forbidden:** inventing a new face or rendering style that merely fits the outfit or location.`;
 
 export const CHAT_LIKENESS_SUBJECT_ANCHOR = `**SUBJECT (read first):** The stored profile/roster picture is **not** a location or wardrobe brief. Use CHARACTER APPEARANCE (and the roster portrait URL when the pipeline supplies one) **only** for ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE}. **Do not import from roster imagery or long appearance blurbs:** ${CHAT_LIKENESS_SCENE_FORBIDDEN_INLINE}. The block under **Requested framing (from menu)** defines **outfit, room, pose, props, camera, and light** — it always overrides conflicting catalog prose.`;
 
@@ -47,4 +47,4 @@ export function chatLikenessSameSubjectMandate(subjectName: string): string {
 
 /** Appended to `CHAT_STILL_MENU_QUALITY_AND_ANATOMY` (binding for every gallery tile + FAB tier). */
 export const CHAT_LIKENESS_STILL_MENU_IDENTITY_TAIL =
-  "**Every selfie / lewd / FAB preset:** The subject must be **this roster companion** (face + marks + hair + skin + species) per CHARACTER APPEARANCE and the likeness portrait URL when supplied — **not** a different photoreal woman who matches the pose. Forbidden: generic catalog face or lookalike.";
+  "**Every selfie / lewd / FAB preset:** The subject must be **this roster companion** (face + marks + hair + skin + species + **art style**) per CHARACTER APPEARANCE and the likeness portrait URL when supplied — **not** a different person or mismatched medium. Forbidden: generic catalog face, lookalike, or art-style drift.";

@@ -44,3 +44,13 @@ export function effectiveForgeArtStyleLabelForCharacterData(
 }
 
 export const FORGE_ANIME_STYLE_LOCK_REGEX = /ultra-detailed\s+2D\s+anime\s+style/i;
+
+/** Minimal art-style lock for chat menu stills when full theme DNA is suppressed (scene must not inherit packshot). */
+export function buildArtStyleOnlyLockPrefix(characterData: Record<string, unknown>): string {
+  const art = effectiveForgeArtStyleLabelForCharacterData(
+    String(characterData.artStyleLabel ?? characterData.art_style_label ?? ""),
+    characterData,
+  );
+  if (!art) return "";
+  return `ART_STYLE_LOCK (binding — match roster portrait): Render every element in **${art}** — same medium, line weight, shading model, color grading, and material read as the profile portrait. **Forbidden:** drifting to generic stock photography, a different illustration style, or photoreal wash on stylized subjects unless the portrait itself is photoreal.`;
+}

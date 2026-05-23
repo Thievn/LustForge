@@ -11,4 +11,4 @@ export const CHAT_IMAGINE_NO_DEFAULT_CHAIR_BLOCK = `**No default chair (binding)
 
 /** One-line for Imagine execution heads — chat session stills. */
 export const CHAT_LIKENESS_EDGE_SAME_SUBJECT =
-  "**Same roster companion:** facial identity must match the portrait URL + CHARACTER APPEARANCE — not a different photoreal woman. Only pose/room/outfit/light from the menu may differ.";
+  "**Same roster companion:** facial identity and **art-style discipline** must match the portrait URL + CHARACTER APPEARANCE — not a different person or mismatched rendering medium. Only pose/room/outfit/light from the menu may differ.";

@@ -12,8 +12,8 @@ export type ChatStillMenuCategory = {
 };
 
 /** Scene line only — global quality / anatomy / likeness rules are appended in `resolveChatImageGenerationPrompt` when a tile is chosen. */
-const selfie = (scene: string) =>
-  `Natural vertical selfie — **this roster companion only** (not a generic lookalike); lock ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE} to CHARACTER APPEARANCE + portrait likeness URL when supplied; gender presentation from CHARACTER APPEARANCE. **No smartphone, screen, or phone case visible** — arm-extended front-camera POV, mirror reflection, tripod/remote, or partner-held frame. ${scene} Outfit, pose, background, and props belong **only** to this scene — do not copy catalog-card wardrobe, backdrop, or packshot pose.`;
+const momentPortrait = (scene: string) =>
+  `Natural vertical portrait moment — **this roster companion only** (not a generic lookalike); lock ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE} to CHARACTER APPEARANCE + portrait likeness URL when supplied; gender presentation from CHARACTER APPEARANCE. **Not a selfie shot:** no smartphone, camera, screen, lens reflection, or arm-extended front-camera pose — render a natural editorial or candid pose in-scene (standing, leaning, seated on scene furniture, walking, etc.) as described below. ${scene} Outfit, pose, background, and props belong **only** to this scene — do not copy catalog-card wardrobe, backdrop, or packshot pose.`;
 
 const lewd = (scene: string) =>
   `Tasteful editorial-adult shot — **this roster companion only** (not a generic lookalike); lock ${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE} to CHARACTER APPEARANCE + portrait likeness URL when supplied; gender presentation from CHARACTER APPEARANCE. **Suggestive wardrobe only** (lingerie, sheer, short shorts, tanks, wet fabric with coverage, silk sheets) — **no bare skin below tasteful coverage, no visible genitals, no explicit sexual acts, no phone in hand.** ${scene} Wardrobe, pose, and set follow this line only — not the profile marketing still’s environment or costume.`;
@@ -23,7 +23,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "sunset-pier-selfie",
     label: "Sunset Pier Selfie",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Golden hour on a wooden pier, ocean behind them, fresh elegant summer outfit, warm rim light, relaxed camera-aware smile.",
     ),
   },
@@ -31,7 +31,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "cozy-coffee-shop",
     label: "Cozy Coffee Shop",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Inside a cozy coffee shop, warm practical lights, soft smile, casual chic outfit, shallow depth of field with steam and cups in the background.",
     ),
   },
@@ -39,7 +39,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "luxury-hotel-balcony",
     label: "Luxury Hotel Balcony",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Night on a luxury hotel balcony, city bokeh behind them, evening dress or tailored look, cool breeze, cinematic city glow.",
     ),
   },
@@ -47,7 +47,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "vintage-bookstore",
     label: "Vintage Bookstore",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Aisle of a vintage bookstore, shelves of worn spines, reading glasses or tote, intellectual-cute styling, dust-mote window light.",
     ),
   },
@@ -55,7 +55,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "snowy-cabin-window",
     label: "Snowy Cabin Window",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "By a snowy cabin window, soft winter daylight on their face, knit sweater or layered look, pine and frost outside the glass.",
     ),
   },
@@ -63,7 +63,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "neon-city-street",
     label: "Neon City Street",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "On a neon-lit city street at night, reflective wet pavement, urban streetwear or sleek coat, cyber-noir color accents.",
     ),
   },
@@ -71,7 +71,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "wildflower-field",
     label: "Wildflower Field",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "In a wildflower meadow, golden sunlight, wind in hair, sun dress or light layers, open sky and soft hills.",
     ),
   },
@@ -79,7 +79,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "private-jet-cabin",
     label: "Private Jet Cabin",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Inside a private jet cabin, cream leather seats, window strip of clouds, travel-luxe outfit, calm confident expression.",
     ),
   },
@@ -87,7 +87,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "candlelit-dinner-table",
     label: "Candlelit Dinner Table",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "At a romantic candlelit dinner table, warm tapers, wine glass, date-night outfit, intimate but fully clothed framing.",
     ),
   },
@@ -95,7 +95,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "underwater-pool",
     label: "Underwater Pool",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Underwater in a clear resort pool, caustic light ripples, tasteful swimwear, eyes open toward camera, bubbles and turquoise water.",
     ),
   },
@@ -103,7 +103,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "artist-studio",
     label: "Artist Studio",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "In an artist studio with canvases and easels, paint-splatter floor, creative casual outfit, north-light windows.",
     ),
   },
@@ -111,7 +111,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "luxury-spa",
     label: "Luxury Spa",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "In a luxury spa lounge, white robes or spa wrap, orchids and stone textures, serene smile, soft diffused lighting.",
     ),
   },
@@ -119,7 +119,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "train-window",
     label: "Train Window",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "By a train window with scenery streaking past, cozy travel layers, contemplative look, cinematic motion blur outside.",
     ),
   },
@@ -127,7 +127,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "mountain-overlook",
     label: "Mountain Overlook",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "At a mountain overlook railing, crisp air, windbreaker or trail-chic look, sweeping valley vista, midday sun.",
     ),
   },
@@ -135,7 +135,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "vintage-car",
     label: "Vintage Car",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Inside a vintage car bench seat, chrome and leather details, retro sunglasses optional, golden hour through glass.",
     ),
   },
@@ -143,7 +143,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "rooftop-pool",
     label: "Rooftop Pool",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "At a rooftop infinity pool deck, skyline behind, tasteful resort cover-up or swim look appropriate to SFW band, sunglasses.",
     ),
   },
@@ -151,7 +151,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "library-balcony",
     label: "Library Balcony",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "On a grand library balcony overlooking stacks below, academic-glam outfit, carved railings, soft window light.",
     ),
   },
@@ -159,7 +159,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "greenhouse",
     label: "Greenhouse",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "Inside a lush greenhouse, humid glass panels, tropical plants, linen or light botanical styling, dappled green light.",
     ),
   },
@@ -167,7 +167,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "yacht-deck",
     label: "Yacht Deck",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "On a yacht deck at sea, teak and rigging, nautical breeze, resort-casual outfit, sun and salt sparkle.",
     ),
   },
@@ -175,7 +175,7 @@ export const CHAT_SELFIE_STILL_CATEGORIES: readonly ChatStillMenuCategory[] = [
     id: "festival-crowd",
     label: "Festival Crowd",
     tier: "sfw",
-    imagePrompt: selfie(
+    imagePrompt: momentPortrait(
       "In a vibrant festival crowd, colored flags and string lights, playful festival fashion, motion and confetti hints, dusk sky.",
     ),
   },
