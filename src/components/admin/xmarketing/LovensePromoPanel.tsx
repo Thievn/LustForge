@@ -10,11 +10,9 @@ import {
   useAffiliateShop,
 } from "@/hooks/useAffiliateShop";
 import type { DbCompanion } from "@/hooks/useCompanions";
-import { galleryStaticPortraitUrl } from "@/lib/companionMedia";
-import {
-  bakeLovenseCompanionComboCardPngBlob,
-  uploadLovenseComboCard,
-} from "@/lib/bakeLovenseCompanionComboCard";
+import { isVideoPortraitUrl } from "@/lib/companionMedia";
+import { resolveLovenseComboMediaUrls } from "@/lib/lovenseComboMedia";
+import { LovenseCompanionPicker } from "@/components/admin/xmarketing/LovenseCompanionPicker";
 import { bakeLovensePromoCardPngBlob, uploadLovensePromoCard } from "@/lib/bakeLovensePromoCard";
 import {
   appendLovenseShopLinkToTweet,
@@ -43,7 +41,7 @@ const TONES = ["Professional", "Teasing", "Elegant", "Aggressive Hype", "Mysteri
 const POST_STYLES = ["Punchy one-liner", "Drop / FOMO", "Quote-bait"] as const;
 const IMAGE_MODES = [
   { id: "branded_product", label: "Branded product card" },
-  { id: "companion_combo", label: "Companion + Toy combo" },
+  { id: "companion_combo", label: "Companion video + banner (2 files)" },
   { id: "raw_product", label: "Product image as-is" },
 ] as const;
 
@@ -72,7 +70,8 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
   const [editedText, setEditedText] = useState("");
   const [generating, setGenerating] = useState(false);
   const [baking, setBaking] = useState(false);
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [mediaPrepWarning, setMediaPrepWarning] = useState<string | null>(null);
   const [scheduleLocal, setScheduleLocal] = useState("");
   const [postBusy, setPostBusy] = useState(false);
 
@@ -195,47 +194,60 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
     }
   };
 
+  const prepareComboMedia = useCallback(() => {
+    if (!selectedCompanion || !selectedProduct) {
+      toast.error("Select a companion and product first.");
+      return false;
+    }
+    const result = resolveLovenseComboMediaUrls(selectedCompanion, selectedProduct);
+    setMediaUrls(result.mediaUrls);
+    setMediaPrepWarning(result.warnings.length ? result.warnings.join(" ") : null);
+    if (result.mediaUrls.length >= 2) {
+      toast.success("Ready — companion + product banner will attach as 2 items on X.");
+      return true;
+    }
+    toast.error(result.warnings[0] ?? "Could not prepare combo media.");
+    return false;
+  }, [selectedCompanion, selectedProduct]);
+
   const bakeMedia = useCallback(async () => {
     if (!selectedProduct) return;
+    if (imageMode === "companion_combo" || postFormat === "companion_combo") {
+      prepareComboMedia();
+      return;
+    }
     setBaking(true);
+    setMediaPrepWarning(null);
     try {
       let blob: Blob;
       const slug = selectedProduct.id.slice(0, 8);
       if (imageMode === "raw_product" && selectedProduct.image_url) {
-        setMediaUrl(selectedProduct.image_url.split("?")[0]!);
+        setMediaUrls([selectedProduct.image_url.split("?")[0]!]);
         toast.success("Using product image URL.");
         return;
       }
-      if (imageMode === "companion_combo") {
-        if (!selectedCompanion) {
-          toast.error("Select a companion for combo card.");
-          return;
-        }
-        blob = await bakeLovenseCompanionComboCardPngBlob({
-          companion: selectedCompanion,
-          productName: selectedProduct.name,
-          productImageUrl: selectedProduct.image_url,
-          productBadge: selectedProduct.badge,
-        });
-        const url = await uploadLovenseComboCard(supabase, blob, slug);
-        setMediaUrl(url);
-      } else {
-        blob = await bakeLovensePromoCardPngBlob({
-          productName: selectedProduct.name,
-          productDescription: selectedProduct.description,
-          productImageUrl: selectedProduct.image_url,
-          badge: selectedProduct.badge,
-        });
-        const url = await uploadLovensePromoCard(supabase, blob, slug);
-        setMediaUrl(url);
-      }
+      blob = await bakeLovensePromoCardPngBlob({
+        productName: selectedProduct.name,
+        productDescription: selectedProduct.description,
+        productImageUrl: selectedProduct.image_url,
+        badge: selectedProduct.badge,
+      });
+      const url = await uploadLovensePromoCard(supabase, blob, slug);
+      setMediaUrls([url]);
       toast.success("X media baked and uploaded.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Bake failed");
     } finally {
       setBaking(false);
     }
-  }, [imageMode, selectedCompanion, selectedProduct]);
+  }, [imageMode, postFormat, prepareComboMedia, selectedProduct]);
+
+  useEffect(() => {
+    if (postFormat !== "companion_combo" || !selectedCompanion || !selectedProduct) return;
+    const result = resolveLovenseComboMediaUrls(selectedCompanion, selectedProduct);
+    setMediaUrls(result.mediaUrls);
+    setMediaPrepWarning(result.warnings.length ? result.warnings.join(" ") : null);
+  }, [postFormat, selectedCompanion, selectedProduct]);
 
   const postToX = async (scheduled: boolean) => {
     if (!fullTweetForPreview.trim()) {
@@ -255,7 +267,7 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
         publishNow: !scheduledFor,
       };
       if (scheduledFor) body.scheduledFor = scheduledFor;
-      if (mediaUrl) body.mediaUrls = [mediaUrl.split("?")[0]];
+      if (mediaUrls.length) body.mediaUrls = mediaUrls.map((u) => u.split("?")[0]!);
       const { data, error } = await invokeZernioSocial(body);
       if (error) throw error;
       const z = data as { platformPostUrl?: string; publishWarning?: string };
@@ -270,15 +282,47 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
     }
   };
 
-  const previewMedia = mediaUrl ? (
-    <img src={mediaUrl} alt="" className="w-full rounded-xl border border-white/10 object-cover max-h-[280px]" />
-  ) : selectedProduct?.image_url ? (
-    <img
-      src={selectedProduct.image_url}
-      alt=""
-      className="w-full rounded-xl border border-white/10 object-contain max-h-[280px] bg-black/40"
-    />
-  ) : null;
+  const previewMedia =
+    mediaUrls.length > 0 ? (
+      <div
+        className={cn(
+          "grid gap-2 w-full",
+          mediaUrls.length > 1 ? "grid-cols-2 max-w-lg mx-auto" : "grid-cols-1 max-w-md mx-auto",
+        )}
+      >
+        {mediaUrls.map((url, i) => {
+          const isVideo = isVideoPortraitUrl(url);
+          const label = i === 0 && postFormat === "companion_combo" ? "Companion" : i === 1 ? "Banner" : "Media";
+          return (
+            <div key={`${url}-${i}`} className="space-y-1">
+              <p className="text-[9px] uppercase tracking-wider text-[#71767b] text-center">{label}</p>
+              {isVideo ? (
+                <video
+                  src={url}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full rounded-xl border border-white/10 object-contain bg-black max-h-[220px]"
+                />
+              ) : (
+                <img
+                  src={url}
+                  alt=""
+                  className="w-full rounded-xl border border-white/10 object-contain bg-black/40 max-h-[220px]"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    ) : selectedProduct?.image_url ? (
+      <img
+        src={selectedProduct.image_url}
+        alt=""
+        className="w-full rounded-xl border border-white/10 object-contain max-h-[280px] bg-black/40"
+      />
+    ) : null;
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
@@ -289,11 +333,11 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
             <h3 className="font-gothic text-lg text-white">Lovense Promo</h3>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Grok copy + premium X cards for{" "}
+            Grok copy + X media for{" "}
             <a href="/toys" target="_blank" rel="noreferrer" className="text-primary hover:underline">
               /toys
             </a>
-            . Bake landscape cards so tall Lovense banners never crop on X.
+            . Combo posts attach the companion loop video and raw product banner as two separate files on X.
           </p>
 
           <div className="grid sm:grid-cols-2 gap-3">
@@ -360,22 +404,14 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
                 <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
                   Companion
                 </label>
-                <Select
+                <LovenseCompanionPicker
+                  roster={roster}
+                  loading={rosterLoading}
                   value={companionId}
-                  onValueChange={setCompanionId}
-                  disabled={rosterLoading}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Pick companion" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roster.slice(0, 80).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={setCompanionId}
+                  siteOrigin={siteOrigin}
+                  selected={selectedCompanion}
+                />
               </div>
             ) : null}
           </div>
@@ -461,9 +497,24 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
               className="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-60"
             >
               {baking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-              Rebake X image
+              {postFormat === "companion_combo" || imageMode === "companion_combo"
+                ? "Prepare X media"
+                : "Rebake X image"}
             </button>
           </div>
+
+          {mediaPrepWarning ? (
+            <p className="text-[11px] text-amber-200/90 border border-amber-500/25 rounded-lg px-3 py-2 bg-amber-500/10 leading-snug">
+              {mediaPrepWarning}
+            </p>
+          ) : null}
+
+          {postFormat === "companion_combo" && mediaUrls.length >= 2 ? (
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              X will show {mediaUrls.length} attachments side by side — companion loop + Lovense banner (not a baked
+              screenshot).
+            </p>
+          ) : null}
 
           {variations && variations.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -536,12 +587,10 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
       </div>
 
       <div className="xl:col-span-5 xl:sticky xl:top-4 space-y-4">
-        {mediaUrl || selectedProduct?.image_url ? (
-          <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-3">{previewMedia}</div>
-        ) : null}
         {postFormat === "companion_combo" && selectedCompanion ? (
           <p className="text-xs text-muted-foreground px-1">
             Combo: {selectedCompanion.name} + {selectedProduct?.name ?? "product"}
+            {mediaUrls.length >= 2 ? " · 2 attachments ready" : " · preparing media…"}
           </p>
         ) : null}
         <MarketingTweetPreview
@@ -549,7 +598,7 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
           charCount={fullTweetForPreview.length}
           maxChars={280}
           media={previewMedia}
-          imageUrl={!previewMedia && selectedCompanion ? galleryStaticPortraitUrl(selectedCompanion, selectedCompanion.id) : null}
+          mediaBlockedReason={mediaPrepWarning}
         />
       </div>
     </div>
