@@ -11,13 +11,18 @@ import {
 } from "@/hooks/useAffiliateShop";
 import type { DbCompanion } from "@/hooks/useCompanions";
 import { isVideoPortraitUrl } from "@/lib/companionMedia";
-import { resolveLovenseComboMediaUrls } from "@/lib/lovenseComboMedia";
+import {
+  mediaUrlsMixVideoAndImages,
+  resolveLovensePromoMediaUrls,
+  type LovenseXMediaStrategy,
+} from "@/lib/lovenseComboMedia";
 import { LovenseCompanionPicker } from "@/components/admin/xmarketing/LovenseCompanionPicker";
 import { bakeLovensePromoCardPngBlob, uploadLovensePromoCard } from "@/lib/bakeLovensePromoCard";
 import {
   appendLovenseShopLinkToTweet,
   defaultShopUrl,
   LOVENSE_CAMPAIGN_TEMPLATES,
+  LOVENSE_COMBO_MEDIA_STRATEGIES,
   LOVENSE_POST_FORMATS,
   type LovenseCampaignTemplate,
   type LovensePostFormat,
@@ -41,11 +46,13 @@ const TONES = ["Professional", "Teasing", "Elegant", "Aggressive Hype", "Mysteri
 const POST_STYLES = ["Punchy one-liner", "Drop / FOMO", "Quote-bait"] as const;
 const IMAGE_MODES = [
   { id: "branded_product", label: "Branded product card" },
-  { id: "companion_combo", label: "Companion video + banner (2 files)" },
   { id: "raw_product", label: "Product image as-is" },
 ] as const;
 
 type ImageMode = (typeof IMAGE_MODES)[number]["id"];
+
+const X_MEDIA_LIMIT_NOTE =
+  "X (via Zernio) allows either 1 video or up to 4 images per tweet — not video + image together.";
 
 type Props = {
   roster: DbCompanion[];
@@ -73,7 +80,9 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [mediaPrepWarning, setMediaPrepWarning] = useState<string | null>(null);
   const [scheduleLocal, setScheduleLocal] = useState("");
-  const [postBusy, setPostBusy] = useState(false);
+  const [comboMediaStrategy, setComboMediaStrategy] = useState<LovenseXMediaStrategy>("companion_video");
+  const [teaseUseVideo, setTeaseUseVideo] = useState(true);
+  const [xPlatformNote, setXPlatformNote] = useState<string | null>(null);
 
   const activeProducts = useMemo(
     () => products.filter((p) => p.is_active).sort((a, b) => a.sort_order - b.sort_order),
@@ -103,13 +112,38 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
     if (tpl) setTone(tpl.defaultTone);
   }, [campaignTemplate]);
 
-  useEffect(() => {
-    if (postFormat === "companion_combo") {
-      setImageMode("companion_combo");
-    } else if (imageMode === "companion_combo") {
-      setImageMode("branded_product");
+  const needsCompanion = postFormat === "companion_combo" || postFormat === "companion_tease";
+
+  const activeMediaStrategy = useMemo((): LovenseXMediaStrategy | null => {
+    if (postFormat === "companion_tease") return teaseUseVideo ? "companion_video" : "companion_still";
+    if (postFormat === "companion_combo") return comboMediaStrategy;
+    return null;
+  }, [postFormat, comboMediaStrategy, teaseUseVideo]);
+
+  const applyPromoMedia = useCallback(() => {
+    if (!activeMediaStrategy || !selectedProduct) return null;
+    if (!selectedCompanion) {
+      setMediaUrls([]);
+      setMediaPrepWarning("Select a companion.");
+      setXPlatformNote(null);
+      return null;
     }
-  }, [postFormat, imageMode]);
+    const result = resolveLovensePromoMediaUrls({
+      strategy: activeMediaStrategy,
+      companion: selectedCompanion,
+      product: selectedProduct,
+    });
+    setMediaUrls(result.mediaUrls);
+    setMediaPrepWarning(result.warnings.length ? result.warnings.join(" ") : null);
+    setXPlatformNote(result.xPlatformNote);
+    return result;
+  }, [activeMediaStrategy, selectedCompanion, selectedProduct]);
+
+  useEffect(() => {
+    if (needsCompanion && selectedCompanion && selectedProduct) {
+      applyPromoMedia();
+    }
+  }, [needsCompanion, selectedCompanion?.id, selectedProduct?.id, activeMediaStrategy, applyPromoMedia]);
 
   const ctaLine = useMemo(() => {
     if (campaignTemplate === "sync_focus") return "Pair your toy — sync in LustForge chat";
@@ -147,8 +181,8 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
       toast.error("Select an active affiliate product first.");
       return;
     }
-    if (postFormat === "companion_combo" && !selectedCompanion) {
-      toast.error("Select a companion for combo posts.");
+    if (needsCompanion && !selectedCompanion) {
+      toast.error("Select a companion first.");
       return;
     }
     setGenerating(true);
@@ -194,30 +228,36 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
     }
   };
 
-  const prepareComboMedia = useCallback(() => {
-    if (!selectedCompanion || !selectedProduct) {
-      toast.error("Select a companion and product first.");
-      return false;
-    }
-    const result = resolveLovenseComboMediaUrls(selectedCompanion, selectedProduct);
-    setMediaUrls(result.mediaUrls);
-    setMediaPrepWarning(result.warnings.length ? result.warnings.join(" ") : null);
-    if (result.mediaUrls.length >= 2) {
-      toast.success("Ready — companion + product banner will attach as 2 items on X.");
+  const preparePromoMedia = useCallback(() => {
+    if (needsCompanion) {
+      const result = applyPromoMedia();
+      if (!result?.mediaUrls.length) {
+        toast.error(result?.warnings[0] ?? "Could not prepare media.");
+        return false;
+      }
+      if (mediaUrlsMixVideoAndImages(result.mediaUrls)) {
+        toast.error("Invalid for X: cannot mix video and images.");
+        return false;
+      }
+      toast.success(
+        result.mediaUrls.length === 1
+          ? "Ready — 1 attachment for X."
+          : `Ready — ${result.mediaUrls.length} images for X.`,
+      );
       return true;
     }
-    toast.error(result.warnings[0] ?? "Could not prepare combo media.");
     return false;
-  }, [selectedCompanion, selectedProduct]);
+  }, [applyPromoMedia, needsCompanion]);
 
   const bakeMedia = useCallback(async () => {
     if (!selectedProduct) return;
-    if (imageMode === "companion_combo" || postFormat === "companion_combo") {
-      prepareComboMedia();
+    if (needsCompanion) {
+      preparePromoMedia();
       return;
     }
     setBaking(true);
     setMediaPrepWarning(null);
+    setXPlatformNote(null);
     try {
       let blob: Blob;
       const slug = selectedProduct.id.slice(0, 8);
@@ -240,18 +280,15 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
     } finally {
       setBaking(false);
     }
-  }, [imageMode, postFormat, prepareComboMedia, selectedProduct]);
-
-  useEffect(() => {
-    if (postFormat !== "companion_combo" || !selectedCompanion || !selectedProduct) return;
-    const result = resolveLovenseComboMediaUrls(selectedCompanion, selectedProduct);
-    setMediaUrls(result.mediaUrls);
-    setMediaPrepWarning(result.warnings.length ? result.warnings.join(" ") : null);
-  }, [postFormat, selectedCompanion, selectedProduct]);
+  }, [imageMode, needsCompanion, preparePromoMedia, selectedProduct]);
 
   const postToX = async (scheduled: boolean) => {
     if (!fullTweetForPreview.trim()) {
       toast.error("Generate or write tweet copy first.");
+      return;
+    }
+    if (mediaUrls.length && mediaUrlsMixVideoAndImages(mediaUrls)) {
+      toast.error("X cannot publish video + images together. Switch to Companion loop video or Two images only.");
       return;
     }
     setPostBusy(true);
@@ -284,18 +321,20 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
 
   const previewMedia =
     mediaUrls.length > 0 ? (
-      <div
-        className={cn(
-          "grid gap-2 w-full",
-          mediaUrls.length > 1 ? "grid-cols-2 max-w-lg mx-auto" : "grid-cols-1 max-w-md mx-auto",
-        )}
-      >
+      <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
         {mediaUrls.map((url, i) => {
           const isVideo = isVideoPortraitUrl(url);
-          const label = i === 0 && postFormat === "companion_combo" ? "Companion" : i === 1 ? "Banner" : "Media";
+          const label =
+            mediaUrls.length === 1
+              ? isVideo
+                ? "Video"
+                : "Image"
+              : i === 0
+                ? "Image 1"
+                : "Image 2";
           return (
             <div key={`${url}-${i}`} className="space-y-1">
-              <p className="text-[9px] uppercase tracking-wider text-[#71767b] text-center">{label}</p>
+              <p className="text-[9px] uppercase tracking-wider text-[#71767b]">{label}</p>
               {isVideo ? (
                 <video
                   src={url}
@@ -303,20 +342,20 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
                   loop
                   muted
                   playsInline
-                  className="w-full rounded-xl border border-white/10 object-contain bg-black max-h-[220px]"
+                  className="w-full rounded-lg border border-white/10 bg-black"
                 />
               ) : (
                 <img
                   src={url}
                   alt=""
-                  className="w-full rounded-xl border border-white/10 object-contain bg-black/40 max-h-[220px]"
+                  className="w-full h-auto rounded-lg border border-white/10 bg-black/40"
                 />
               )}
             </div>
           );
         })}
       </div>
-    ) : selectedProduct?.image_url ? (
+    ) : selectedProduct?.image_url && postFormat === "product_only" ? (
       <img
         src={selectedProduct.image_url}
         alt=""
@@ -337,7 +376,7 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
             <a href="/toys" target="_blank" rel="noreferrer" className="text-primary hover:underline">
               /toys
             </a>
-            . Combo posts attach the companion loop video and raw product banner as two separate files on X.
+            . {X_MEDIA_LIMIT_NOTE}
           </p>
 
           <div className="grid sm:grid-cols-2 gap-3">
@@ -374,6 +413,9 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
                   ))}
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-[10px] text-muted-foreground leading-snug">
+                {LOVENSE_POST_FORMATS.find((f) => f.id === postFormat)?.hint}
+              </p>
             </div>
           </div>
 
@@ -399,7 +441,7 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
                 </SelectContent>
               </Select>
             </div>
-            {postFormat === "companion_combo" ? (
+            {needsCompanion ? (
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
                   Companion
@@ -415,6 +457,44 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
               </div>
             ) : null}
           </div>
+
+          {postFormat === "companion_tease" ? (
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                Companion media
+              </label>
+              <select
+                value={teaseUseVideo ? "video" : "still"}
+                onChange={(e) => setTeaseUseVideo(e.target.value === "video")}
+                className="mt-1 w-full rounded-xl bg-black/60 border border-border px-3 py-2 text-sm"
+              >
+                <option value="video">Loop video (animated on X)</option>
+                <option value="still">Still portrait</option>
+              </select>
+            </div>
+          ) : null}
+
+          {postFormat === "companion_combo" ? (
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                X media strategy
+              </label>
+              <select
+                value={comboMediaStrategy}
+                onChange={(e) => setComboMediaStrategy(e.target.value as LovenseXMediaStrategy)}
+                className="mt-1 w-full rounded-xl bg-black/60 border border-border px-3 py-2 text-sm"
+              >
+                {LOVENSE_COMBO_MEDIA_STRATEGIES.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[10px] text-muted-foreground leading-snug">
+                {LOVENSE_COMBO_MEDIA_STRATEGIES.find((s) => s.id === comboMediaStrategy)?.hint}
+              </p>
+            </div>
+          ) : null}
 
           <div className="grid sm:grid-cols-3 gap-3">
             <div>
@@ -447,6 +527,7 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
                 ))}
               </select>
             </div>
+            {postFormat === "product_only" ? (
             <div>
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
                 X image
@@ -455,7 +536,6 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
                 value={imageMode}
                 onChange={(e) => setImageMode(e.target.value as ImageMode)}
                 className="mt-1 w-full rounded-xl bg-black/60 border border-border px-3 py-2 text-sm"
-                disabled={postFormat === "companion_combo"}
               >
                 {IMAGE_MODES.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -464,6 +544,9 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
                 ))}
               </select>
             </div>
+            ) : (
+            <div className="hidden sm:block" aria-hidden />
+            )}
           </div>
 
           <div>
@@ -497,11 +580,15 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
               className="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-60"
             >
               {baking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-              {postFormat === "companion_combo" || imageMode === "companion_combo"
-                ? "Prepare X media"
-                : "Rebake X image"}
+              {needsCompanion ? "Prepare X media" : "Rebake X image"}
             </button>
           </div>
+
+          {xPlatformNote ? (
+            <p className="text-[11px] text-muted-foreground border border-white/[0.06] rounded-lg px-3 py-2 leading-snug">
+              {xPlatformNote}
+            </p>
+          ) : null}
 
           {mediaPrepWarning ? (
             <p className="text-[11px] text-amber-200/90 border border-amber-500/25 rounded-lg px-3 py-2 bg-amber-500/10 leading-snug">
@@ -509,10 +596,10 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
             </p>
           ) : null}
 
-          {postFormat === "companion_combo" && mediaUrls.length >= 2 ? (
+          {needsCompanion && mediaUrls.length > 0 ? (
             <p className="text-[11px] text-muted-foreground leading-snug">
-              X will show {mediaUrls.length} attachments side by side — companion loop + Lovense banner (not a baked
-              screenshot).
+              {mediaUrls.length} attachment{mediaUrls.length === 1 ? "" : "s"} queued for Zernio
+              {mediaUrls.some(isVideoPortraitUrl) ? " (video)" : " (images)"}.
             </p>
           ) : null}
 
@@ -587,10 +674,11 @@ export function LovensePromoPanel({ roster, rosterLoading, siteOrigin }: Props) 
       </div>
 
       <div className="xl:col-span-5 xl:sticky xl:top-4 space-y-4">
-        {postFormat === "companion_combo" && selectedCompanion ? (
+        {needsCompanion && selectedCompanion ? (
           <p className="text-xs text-muted-foreground px-1">
-            Combo: {selectedCompanion.name} + {selectedProduct?.name ?? "product"}
-            {mediaUrls.length >= 2 ? " · 2 attachments ready" : " · preparing media…"}
+            {postFormat === "companion_tease" ? "Tease" : "Combo"}: {selectedCompanion.name}
+            {selectedProduct ? ` + ${selectedProduct.name}` : ""}
+            {mediaUrls.length ? ` · ${mediaUrls.length} attachment${mediaUrls.length === 1 ? "" : "s"} ready` : ""}
           </p>
         ) : null}
         <MarketingTweetPreview

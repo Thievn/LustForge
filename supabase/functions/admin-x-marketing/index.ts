@@ -155,7 +155,7 @@ function buildLovenseHashtagPool(args: {
   if (tpl === "sync_focus") add("AppControlled");
   if (tpl === "fomo") add("ComingSoon");
   if (tpl === "product_spotlight") add(titleToTag(args.productName));
-  if (args.postFormat === "companion_combo") add("AICompanion");
+  if (args.postFormat === "companion_combo" || args.postFormat === "companion_tease") add("AICompanion");
   return out;
 }
 
@@ -514,9 +514,11 @@ Deno.serve(async (req) => {
       const templateLine =
         LOVENSE_TEMPLATE_GUIDE[campaignTemplate] ?? LOVENSE_TEMPLATE_GUIDE.sync_focus;
       const formatLine =
-        postFormat === "companion_combo" && companionName
-          ? `Post format: companion + toy combo. Weave ${companionName} (${companionTagline || "AI companion"}) pairing with Lovense hardware in chat — tasteful, premium.`
-          : "Post format: product-focused Lovense shop promo for LustForge /toys.";
+        postFormat === "companion_tease" && companionName
+          ? `Post format: companion tease. Lead with ${companionName} (${companionTagline || "AI companion"}) — visual is the companion; tease pairing with ${productName} and Lovense sync in chat. Do not describe the product image — it is not attached.`
+          : postFormat === "companion_combo" && companionName
+            ? `Post format: companion + toy. Weave ${companionName} (${companionTagline || "AI companion"}) with ${productName} and Lovense hardware sync — tasteful, premium.`
+            : "Post format: product-focused Lovense shop promo for LustForge /toys.";
 
       const system =
         `You are the lead social strategist for LustForge AI promoting the Lovense affiliate shop (/toys). ` +
