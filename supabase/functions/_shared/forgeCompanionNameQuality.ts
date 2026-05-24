@@ -28,6 +28,7 @@ const GOTH_STEMS = [
   "grimh", "dreadm", "voidb", "gloomw", "cinderf", "ebonm", "ironb", "lostg", "nightmar", "darkh",
   "hollowm", "jagged", "korvin", "blightf", "failf", "gearlock", "shadowveil", "grimdawn",
   "failfrost", "nightbane", "dreadmarch", "shadowmere", "mourningveil", "gloomwraith", "thornmere",
+  "twinveil", "twinned",
   "nightfall", "starfall", "moonfall", "doom", "dooms", "malef", "malach",
 ];
 

@@ -101,6 +101,8 @@ const GOTH_STEMS = [
   "blightf",
   "failf",
   "gearlock",
+  "twinveil",
+  "twinned",
   "shadowveil",
   "grimdawn",
   "failfrost",

@@ -27,11 +27,11 @@ export function NexusMergeRitualOverlay({
   onChatMinimumMet?: () => void;
   onContinueInBackground?: () => void;
 }) {
-  const phaseTitle = ritualPhase === "veil" ? "Twinned veil" : "Living circuit";
+  const phaseTitle = ritualPhase === "veil" ? "Merge in progress" : "Almost ready";
   const phaseSubtitle =
     ritualPhase === "veil"
-      ? "The forge drinks two silhouettes down to one spark — listen to their hunger before anything steps into the light."
-      : "Still heat wakes into motion — the weave crystallizes under violet glass.";
+      ? "Two companions become one in the Nexus. Read their dialogue while the forge works — she appears when the merge finishes."
+      : "Your new companion is taking shape. Her loop portrait renders next.";
 
   return (
     <motion.div
@@ -50,7 +50,7 @@ export function NexusMergeRitualOverlay({
       <div className="relative z-[2] mx-auto w-full max-w-6xl space-y-4 sm:space-y-5">
         <div className="rounded-2xl border border-cyan-500/10 border-b-fuchsia-500/15 bg-[#050308]/72 px-4 py-3 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:px-6 sm:py-4">
           <div className="space-y-1.5 text-center">
-            <p className="text-[9px] font-medium uppercase tracking-[0.32em] text-cyan-200/45 sm:text-[10px]">Nexus forge · twin hunger</p>
+            <p className="text-[9px] font-medium uppercase tracking-[0.32em] text-cyan-200/45 sm:text-[10px]">Nexus Forge · merging</p>
             <h3 className="font-gothic text-xl text-white/95 sm:text-2xl md:text-3xl">
               <span className="bg-gradient-to-r from-cyan-200/95 via-white to-fuchsia-200/90 bg-clip-text text-transparent">
                 {phaseTitle}
@@ -98,9 +98,9 @@ export function NexusMergeRitualOverlay({
             "mx-auto max-w-2xl px-2 text-center text-[10px] font-normal normal-case leading-relaxed tracking-normal text-muted-foreground/80 sm:text-[11px]",
           )}
         >
-          This weave runs on the server — lock your phone, lose signal, or step away. When it finishes, your ascendant
-          appears in your vault; if the forge cannot close the weave, your Forge Coins refund automatically the next time
-          you open Nexus or your vault refreshes.
+          This runs on the server — you can lock your phone or step away. When it finishes, your new companion
+          appears in your vault. If the merge fails, your Forge Coins refund automatically the next time you open
+          Nexus or refresh your vault.
         </p>
       </div>
     </motion.div>

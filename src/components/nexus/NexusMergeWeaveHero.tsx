@@ -52,7 +52,7 @@ function MergeAnchor({ who, side }: { who: DbCompanion; side: "alpha" | "omega" 
     side === "alpha"
       ? "ring-cyan-400/40 shadow-[0_0_32px_rgba(34,211,238,0.28)]"
       : "ring-fuchsia-500/45 shadow-[0_0_34px_rgba(236,72,153,0.3)]";
-  const veinLabel = side === "alpha" ? "First hunger" : "Answering hunger";
+  const veinLabel = side === "alpha" ? "Parent I" : "Parent II";
 
   return (
     <motion.div
@@ -93,8 +93,8 @@ export function NexusMergeWeaveHero({
 }) {
   const blurb =
     mergeSubphase === "fusion"
-      ? "Two hungers lean into the same dark — ink and ache braid until only one silhouette remains."
-      : "The still shivers awake — motion crawls the sigil until her pulse matches yours on the glass.";
+      ? "Two parents, one outcome — the Nexus forges a new companion between them."
+      : "Her loop portrait is rendering. Just a little longer.";
 
   return (
     <div className="w-full max-w-3xl px-1 sm:max-w-4xl sm:px-2 md:max-w-5xl">

@@ -74,10 +74,10 @@ export function NexusBreedingDirtyChat({
 
   const mergeLoadingLine = useMemo(() => {
     const lines = [
-      "The veil listens — twin voices finding their rhythm…",
-      "Forging whispers between bloodlines under violet glass…",
-      "Grok threads their hunger into words the Nexus can hear…",
-      "Two silhouettes trade secrets before the third steps through…",
+      "They’re talking — give the forge a moment…",
+      "Pulling their lines from the Nexus…",
+      "Dialogue loading — stay on this screen…",
+      "The forge is writing what they’d say to each other…",
     ];
     return lines[Math.floor(Math.random() * lines.length)]!;
   }, [parentA.id, parentB.id, active]);
@@ -237,10 +237,10 @@ export function NexusBreedingDirtyChat({
         )}
       >
         {isRitual
-          ? "Live weave · Grok-scripted · vanishes when the rite ends"
+          ? "Rite dialogue · ephemeral · clears when the rite ends"
           : isMergeWeave
-            ? "Twin-thread chatter · Grok · not saved to chat history"
-            : "Private thread · Grok · vanishes when the merge ends"}
+            ? "Merge dialogue · private · not saved to chat"
+            : "Private dialogue · clears when the merge ends"}
       </p>
       <div
         className={cn(
@@ -314,11 +314,7 @@ export function NexusBreedingDirtyChat({
       <div className="min-h-[140px] flex-1 space-y-2.5 overflow-y-auto px-3 py-3 sm:space-y-3 sm:px-4">
         {fetchState === "loading" ? (
           <p className="text-center text-[12px] text-muted-foreground/80 animate-pulse">
-            {isMergeWeave
-              ? mergeLoadingLine
-              : isRitual
-                ? "The rite summons their voices from the dark…"
-                : "Spinning a private thread between them…"}
+            {isMergeWeave ? mergeLoadingLine : "Loading their dialogue…"}
           </p>
         ) : null}
         {fetchState === "error" && errMsg ? (
