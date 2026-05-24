@@ -4,7 +4,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireSessionUser } from "../_shared/requireSessionUser.ts";
 import { resolveXaiApiKey } from "../_shared/resolveXaiApiKey.ts";
-import { defaultGrokProductChatModel, extractGrokAssistantText, grokChatCompletionRaw } from "../_shared/xaiGrokChatRaw.ts";
+import {
+  defaultGrokEdgeChatModel,
+  defaultGrokProductChatModel,
+  extractGrokAssistantText,
+  grokChatCompletionRaw,
+} from "../_shared/xaiGrokChatRaw.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +61,49 @@ function normalizeScriptLines(raw: unknown, targetMin: number): Array<{ kind: "s
   return out;
 }
 
+function nexusBreedingModel(getEnv: (name: string) => string | undefined): string {
+  return (
+    getEnv("GROK_NEXUS_BREEDING_MODEL")?.trim() ||
+    getEnv("GROK_ADMIN_CHAT_MODEL")?.trim() ||
+    defaultGrokProductChatModel(getEnv)
+  );
+}
+
+function buildSystemPrompt(
+  surface: "nexus_merge" | "ritual",
+  targetLineCount: number,
+  nameA: string,
+  nameB: string,
+): string {
+  const baseRules = `Output **only** valid JSON (no markdown, no code fences, no commentary). Shape:
+{"lines":[{"kind":"speech"|"narration","text":"string"}, ...]}
+
+Rules:
+- Produce at least ${targetLineCount} entries in "lines" (more is fine; cap at 200).
+- kind "speech" = in-character dialogue from one of the two lovers only — first person, short (aim under 220 characters), natural cadence, continuous back-and-forth as if mid-act.
+- kind "narration" = brief third-person scene beat (bodies, motion, heat, touch, breath, sweat) — one short sentence or clause each time. Use regularly but less than half of all lines.
+- **Speaking order:** list "speech" lines in strict alternation: first speech is always ${nameA} (first thread), second speech is ${nameB} (second thread), then ${nameA}, then ${nameB}, and so on. Do **not** include a "speaker" field.
+- Open with 1–2 "narration" lines, then begin alternating speech.
+- Never use the words: child, baby, offspring, kid (any casing).
+- Stay in voice: ${nameA} vs ${nameB} — personalities, kinks, and appearance below.
+- JSON must be parseable; escape internal double quotes in strings.`;
+
+  if (surface === "nexus_merge") {
+    return `You write hardcore adults-only pornographic fantasy dialogue for a private fictional "Nexus breeding" scene between two consenting adult characters (no minors, no non-consent, no coercion).
+${baseRules}
+
+Tone for this surface (Nexus Forge — premium ritual):
+- Raw, vulgar, explicit dirty talk — graphic body parts, fucking, moaning, wetness, grip, rhythm. No euphemisms, no fade-to-black, no poetic softening.
+- Speech lines should feel like filthy sexting mid-sex: profanity welcome, kink-aware, hungry, shameless.
+- Weave each parent's listed kinks and personality into how they speak and what they want.
+- Narration beats stay physical and explicit (skin, breath, motion), not abstract romance.`;
+  }
+
+  return `You write explicit adults-only fantasy dialogue for a private fictional "Nexus breeding" scene between two consenting adult characters (no minors, no non-consent).
+${baseRules}
+- kind "speech" = lewd and continuous, as if they are mid-act with each other.`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -63,7 +111,12 @@ Deno.serve(async (req) => {
   if ("response" in auth) return auth.response;
   const userId = auth.user.id;
 
-  let body: { parentAId?: string; parentBId?: string; targetLineCount?: number };
+  let body: {
+    parentAId?: string;
+    parentBId?: string;
+    targetLineCount?: number;
+    surface?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -80,6 +133,7 @@ Deno.serve(async (req) => {
     ? Math.round(body.targetLineCount)
     : 72;
   const targetLineCount = Math.max(40, Math.min(170, rawTarget));
+  const surface: "nexus_merge" | "ritual" = body.surface === "nexus_merge" ? "nexus_merge" : "ritual";
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return json({ error: "Server misconfigured" }, 500);
@@ -93,7 +147,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const { data: rows, error: qErr } = await supabase
     .from("custom_characters")
-    .select("id,user_id,name,gender,role,personality,kinks,appearance")
+    .select("id,user_id,name,gender,role,personality,kinks,appearance,tagline,bio")
     .in("id", [idA, idB]);
 
   if (qErr || !rows || rows.length !== 2) {
@@ -113,27 +167,19 @@ Deno.serve(async (req) => {
     name: String(r.name ?? "").slice(0, 80),
     gender: String(r.gender ?? "").slice(0, 40),
     role: String(r.role ?? "").slice(0, 40),
+    tagline: String(r.tagline ?? "").replace(/\s+/g, " ").trim().slice(0, 160),
     personality: String(r.personality ?? "").replace(/\s+/g, " ").trim().slice(0, 520),
+    appearance: String(r.appearance ?? "").replace(/\s+/g, " ").trim().slice(0, 420),
+    bio: String(r.bio ?? "").replace(/\s+/g, " ").trim().slice(0, 360),
     kinks: Array.isArray(r.kinks) ? (r.kinks as unknown[]).map((x) => String(x)).slice(0, 12).join(", ") : "",
   });
 
-  const system = `You write explicit adults-only fantasy dialogue for a private fictional "Nexus breeding" scene between two consenting adult characters (no minors, no non-consent).
-Output **only** valid JSON (no markdown, no code fences, no commentary). Shape:
-{"lines":[{"kind":"speech"|"narration","text":"string"}, ...]}
-
-Rules:
-- Produce at least ${targetLineCount} entries in "lines" (more is fine; cap at 200).
-- kind "speech" = in-character dialogue from one of the two lovers only — first person, short (aim under 200 characters), natural texting cadence, lewd and continuous, as if they are mid-act with each other.
-- kind "narration" = brief third-person scene beat (bodies, motion, heat, touch, breath) — one short sentence or clause each time, no quotation marks framing as dialogue. Use these regularly but less than half of all lines.
-- **Speaking order:** list "speech" lines in strict alternation: first speech is always ${nameA} (first thread), second speech is ${nameB} (second thread), then ${nameA}, then ${nameB}, and so on. Do **not** include a "speaker" field — alternation is by order of speech lines only.
-- Open with 1–2 "narration" lines, then begin alternating speech.
-- Never use the words: child, baby, offspring, kid (any casing).
-- Stay in voice: ${nameA} vs ${nameB} — personalities below.
-- JSON must be parseable; escape internal double quotes in strings.`;
-
+  const system = buildSystemPrompt(surface, targetLineCount, nameA, nameB);
   const userMsg = `THREAD I (${nameA}):\n${JSON.stringify(brief(pa))}\n\nTHREAD II (${nameB}):\n${JSON.stringify(brief(pb))}\n\nGenerate the JSON now.`;
 
-  const model = defaultGrokProductChatModel((n) => Deno.env.get(n));
+  const model = surface === "nexus_merge"
+    ? nexusBreedingModel((n) => Deno.env.get(n))
+    : defaultGrokEdgeChatModel((n) => Deno.env.get(n));
 
   const res = await grokChatCompletionRaw({
     model,
@@ -141,7 +187,7 @@ Rules:
       { role: "system", content: system.slice(0, 120_000) },
       { role: "user", content: userMsg.slice(0, 24_000) },
     ],
-    temperature: 0.88,
+    temperature: surface === "nexus_merge" ? 0.92 : 0.88,
     max_tokens: 12_000,
   }, apiKey);
 
@@ -171,5 +217,5 @@ Rules:
     return json({ error: "Model returned an unusable script — try again." }, 502);
   }
 
-  return json({ lines, model });
+  return json({ lines, model, surface });
 });

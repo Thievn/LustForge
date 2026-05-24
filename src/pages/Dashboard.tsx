@@ -37,6 +37,7 @@ import { normalizeCompanionRarity } from "@/lib/companionRarity";
 import { Progress } from "@/components/ui/progress";
 import { useCompanions, dbToCompanion } from "@/hooks/useCompanions";
 import { useVaultCollection } from "@/hooks/useVaultCollection";
+import { invalidateProfileWallet, useProfileWallet } from "@/hooks/useProfileWallet";
 import { companions, type Companion } from "@/data/companions";
 import { isPlatformAdmin } from "@/config/auth";
 import {
@@ -112,9 +113,11 @@ export default function Dashboard() {
   const [notifyMarketing, setNotifyMarketing] = useState(false);
   const [privateMode, setPrivateMode] = useState(true);
   const [profileDisplayName, setProfileDisplayName] = useState<string | null>(null);
-  const [tokensBalance, setTokensBalance] = useState(0);
-  const [chatDailyQuotaDate, setChatDailyQuotaDate] = useState<string | null>(null);
-  const [chatDailyQuotaUsed, setChatDailyQuotaUsed] = useState<number | null>(null);
+
+  const { data: profileWallet } = useProfileWallet(user?.id);
+  const tokensBalance = profileWallet?.tokens_balance ?? 0;
+  const chatDailyQuotaDate = profileWallet?.chat_daily_quota_date ?? null;
+  const chatDailyQuotaUsed = profileWallet?.chat_daily_quota_used ?? null;
 
   const { vaultCompanions, isLoading: vaultLoading } = useVaultCollection(user?.id ?? null, dbCompanions);
   const { data: insights, isLoading: insightsLoading } = useDashboardInsights(user?.id ?? null);
@@ -238,15 +241,14 @@ export default function Dashboard() {
 
   const refreshProfileCredits = useCallback(async () => {
     if (!user?.id) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("tokens_balance, chat_daily_quota_date, chat_daily_quota_used")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    setTokensBalance(typeof data?.tokens_balance === "number" ? data.tokens_balance : 0);
-    setChatDailyQuotaDate(data?.chat_daily_quota_date ?? null);
-    setChatDailyQuotaUsed(typeof data?.chat_daily_quota_used === "number" ? data.chat_daily_quota_used : null);
-  }, [user?.id]);
+    await invalidateProfileWallet(queryClient, user.id);
+  }, [queryClient, user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      void invalidateProfileWallet(queryClient, user.id);
+    }
+  }, [activeNav, queryClient, user?.id]);
 
   useWindowVisibleRefresh(
     () => {
@@ -271,23 +273,20 @@ export default function Dashboard() {
         setUser(session.user);
         let { data: prof } = await supabase
           .from("profiles")
-          .select("display_name, tokens_balance, chat_daily_quota_date, chat_daily_quota_used")
+          .select("display_name")
           .eq("user_id", session.user.id)
           .maybeSingle();
         if (!prof) {
           await supabase.from("profiles").insert({ user_id: session.user.id });
           const again = await supabase
             .from("profiles")
-            .select("display_name, tokens_balance, chat_daily_quota_date, chat_daily_quota_used")
+            .select("display_name")
             .eq("user_id", session.user.id)
             .maybeSingle();
           prof = again.data;
         }
         if (!cancelled) {
           setProfileDisplayName(prof?.display_name ?? null);
-          setTokensBalance(typeof prof?.tokens_balance === "number" ? prof.tokens_balance : 0);
-          setChatDailyQuotaDate(prof?.chat_daily_quota_date ?? null);
-          setChatDailyQuotaUsed(typeof prof?.chat_daily_quota_used === "number" ? prof.chat_daily_quota_used : null);
         }
         await refreshToy(session.user.id);
       }
@@ -302,22 +301,19 @@ export default function Dashboard() {
       void (async () => {
         let { data: prof } = await supabase
           .from("profiles")
-          .select("display_name, tokens_balance, chat_daily_quota_date, chat_daily_quota_used")
+          .select("display_name")
           .eq("user_id", session.user.id)
           .maybeSingle();
         if (!prof) {
           await supabase.from("profiles").insert({ user_id: session.user.id });
           const again = await supabase
             .from("profiles")
-            .select("display_name, tokens_balance, chat_daily_quota_date, chat_daily_quota_used")
+            .select("display_name")
             .eq("user_id", session.user.id)
             .maybeSingle();
           prof = again.data;
         }
         setProfileDisplayName(prof?.display_name ?? null);
-        setTokensBalance(typeof prof?.tokens_balance === "number" ? prof.tokens_balance : 0);
-        setChatDailyQuotaDate(prof?.chat_daily_quota_date ?? null);
-        setChatDailyQuotaUsed(typeof prof?.chat_daily_quota_used === "number" ? prof.chat_daily_quota_used : null);
       })();
       void refreshToy(session.user.id);
     });

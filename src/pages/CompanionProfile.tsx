@@ -6,7 +6,8 @@ import { stripDiscoverForgeTemplateCanonicalLoop } from "@/lib/discoverTemplateM
 import { useCompanionGeneratedImages } from "@/hooks/useCompanionGeneratedImages";
 import { useCompanions, dbToCompanion } from "@/hooks/useCompanions";
 import { useForgeCompanionOverlay } from "@/hooks/useForgeCompanionOverlay";
-import { VAULT_COLLECTION_QUERY_KEY } from "@/hooks/useVaultCollection";
+import { useProfileWallet, invalidateProfileWallet } from "@/hooks/useProfileWallet";
+import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 import { PURCHASED_COMPANION_IDS_QUERY_KEY } from "@/hooks/usePurchasedCompanionIds";
 import Navbar from "@/components/Navbar";
 import ParticleBackground from "@/components/ParticleBackground";
@@ -197,8 +198,17 @@ const CompanionProfile = () => {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [autoSpendChatImages, setAutoSpendChatImagesState] = useState(false);
   const [dropClickTracked, setDropClickTracked] = useState(false);
-  const [fcBalanceProfile, setFcBalanceProfile] = useState<number | null>(null);
-  const [discoverFreeCommonClaimed, setDiscoverFreeCommonClaimed] = useState<boolean | null>(null);
+  const walletQuery = useProfileWallet(user?.id);
+  const fcBalanceProfile = user?.id
+    ? walletQuery.isSuccess
+      ? walletQuery.data.tokens_balance
+      : (walletQuery.data?.tokens_balance ?? null)
+    : null;
+  const discoverFreeCommonClaimed = user?.id
+    ? walletQuery.data
+      ? walletQuery.data.discover_free_common_claimed
+      : null
+    : null;
   const [buyConfirmProfileOpen, setBuyConfirmProfileOpen] = useState(false);
   const [purchasingDiscoverProfile, setPurchasingDiscoverProfile] = useState(false);
   /** Paid Discover / catalog unlock (see `purchase_discover_companion` → `user_transactions.card_purchase`). */
@@ -697,31 +707,6 @@ const CompanionProfile = () => {
   }, [id, user?.id]);
 
   useEffect(() => {
-    if (!user?.id) {
-      setFcBalanceProfile(null);
-      setDiscoverFreeCommonClaimed(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("tokens_balance, discover_free_common_claimed")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (!cancelled) {
-        setFcBalanceProfile(typeof profile?.tokens_balance === "number" ? profile.tokens_balance : null);
-        setDiscoverFreeCommonClaimed(
-          typeof profile?.discover_free_common_claimed === "boolean" ? profile.discover_free_common_claimed : null,
-        );
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  useEffect(() => {
     if (!teaserConsumeLocked || isAdminUser) return;
     setProfileTab((t) => (t !== "profile" ? "profile" : t));
   }, [teaserConsumeLocked, isAdminUser]);
@@ -954,10 +939,11 @@ const CompanionProfile = () => {
         } else {
           toast.error(r.err || "Could not complete purchase.");
         }
-        setFcBalanceProfile((b) => (b !== null ? r.newBalance : b));
+        applyWalletBalanceFromServer(queryClient, user.id, r.newBalance);
         return;
       }
-      setFcBalanceProfile(r.newBalance);
+      applyWalletBalanceFromServer(queryClient, user.id, r.newBalance);
+      void invalidateProfileWallet(queryClient, user.id);
       setPinned(true);
       setHasPaidForThisCard(true);
       void queryClient.invalidateQueries({ queryKey: [...VAULT_COLLECTION_QUERY_KEY, user.id] });
@@ -1095,14 +1081,7 @@ const CompanionProfile = () => {
               }}
               onBalanceMaybeChanged={() => {
                 if (!user?.id) return;
-                void supabase
-                  .from("profiles")
-                  .select("tokens_balance")
-                  .eq("user_id", user.id)
-                  .maybeSingle()
-                  .then(({ data }) => {
-                    setFcBalanceProfile(typeof data?.tokens_balance === "number" ? data.tokens_balance : null);
-                  });
+                void invalidateProfileWallet(queryClient, user.id);
               }}
             />
             {loopMp4SourceUrl && stillForProfile && user?.id && dbComp ? (

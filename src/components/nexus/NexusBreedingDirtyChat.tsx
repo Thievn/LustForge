@@ -122,6 +122,7 @@ export function NexusBreedingDirtyChat({
         parentAId: parentA.id,
         parentBId: parentB.id,
         targetLineCount: resolvedTargetCount,
+        surface: isMergeWeave ? "nexus_merge" : "ritual",
       });
       if (cancelled) return;
       if ("error" in res) {

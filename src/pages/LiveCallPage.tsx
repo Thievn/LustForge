@@ -5,6 +5,7 @@
  */
 import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanions, dbToCompanion, type DbCompanion } from "@/hooks/useCompanions";
 import { useCompanionRelationship } from "@/hooks/useCompanionRelationship";
@@ -21,6 +22,7 @@ import { readStashedLiveCallOption, clearStashedLiveCallOption } from "@/lib/liv
 import { fetchTtsSampleAudioUrl } from "@/lib/invokeGrokTtsSample";
 import { LIVE_CALL_CREDITS_PER_MINUTE } from "@/lib/liveCallBilling";
 import { spendForgeCoins } from "@/lib/forgeCoinsClient";
+import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 import { LiveCallPhoneShell, type LiveCallUiPhase } from "@/components/liveCall/LiveCallPhoneShell";
 import { useCompanionDisplayOverride } from "@/hooks/useCompanionDisplayOverride";
 import { galleryStaticPortraitUrl } from "@/lib/companionMedia";
@@ -51,6 +53,7 @@ function pickPrimaryToy(toys: LovenseToy[]): LovenseToy | null {
 }
 
 const LiveCallPage = () => {
+  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -274,6 +277,7 @@ const LiveCallPage = () => {
         bill_seconds: billSec,
       }).then((r) => {
         if (!r.ok) toast.error(r.err || "Could not record FC for this call.");
+        else applyWalletBalanceFromServer(queryClient, uid, r.newBalance);
       });
     }
     if (id) navigate(`/companions/${id}`, { replace: true });

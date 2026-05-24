@@ -15,6 +15,8 @@ import { CompanionVibeTraitStrip } from "@/components/traits/CompanionVibeTraitS
 import { resolveDisplayTraitsForCompanion } from "@/lib/vibeDisplayTraits";
 import { VAULT_COLLECTION_QUERY_KEY } from "@/hooks/useVaultCollection";
 import { PURCHASED_COMPANION_IDS_QUERY_KEY, usePurchasedCompanionIds } from "@/hooks/usePurchasedCompanionIds";
+import { useProfileWallet } from "@/hooks/useProfileWallet";
+import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 import { supabase } from "@/integrations/supabase/client";
 import { discoverCardPriceFc } from "@/lib/forgeEconomy";
 import { purchaseDiscoverCompanion } from "@/lib/forgeCoinsClient";
@@ -54,8 +56,13 @@ export default function DiscoverCompanionsGallery() {
   const pool = useMemo(() => (dbRows?.length ? rowsFromDb(dbRows) : []), [dbRows]);
 
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
-  const [fcBalance, setFcBalance] = useState<number | null>(null);
-  const [freeCommonClaimed, setFreeCommonClaimed] = useState<boolean | null>(null);
+  const { data: profileWallet } = useProfileWallet(sessionUserId);
+  const fcBalance =
+    profileWallet && typeof profileWallet.tokens_balance === "number" ? profileWallet.tokens_balance : null;
+  const freeCommonClaimed =
+    profileWallet && typeof profileWallet.discover_free_common_claimed === "boolean"
+      ? profileWallet.discover_free_common_claimed
+      : null;
   const [welcomeGiftBannerDismissed, setWelcomeGiftBannerDismissed] = useState(false);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [buyConfirmFor, setBuyConfirmFor] = useState<CommunityGalleryRow | null>(null);
@@ -68,20 +75,9 @@ export default function DiscoverCompanionsGallery() {
     } = await supabase.auth.getSession();
     if (!session?.user) {
       setSessionUserId(null);
-      setFcBalance(null);
-      setFreeCommonClaimed(null);
       return;
     }
     setSessionUserId(session.user.id);
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("tokens_balance, discover_free_common_claimed")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-    setFcBalance(typeof profile?.tokens_balance === "number" ? profile.tokens_balance : null);
-    setFreeCommonClaimed(
-      typeof profile?.discover_free_common_claimed === "boolean" ? profile.discover_free_common_claimed : null,
-    );
   }, []);
 
   useEffect(() => {
@@ -176,10 +172,10 @@ export default function DiscoverCompanionsGallery() {
         } else {
           toast.error(r.err || "Could not complete purchase.");
         }
-        setFcBalance((b) => (b !== null ? r.newBalance : b));
+        applyWalletBalanceFromServer(queryClient, sessionUserId, r.newBalance);
         return;
       }
-      setFcBalance(r.newBalance);
+      applyWalletBalanceFromServer(queryClient, sessionUserId, r.newBalance);
       void queryClient.invalidateQueries({ queryKey: [...VAULT_COLLECTION_QUERY_KEY, sessionUserId] });
       void queryClient.invalidateQueries({ queryKey: [...PURCHASED_COMPANION_IDS_QUERY_KEY, sessionUserId] });
       if (r.alreadyOwned) {
@@ -189,9 +185,10 @@ export default function DiscoverCompanionsGallery() {
           r.priceFc <= 0 ? "Added to your vault — free first Common" : `Added to your vault — ${r.priceFc} FC`,
           { description: c.name },
         );
-        if (r.priceFc <= 0 && c.rarity === "common") setFreeCommonClaimed(true);
       }
-      void refreshSessionWallet();
+      if (r.priceFc <= 0 && c.rarity === "common") {
+        void queryClient.invalidateQueries({ queryKey: ["profile-wallet", sessionUserId] });
+      }
     } finally {
       setPurchasingId(null);
     }

@@ -3,6 +3,8 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCompanions, dbToCompanion, type DbCompanion } from "@/hooks/useCompanions";
 import { useForgeCompanionOverlay } from "@/hooks/useForgeCompanionOverlay";
+import { useProfileWallet, invalidateProfileWallet } from "@/hooks/useProfileWallet";
+import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 import { useCompanionDisplayOverride } from "@/hooks/useCompanionDisplayOverride";
 import { mergeCompanionDisplayWithUserOverride } from "@/lib/mergeCompanionDisplayOverride";
 import { stripDiscoverForgeTemplateCanonicalLoop } from "@/lib/discoverTemplateMedia";
@@ -175,9 +177,6 @@ export function useChatSessionController() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [tokensBalance, setTokensBalance] = useState<number>(0);
-  /** False until first `fetchTokens` completes — avoids treating initial 0 as broke. */
-  const [forgeBalanceReady, setForgeBalanceReady] = useState(false);
   /** Eastern quota-period date from `profiles.chat_daily_quota_date` + used count (DB: `chat_consume_message_quota`). */
   const [chatDailyQuotaDate, setChatDailyQuotaDate] = useState<string | null>(null);
   const [chatDailyQuotaUsed, setChatDailyQuotaUsed] = useState(0);
@@ -288,6 +287,10 @@ export function useChatSessionController() {
   );
 
   const isAdminUser = useMemo(() => isPlatformAdmin(user), [user]);
+
+  const walletQuery = useProfileWallet(user?.id);
+  const tokensBalance = isAdminUser ? 999999 : (walletQuery.data?.tokens_balance ?? 0);
+  const forgeBalanceReady = isAdminUser || walletQuery.isSuccess;
 
   const isOwnForgeChat = useMemo(
     () => Boolean(user?.id && dbComp?.user_id === user.id && companion?.id?.startsWith("cc-")),
@@ -535,7 +538,7 @@ export function useChatSessionController() {
         bill_seconds: billSec,
       }).then((r) => {
         if (r.ok) {
-          setTokensBalance(r.newBalance);
+          applyWalletBalanceFromServer(queryClient, user?.id, r.newBalance);
           tokensBalanceRef.current = r.newBalance;
         } else {
           toast.error(r.err || "Could not record FC for this Live Voice session.");
@@ -734,9 +737,8 @@ export function useChatSessionController() {
       .maybeSingle();
     const bal =
       typeof data?.tokens_balance === "number" && Number.isFinite(data.tokens_balance) ? data.tokens_balance : 0;
-    setTokensBalance(bal);
-    tokensBalanceRef.current = bal;
-    setForgeBalanceReady(true);
+    applyWalletBalanceFromServer(queryClient, userId, bal);
+    tokensBalanceRef.current = isAdminUser ? 999999 : bal;
     const g = data?.tts_voice_global_override;
     setProfileTtsGlobal(typeof g === "string" && g.trim() ? g.trim() : null);
     const qd = typeof data?.chat_daily_quota_date === "string" ? data.chat_daily_quota_date : null;
@@ -776,9 +778,10 @@ export function useChatSessionController() {
       await fetchTokens(userId);
       return;
     }
-    setTokensBalance(r.newBalance);
+    applyWalletBalanceFromServer(queryClient, userId, r.newBalance);
     tokensBalanceRef.current = r.newBalance;
     await fetchTokens(userId);
+    void invalidateProfileWallet(queryClient, userId);
   };
 
   const generateImage = async (
@@ -910,7 +913,7 @@ export function useChatSessionController() {
       }
 
       if (typeof data.newTokensBalance === "number") {
-        setTokensBalance(data.newTokensBalance);
+        applyWalletBalanceFromServer(queryClient, userId, data.newTokensBalance);
       } else {
         await fetchTokens(userId);
       }
@@ -1026,7 +1029,7 @@ export function useChatSessionController() {
       if (!imageUrl || !imageId) throw new Error("No image generated");
 
       if (typeof data.newTokensBalance === "number") {
-        setTokensBalance(data.newTokensBalance);
+        applyWalletBalanceFromServer(queryClient, userId, data.newTokensBalance);
       } else {
         await fetchTokens(user.id);
       }
@@ -1787,7 +1790,7 @@ export function useChatSessionController() {
         },
       ]);
       if (typeof data?.newTokensBalance === "number") {
-        setTokensBalance(data.newTokensBalance);
+        applyWalletBalanceFromServer(queryClient, userId, data.newTokensBalance);
         tokensBalanceRef.current = data.newTokensBalance;
       } else {
         await fetchTokens(user.id);

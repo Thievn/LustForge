@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { isPlatformAdmin } from "@/config/auth";
 import type { User } from "@supabase/supabase-js";
 import { fetchFcPaymentHistory, type FcOrderRow } from "@/lib/nowpaymentsFcClient";
+import { useProfileWallet } from "@/hooks/useProfileWallet";
 
 type UserTransactionRow = {
   id: string;
@@ -26,7 +27,10 @@ export default function Account() {
   const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
-  const [tokens, setTokens] = useState<number | null>(null);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const walletQuery = useProfileWallet(sessionUserId ?? undefined);
+  const tokens =
+    walletQuery.isLoading && !walletQuery.data ? null : (walletQuery.data?.tokens_balance ?? null);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [accountTab, setAccountTab] = useState<"account" | "history">("account");
   const [txLoading, setTxLoading] = useState(false);
@@ -41,17 +45,17 @@ export default function Account() {
       navigate("/auth", { replace: true });
       return;
     }
+    setSessionUserId(session.user.id);
     setSessionUser(session.user);
     setEmail(session.user.email ?? "");
     const meta = session.user.user_metadata as Record<string, string | undefined> | undefined;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("display_name, tokens_balance")
+      .select("display_name")
       .eq("user_id", session.user.id)
       .maybeSingle();
     const fromProfile = profile?.display_name?.trim();
     setUsername(fromProfile || meta?.username?.trim() || meta?.full_name?.trim() || "");
-    setTokens(profile?.tokens_balance ?? null);
     setLoading(false);
   }, [navigate]);
 

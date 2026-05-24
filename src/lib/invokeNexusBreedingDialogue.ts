@@ -13,12 +13,14 @@ export async function invokeNexusBreedingDialogue(args: {
   parentAId: string;
   parentBId: string;
   targetLineCount?: number;
+  surface?: "nexus_merge" | "ritual" | "standard";
 }): Promise<{ lines: NexusBreedingScriptLineDto[]; model?: string } | { error: string }> {
   const { data, error } = await supabase.functions.invoke("nexus-breeding-dialogue", {
     body: {
       parentAId: args.parentAId,
       parentBId: args.parentBId,
       targetLineCount: args.targetLineCount,
+      surface: args.surface === "nexus_merge" ? "nexus_merge" : "ritual",
     },
   });
   if (error) {

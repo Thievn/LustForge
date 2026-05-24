@@ -289,9 +289,38 @@ function NexusRevealPanel({
           background: `radial-gradient(circle at 50% 12%, ${NEON}26, transparent 52%), radial-gradient(circle at 80% 90%, hsl(170 100% 42% / 0.08), transparent 45%)`,
         }}
       />
-      <div className="relative grid lg:grid-cols-[minmax(0,280px)_1fr] gap-10 items-start text-left">
-        <div className="mx-auto w-full max-w-[280px] space-y-4">
-          {companionUi && stillUrl ? (
+      <div className="relative grid lg:grid-cols-[minmax(0,380px)_1fr] gap-10 items-start text-left">
+        <div className="mx-auto w-full max-w-[min(100%,420px)]">
+          {showLoop && animUrl && companionUi ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <TierHaloPortraitFrame
+                variant="card"
+                frameStyle="clean"
+                rarity={companionUi.rarity}
+                gradientFrom={companionUi.gradientFrom}
+                gradientTo={companionUi.gradientTo}
+                overlayUrl={companionUi.rarityBorderOverlayUrl}
+                aspectClassName="aspect-[2/3] w-full"
+                rarityFrameBleed
+                className="w-full shadow-[0_0_48px_rgba(255,45,123,0.22)]"
+              >
+                <video
+                  src={animUrl}
+                  poster={stillUrl ?? undefined}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 z-[1] h-full w-full object-cover object-top"
+                />
+                <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/75 via-transparent to-transparent pointer-events-none" />
+              </TierHaloPortraitFrame>
+            </motion.div>
+          ) : companionUi && stillUrl ? (
             <TierHaloPortraitFrame
               variant="card"
               frameStyle="clean"
@@ -317,17 +346,8 @@ function NexusRevealPanel({
               <p className="text-[10px] text-muted-foreground">Open their profile if this stays blank.</p>
             </div>
           )}
-          {showLoop && animUrl ? (
-            <video
-              src={animUrl}
-              className="w-full rounded-xl border border-white/10 shadow-lg shadow-black/40"
-              autoPlay
-              loop
-              muted
-              playsInline
-            />
-          ) : loopVideoFailed && companionUi ? (
-            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+          {loopVideoFailed && companionUi && !showLoop ? (
+            <p className="mt-3 text-[11px] text-muted-foreground text-center leading-relaxed">
               Loop video did not finish — open their profile and tap Regenerate loop video.
             </p>
           ) : null}

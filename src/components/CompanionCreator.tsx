@@ -146,6 +146,8 @@ import {
 } from "@/lib/identityAnatomyDetail";
 import { FORGE_CREATE_COMPANION_FC, FORGE_PREVIEW_FC } from "@/lib/forgeEconomy";
 import { creditForgeCoins, spendForgeCoins } from "@/lib/forgeCoinsClient";
+import { useProfileWallet, invalidateProfileWallet } from "@/hooks/useProfileWallet";
+import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 import { serializeBaseDisplayTraitsForInsert } from "@/lib/vibeDisplayTraits";
 import {
   DEFAULT_FORGE_VISUAL_TAILORING,
@@ -560,7 +562,12 @@ const CompanionCreator = forwardRef<CompanionCreatorHandle, CompanionCreatorProp
   const isAdmin = mode === "admin";
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [tokens, setTokens] = useState<number | null>(null);
+  const walletQuery = useProfileWallet(userId ?? undefined);
+  const tokens = isAdmin
+    ? 999999
+    : walletQuery.isLoading && walletQuery.fetchStatus !== "idle" && !walletQuery.data
+      ? null
+      : (walletQuery.data?.tokens_balance ?? 0);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   const [name, setName] = useState("");
@@ -868,17 +875,15 @@ const CompanionCreator = forwardRef<CompanionCreatorHandle, CompanionCreatorProp
       }
       setUserId(session.user.id);
       if (isAdmin) {
-        setTokens(999999);
         setLoadingProfile(false);
         return;
       }
       const { data, error } = await withAsyncTimeout(
-        supabase.from("profiles").select("tokens_balance, display_name").eq("user_id", session.user.id).maybeSingle(),
+        supabase.from("profiles").select("display_name").eq("user_id", session.user.id).maybeSingle(),
         SESSION_LOAD_TIMEOUT_MS,
         "Loading profile",
       );
       if (error) console.error(error);
-      setTokens(typeof data?.tokens_balance === "number" ? data.tokens_balance : 0);
       setProfileDisplayName(data?.display_name?.trim() || "");
     } catch (e: unknown) {
       console.error(e);
@@ -892,18 +897,12 @@ const CompanionCreator = forwardRef<CompanionCreatorHandle, CompanionCreatorProp
     void loadProfile();
   }, [loadProfile]);
 
-  const refreshForgeCoinsOnly = useCallback(async () => {
-    if (!userId || isAdmin) return;
-    const { data } = await supabase.from("profiles").select("tokens_balance").eq("user_id", userId).maybeSingle();
-    if (data && typeof data.tokens_balance === "number") setTokens(data.tokens_balance);
-  }, [userId, isAdmin]);
-
   useEffect(() => {
-    if (isAdmin) return;
-    const onFocus = () => void refreshForgeCoinsOnly();
+    if (isAdmin || !userId) return;
+    const onFocus = () => void invalidateProfileWallet(queryClient, userId);
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, [isAdmin, refreshForgeCoinsOnly]);
+  }, [isAdmin, userId, queryClient]);
 
   const appendPreviewHistory = useCallback(
     (display: string, canonical: string) => {
@@ -1912,20 +1911,8 @@ User flavor notes: ${extraNotes || "none"}`;
         });
       }, 0);
       if (isAdmin) pushForgeOp("Portrait returned from the veil — study Live preview.", "ok");
-      if (typeof data.newTokensBalance === "number") setTokens(data.newTokensBalance);
-      else if (!isAdmin) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.user) {
-          const { data: row } = await supabase
-            .from("profiles")
-            .select("tokens_balance")
-            .eq("user_id", session.user.id)
-            .single();
-          if (row) setTokens(row.tokens_balance);
-        }
-      }
+      if (typeof data.newTokensBalance === "number") applyWalletBalanceFromServer(queryClient, userId, data.newTokensBalance);
+      else if (!isAdmin && userId) void invalidateProfileWallet(queryClient, userId);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Preview failed";
       if (isAdmin) pushForgeOp(`Portrait failed: ${msg}`, "err");
@@ -2080,13 +2067,7 @@ User flavor notes: ${extraNotes || "none"}`;
       }
       if (!isAdmin) {
         bumpCreate("Counting the FC embers in your purse…");
-        const { data: balRow } = await withAsyncTimeout(
-          supabase.from("profiles").select("tokens_balance").eq("user_id", userId).maybeSingle(),
-          SESSION_LOAD_TIMEOUT_MS,
-          "Loading forge balance",
-        );
-        const bal = typeof balRow?.tokens_balance === "number" ? balRow.tokens_balance : 0;
-        setTokens(bal);
+        const bal = walletQuery.data?.tokens_balance ?? 0;
         if (bal < finalTotalCost) {
           toast.error(
             `This binding asks ${finalTotalCost} FC — you carry ${bal}. Gather embers or forge fewer at once.`,
@@ -2111,7 +2092,7 @@ User flavor notes: ${extraNotes || "none"}`;
           return;
         }
         userCharged = true;
-        setTokens(spend.newBalance);
+        applyWalletBalanceFromServer(queryClient, userId, spend.newBalance);
         bumpCreate("Weaving her into the vault…");
       }
 
@@ -2716,7 +2697,7 @@ User flavor notes: ${extraNotes || "none"}`;
             FORGE_RPC_TIMEOUT_MS,
             "Forge coin refund (RPC)",
           );
-          if (ref.ok) setTokens(ref.newBalance);
+          if (ref.ok) applyWalletBalanceFromServer(queryClient, userId, ref.newBalance);
           userRefunded = true;
         }
         throw error;
@@ -2793,7 +2774,7 @@ User flavor notes: ${extraNotes || "none"}`;
             "Forge coin refund (RPC)",
           );
           if (ref.ok) {
-            setTokens(ref.newBalance);
+            applyWalletBalanceFromServer(queryClient, userId, ref.newBalance);
             toast.message("The binding broke — your FC returned to you.", {
               description: "Your draft and portrait echoes stay in this browser until you clear them.",
             });

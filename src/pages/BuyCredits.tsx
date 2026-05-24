@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Coins, CreditCard, Info, Loader2, Wallet } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +27,8 @@ import {
   NEXUS_INFUSE_ADDON_FC,
   NEXUS_MERGE_FC,
 } from "@/lib/forgeEconomy";
+import { useProfileWallet, invalidateProfileWallet } from "@/hooks/useProfileWallet";
+import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 
 const NEON = "#FF2D7B";
 
@@ -36,10 +39,13 @@ function statusTone(status: FcOrderRow["payment_status"]) {
 }
 
 export default function BuyCredits() {
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [packs, setPacks] = useState<FcPack[]>([]);
   const [orders, setOrders] = useState<FcOrderRow[]>([]);
-  const [balance, setBalance] = useState<number>(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const walletQuery = useProfileWallet(userId ?? undefined);
+  const balance = walletQuery.data?.tokens_balance ?? 0;
   const [loading, setLoading] = useState(true);
   const [selectedPackId, setSelectedPackId] = useState<string>("popular_1650");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "crypto">("card");
@@ -59,15 +65,12 @@ export default function BuyCredits() {
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session?.user) return;
 
-    const [{ data: profile }, packsData, historyData] = await Promise.all([
-      supabase.from("profiles").select("tokens_balance").eq("user_id", sessionData.session.user.id).maybeSingle(),
-      fetchFcPacks(),
-      fetchFcPaymentHistory(),
-    ]);
-    setBalance(Number(profile?.tokens_balance ?? 0));
+    setUserId(sessionData.session.user.id);
+    const [packsData, historyData] = await Promise.all([fetchFcPacks(), fetchFcPaymentHistory()]);
     setPacks(packsData);
     setOrders(historyData);
     if (!selectedPackId && packsData[0]) setSelectedPackId(packsData[0].id);
+    void invalidateProfileWallet(queryClient, sessionData.session.user.id);
   };
 
   useEffect(() => {
@@ -95,7 +98,7 @@ export default function BuyCredits() {
         tries += 1;
         try {
           const res = await fetchFcOrderStatus(order);
-          setBalance(res.balance);
+          applyWalletBalanceFromServer(queryClient, userId, res.balance);
           if (res.status === "completed") {
             clearInterval(timer);
             setPolling(false);
