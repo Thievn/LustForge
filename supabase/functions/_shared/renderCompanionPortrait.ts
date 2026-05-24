@@ -10,8 +10,9 @@ import {
 import { rewritePromptForImagine } from "./safeImagePromptRewriter.ts";
 import {
   buildAnimeTemptationStyleLead,
+  effectiveForgeArtStyleLabelForCharacterData,
   FORGE_ANIME_STYLE_LOCK_REGEX,
-  isAnimeTemptationForgeTabId,
+  isAnimeArtStyleLabel,
 } from "./forgeAnimeStyleDna.ts";
 import { buildForgeStyleDnaPrefix } from "./forgeTabStyleDna.ts";
 import { decodeImageDataUrl } from "./imageDataUrl.ts";
@@ -29,8 +30,11 @@ export type PortraitStorageTarget =
 export function buildPortraitFinalPrompt(imagePrompt: string, characterData: Record<string, unknown>): string {
   const anatomyKey = buildAnatomyImagineKeyRules(resolveAnatomyVariant(characterData));
   const dna = buildForgeStyleDnaPrefix(characterData, "preview");
-  const tabRaw = characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab;
-  const anime = isAnimeTemptationForgeTabId(tabRaw);
+  const artLabel = effectiveForgeArtStyleLabelForCharacterData(
+    String(characterData.artStyleLabel ?? characterData.art_style_label ?? ""),
+    characterData,
+  );
+  const anime = isAnimeArtStyleLabel(artLabel);
   const animeLead =
     anime && !FORGE_ANIME_STYLE_LOCK_REGEX.test(imagePrompt) ? `${buildAnimeTemptationStyleLead("preview")}\n\n` : "";
   return `
@@ -68,8 +72,11 @@ async function buildFullAdultArtPortraitPrompt(
     "a highly attractive character";
 
   const dna = buildForgeStyleDnaPrefix(characterData, "full");
-  const tabRaw = characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab;
-  const anime = isAnimeTemptationForgeTabId(tabRaw);
+  const artLabel = effectiveForgeArtStyleLabelForCharacterData(
+    String(characterData.artStyleLabel ?? characterData.art_style_label ?? ""),
+    characterData,
+  );
+  const anime = isAnimeArtStyleLabel(artLabel);
   const animeLead =
     anime && !FORGE_ANIME_STYLE_LOCK_REGEX.test(safeRewritten)
       ? `${buildAnimeTemptationStyleLead("full")}\n\n`

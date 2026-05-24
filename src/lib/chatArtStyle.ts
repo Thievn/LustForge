@@ -56,18 +56,18 @@ function inferFromImagePromptOrAppearance(
 
 /**
  * Single label for chat image prompts and `characterData.artStyleLabel`.
- * Priority: tags → forge theme snapshot → anime tab → image_prompt / appearance / reference text.
+ * Priority: forge theme snapshot artStyle → tags → anime tab fallback → image_prompt / appearance.
  */
 export function resolveChatArtStyleLabel(db: ChatArtStyleDbInput | null | undefined): string {
-  const tags = db?.tags ?? [];
-  const fromTags = inferStylizedArtFromTags(Array.isArray(tags) ? tags : []);
-  if (fromTags) return fromTags;
-
   const snap = db?.personality_forge
     ? parseForgeThemeSnapshotFromPersonalityForge(db.personality_forge)
     : null;
   const snapArt = snap?.artStyle?.trim();
   if (snapArt) return normalizeForgeArtStyle(snapArt);
+
+  const tags = db?.tags ?? [];
+  const fromTags = inferStylizedArtFromTags(Array.isArray(tags) ? tags : []);
+  if (fromTags) return fromTags;
 
   if (snap?.activeForgeTab && isAnimeTemptationForgeTabId(snap.activeForgeTab)) {
     return "Anime Style";

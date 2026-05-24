@@ -311,8 +311,7 @@ serve(async (req) => {
     cdScene.artStyleLabel = effectiveForgeArtStyleLabelForCharacterData(artRaw, cdScene);
     cdScene.art_style_label = cdScene.artStyleLabel;
     const artLabelForLead = String(cdScene.artStyleLabel ?? "").trim();
-    const isAnime =
-      isAnimeTemptationForgeTabId(tabForAnime) || isAnimeArtStyleLabel(artLabelForLead);
+    const isAnime = isAnimeArtStyleLabel(artLabelForLead);
     const isStylizedArt = isAnime || isStylizedNonPhotorealArtLabel(artLabelForLead);
     const dnaPrefix =
       suppressForgeDna && isChatSessionStill

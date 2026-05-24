@@ -580,7 +580,7 @@ const CompanionCreator = forwardRef<CompanionCreatorHandle, CompanionCreatorProp
   const [visualTailoring, setVisualTailoring] = useState<ForgeVisualTailoring>(() => ({ ...DEFAULT_FORGE_VISUAL_TAILORING }));
   const [artStyle, setArtStyle] = useState<string>(() => "Photorealistic");
   const [sceneAtmosphere, setSceneAtmosphere] = useState<string>(() =>
-    normalizeForgeScene("No Background / Transparent"),
+    normalizeForgeScene("Neutral Gray Seamless Backdrop"),
   );
   const [bodyType, setBodyType] = useState<string>(() => normalizeForgeBodyType(pickOne(FORGE_BODY_TYPES)));
   const [traits, setTraits] = useState<string[]>(() => pickRandom(FORGE_ACCENT_TRAIT_POOL, randomTraitCount()));

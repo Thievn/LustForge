@@ -64,12 +64,15 @@ export function effectiveForgeArtStyleLabelForCharacterData(
   artStyle: string,
   characterData: { selectedForgeTab?: unknown; selected_forge_tab?: unknown; activeForgeTab?: unknown },
 ): string {
+  const s = String(artStyle ?? "").trim();
+  if (s) {
+    if (isAnimeArtStyleLabel(s)) return "Anime Style";
+    return s;
+  }
   const tab =
     characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab ?? "";
   if (isAnimeTemptationForgeTabId(tab)) return "Anime Style";
-  const s = String(artStyle ?? "").trim();
-  if (s && isAnimeArtStyleLabel(s)) return "Anime Style";
-  return s || "Photorealistic";
+  return "Photorealistic";
 }
 
 /** Art-style lock for chat menu stills when full theme DNA is suppressed (Edge mirror). */
@@ -81,9 +84,7 @@ export function buildArtStyleOnlyLockPrefix(
     String(characterData.artStyleLabel ?? characterData.art_style_label ?? ""),
     characterData as { selectedForgeTab?: unknown; selected_forge_tab?: unknown; activeForgeTab?: unknown },
   );
-  const tab =
-    characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab ?? "";
-  const animeLane = isAnimeTemptationForgeTabId(tab) || isAnimeArtStyleLabel(art);
+  const animeLane = isAnimeArtStyleLabel(art);
   if (animeLane) {
     return `[ART STYLE — 2D ANIME LOCK — HIGHEST PRIORITY]\n${buildAnimeTemptationStyleLead(tier)}`;
   }

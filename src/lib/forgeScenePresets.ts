@@ -11,7 +11,6 @@ export const FORGE_SCENE_GROUPS: readonly {
     id: "transparent_studio",
     label: "Transparent & studio",
     scenes: [
-      "No Background / Transparent",
       "Pure White Cyclorama Studio",
       "Neutral Gray Seamless Backdrop",
       "Black Void Infinity Cove",
@@ -220,7 +219,8 @@ export type ForgeSceneAtmosphere = (typeof FORGE_SCENE_ATMOSPHERES)[number];
 
 /** Older vault rows → canonical scene string (keep in sync with `normalizeForgeScene`). */
 export const FORGE_SCENE_LEGACY_TO_CANONICAL: Record<string, string> = {
-  "No Background": "No Background / Transparent",
+  "No Background": "Neutral Gray Seamless Backdrop",
+  "No Background / Transparent": "Neutral Gray Seamless Backdrop",
 };
 
 /** Richer overrides for frequently used or legacy-tuned presets. */
@@ -312,7 +312,7 @@ export function normalizeForgeSceneInput(input: string): ForgeSceneAtmosphere {
   const t = legacy ?? raw;
   if ((FORGE_SCENE_ATMOSPHERES as readonly string[]).includes(t)) return t as ForgeSceneAtmosphere;
   const hit = FORGE_SCENE_ATMOSPHERES.find((s) => s.toLowerCase() === t.toLowerCase());
-  return (hit ?? "No Background / Transparent") as ForgeSceneAtmosphere;
+  return (hit ?? "Neutral Gray Seamless Backdrop") as ForgeSceneAtmosphere;
 }
 
 export function forgeSceneAtmosphereHint(scene: string): string {

@@ -42,6 +42,25 @@ describe("resolveChatArtStyleLabel", () => {
       }),
     ).toBe("Anime Style");
   });
+
+  it("prefers snapshot artStyle over conflicting style tags", () => {
+    const snap = buildForgeThemeSnapshotV1({
+      activeForgeTab: "anime_temptation",
+      forgeCardPose: "standing",
+      artStyle: "Photorealistic",
+      sceneAtmosphere: "Neon City",
+      bodyType: "Average Build",
+      visualTailoring: {},
+      forgeTabFeatures: {},
+      forgeTabSharedOverrides: {} as never,
+    });
+    const label = resolveChatArtStyleLabel({
+      tags: ["Anime Style"],
+      personality_forge: { _forgeThemeV2: snap },
+      image_prompt: "2D anime cel-shaded illustration",
+    });
+    expect(label).toBe("Photorealistic");
+  });
 });
 
 describe("isAnimeArtStyleLabel", () => {

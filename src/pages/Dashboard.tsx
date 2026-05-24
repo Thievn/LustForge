@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DailyFreeMessagesBar } from "@/components/chat/DailyFreeMessagesBar";
 import { nextTextMessageFc, remainingFreeMessages } from "@/lib/chatDailyQuota";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -17,7 +16,6 @@ import {
   Layers,
   LogOut,
   MessageSquare,
-  Orbit,
   Settings,
   Shield,
   TrendingUp,
@@ -55,6 +53,8 @@ import {
   buildDashboardActivity,
   chatBondLabel,
 } from "@/lib/dashboardInsights";
+import { DashboardChatQuotaChip } from "@/components/dashboard/DashboardChatQuotaChip";
+import { DashboardHeroActions } from "@/components/dashboard/DashboardHeroActions";
 
 const NEON_PINK = "#FF2D7B";
 
@@ -944,56 +944,15 @@ function DashboardHome({
         ))}
       </div>
 
-      <section className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-black/55 via-card/35 to-cyan-950/10 p-5 sm:p-6 shadow-[0_0_44px_rgba(255,45,123,0.1),inset_0_1px_0_rgba(255,255,255,0.05)]">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="font-gothic text-lg sm:text-xl text-white flex items-center gap-2 min-w-0">
-            <MessageSquare className="h-5 w-5 shrink-0 text-primary" style={{ color: NEON_PINK }} />
-            Companion chat — free lines today
-          </h3>
-        </div>
-        <p className="mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed max-w-2xl">
-          Classic text uses a shared daily pool (resets 3 AM Eastern). After it runs out, each line bills Forge Coins at the rate shown
-          below.
-        </p>
-        {isAdminUser ? (
-          <p className="mt-3 text-xs text-muted-foreground">Admin accounts skip message quota metering.</p>
-        ) : (
-          <DailyFreeMessagesBar
-            visible
-            className="mt-3 text-[11px] sm:text-xs px-3.5 py-2.5"
-            remainingFree={chatRemainingFree}
-            nextLineFc={chatNextLineFc}
-            isAdminUser={false}
-          />
-        )}
-      </section>
+      <DashboardHeroActions onCreate={onCreate} onOpenNexus={onOpenNexus} className="pt-1" />
 
-      {/* Quick actions — centered under the stat row */}
-      <div className="flex w-full justify-center pt-1">
-        <div className="grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onCreate}
-            className="flex w-full min-h-[3.5rem] items-center justify-center gap-3 rounded-2xl py-4 px-6 font-semibold text-primary-foreground shadow-lg border border-white/10"
-            style={{ background: `linear-gradient(135deg, ${NEON_PINK}, hsl(280 50% 35%))` }}
-          >
-            <Hammer className="h-5 w-5 shrink-0 opacity-95" />
-            Create Companion
-          </motion.button>
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onOpenNexus}
-            className="flex w-full min-h-[3.5rem] items-center justify-center gap-3 rounded-2xl py-4 px-6 font-semibold text-primary-foreground border border-accent/40 bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
-          >
-            <Orbit className="h-5 w-5 shrink-0" />
-            The Nexus
-          </motion.button>
-        </div>
-      </div>
+      {!isAdminUser ? (
+        <DashboardChatQuotaChip
+          remainingFree={chatRemainingFree}
+          nextLineFc={chatNextLineFc}
+          className="-mt-4"
+        />
+      ) : null}
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Collection */}

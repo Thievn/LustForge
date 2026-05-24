@@ -18,6 +18,7 @@ import { rollNexusChildRarity } from "../_shared/nexusRarityRoll.ts";
 import {
   buildChildPersonalityForgeRow,
   FORGE_THEME_TAB_IDS,
+  readForgeThemeDna,
   resolveForgeThemeInnerForNexusMerge,
 } from "../_shared/nexusForgeThemeMerge.ts";
 import { mergeNexusChildVisualStyleTags } from "../_shared/nexusChildStyleTags.ts";
@@ -941,6 +942,21 @@ Output ONLY via the nexus_merge_companion tool call.`;
         const xaiKey = resolveXaiApiKey((n) => Deno.env.get(n) ?? undefined);
         if (xaiKey) {
           const characterData: Record<string, unknown> = { ...insertRow, id: fusionUuid };
+          const themeDna = readForgeThemeDna(mergedPersonalityForge ?? null);
+          if (themeDna) {
+            if (typeof themeDna.activeForgeTab === "string" && themeDna.activeForgeTab.trim()) {
+              characterData.activeForgeTab = themeDna.activeForgeTab;
+              characterData.selectedForgeTab = themeDna.activeForgeTab;
+            }
+            if (typeof themeDna.artStyle === "string" && themeDna.artStyle.trim()) {
+              characterData.artStyleLabel = themeDna.artStyle;
+              characterData.art_style_label = themeDna.artStyle;
+            }
+            if (typeof themeDna.sceneAtmosphere === "string" && themeDna.sceneAtmosphere.trim()) {
+              characterData.sceneAtmosphere = themeDna.sceneAtmosphere;
+              characterData.scene_atmosphere = themeDna.sceneAtmosphere;
+            }
+          }
           const { publicUrl } = await renderPortraitToStorage({
             adminClient: supabase,
             imagePrompt: imagePromptForPortrait,

@@ -48,17 +48,20 @@ export function isStylizedNonPhotorealArtLabel(art: string | null | undefined): 
   );
 }
 
-/** Imagine / augmentation: force 2D lane when Anime Temptation tab is selected. */
+/** Imagine / augmentation: stored artStyle wins over forge tab when both are set. */
 export function effectiveForgeArtStyleLabelForCharacterData(
   artStyle: string,
   characterData: Record<string, unknown>,
 ): string {
+  const s = String(artStyle ?? "").trim();
+  if (s) {
+    if (isAnimeArtStyleLabel(s)) return "Anime Style";
+    return s;
+  }
   const tab =
     characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab ?? "";
   if (isAnimeTemptationForgeTabId(tab)) return "Anime Style";
-  const s = String(artStyle ?? "").trim();
-  if (s && isAnimeArtStyleLabel(s)) return "Anime Style";
-  return s || "Photorealistic";
+  return "Photorealistic";
 }
 
 export const FORGE_ANIME_STYLE_LOCK_REGEX = /ultra-detailed\s+2D\s+anime\s+style/i;
@@ -72,9 +75,7 @@ export function buildArtStyleOnlyLockPrefix(
     String(characterData.artStyleLabel ?? characterData.art_style_label ?? ""),
     characterData,
   );
-  const tab =
-    characterData.selectedForgeTab ?? characterData.selected_forge_tab ?? characterData.activeForgeTab ?? "";
-  const animeLane = isAnimeTemptationForgeTabId(tab) || isAnimeArtStyleLabel(art);
+  const animeLane = isAnimeArtStyleLabel(art);
   if (animeLane) {
     return `[ART STYLE — 2D ANIME LOCK — HIGHEST PRIORITY]\n${buildAnimeTemptationStyleLead(tier)}`;
   }

@@ -32,6 +32,16 @@ import { TierHaloPortraitFrame } from "@/components/rarity/TierHaloPortraitFrame
 import { AdminLoopingVideoBlock } from "@/components/admin/AdminLoopingVideoBlock";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   formatNexusOddsPercent,
   getNexusRarityOutcomesTable,
   nexusParentPairKey,
@@ -461,6 +471,7 @@ export default function TheNexus({
     merge_stats?: Record<string, unknown>;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [mergeConfirmOpen, setMergeConfirmOpen] = useState(false);
   const [nexusRarityInfoOpen, setNexusRarityInfoOpen] = useState(false);
   const [ritualPhase, setRitualPhase] = useState<NexusRitualPhase>("veil");
   const [chatMinMet, setChatMinMet] = useState(false);
@@ -1291,7 +1302,7 @@ export default function TheNexus({
                     whileHover={{ scale: canMerge ? 1.02 : 1 }}
                     whileTap={{ scale: canMerge ? 0.98 : 1 }}
                     disabled={!canMerge || busy}
-                    onClick={() => void runMerge()}
+                    onClick={() => setMergeConfirmOpen(true)}
                     className={cn(
                       "w-full rounded-xl py-3.5 font-bold text-primary-foreground shadow-lg transition-opacity",
                       canMerge ? "glow-pink" : "opacity-40 cursor-not-allowed",
@@ -1302,6 +1313,58 @@ export default function TheNexus({
                       ? "Run admin fusion"
                       : `Awaken in The Nexus — ${totalCost} FC`}
                   </motion.button>
+                  <AlertDialog open={mergeConfirmOpen} onOpenChange={setMergeConfirmOpen}>
+                    <AlertDialogContent className="border-white/10 bg-[#0a0812]/95 text-foreground shadow-[0_24px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:max-w-md">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="font-gothic text-xl tracking-wide">
+                          Confirm Nexus merge
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                          <div className="space-y-3 text-left text-sm text-muted-foreground leading-relaxed">
+                            <p>
+                              {alpha && omega ? (
+                                <>
+                                  Merge <span className="font-medium text-foreground">{alpha.name}</span> and{" "}
+                                  <span className="font-medium text-foreground">{omega.name}</span> into one new
+                                  companion in your vault.
+                                </>
+                              ) : (
+                                "Merge your two selected companions into one new companion in your vault."
+                              )}
+                            </p>
+                            {!isAdmin ? (
+                              <p>
+                                This will spend{" "}
+                                <span className="font-semibold text-amber-200/95">{totalCost} Forge Coins</span>
+                                {infuse ? " (includes infusion)" : ""}. The merge runs on the server — you can read
+                                their dialogue while it works.
+                              </p>
+                            ) : (
+                              <p>Admin fusion runs without charging Forge Coins.</p>
+                            )}
+                            <p className="text-xs text-muted-foreground/85">
+                              Both parent cards enter a cooldown after the merge. If the forge fails, your coins refund
+                              automatically.
+                            </p>
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="gap-2 sm:gap-0">
+                        <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          disabled={busy || !canMerge}
+                          className="glow-pink border-0 text-primary-foreground"
+                          style={{ background: `linear-gradient(135deg, ${NEON}, hsl(280 45% 38%))` }}
+                          onClick={() => {
+                            setMergeConfirmOpen(false);
+                            void runMerge();
+                          }}
+                        >
+                          {isAdmin ? "Confirm admin fusion" : `Confirm merge — ${totalCost} FC`}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                   {!canAfford && !isAdmin ? (
                     <p className="text-center text-xs text-destructive">Insufficient Forge Coins (FC) for this merge.</p>
                   ) : null}

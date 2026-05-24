@@ -34,7 +34,8 @@ function artHint(art: string): string {
 }
 
 const LEGACY_SCENE: Record<string, string> = {
-  "No Background": "No Background / Transparent",
+  "No Background": "Neutral Gray Seamless Backdrop",
+  "No Background / Transparent": "Neutral Gray Seamless Backdrop",
 };
 
 const SCENE_SPECIFIC: Record<string, string> = {

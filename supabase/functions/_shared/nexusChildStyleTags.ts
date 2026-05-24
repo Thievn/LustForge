@@ -1,4 +1,5 @@
-import { normalizeForgeThemeTabIdForMerge, readForgeThemeDna } from "./nexusForgeThemeMerge.ts";
+import { isAnimeArtStyleLabel } from "./forgeAnimeStyleDna.ts";
+import { readForgeThemeDna } from "./nexusForgeThemeMerge.ts";
 
 const STYLE_HINT_RE =
   /\b(anime|manga|cel|photoreal|hyper[-\s]?real|cinematic|illustration|chibi|pixel|watercolor|oil\s+painting|cyberpunk|gothic|baroque|fantasy|digital\s+painting|comic|cartoon|synthwave|vaporwave|neon\s+noir|film\s+noir|editorial|ghibli|hentai|yaoi|yuri|pinup|boudoir|low[-\s]?poly|vapor)\b/i;
@@ -9,7 +10,7 @@ function asStringArray(raw: unknown): string[] {
 }
 
 /**
- * Ensures Nexus children inherit visual-style tags from parents and explicit anime marker when merged tab is anime.
+ * Ensures Nexus children inherit visual-style tags from parents; anime tag only when merged artStyle is anime.
  */
 export function mergeNexusChildVisualStyleTags(input: {
   childTags: string[];
@@ -36,11 +37,16 @@ export function mergeNexusChildVisualStyleTags(input: {
   }
 
   const dna = readForgeThemeDna(mergedPersonalityForge ?? null);
-  const rawTab = dna && typeof dna.activeForgeTab === "string" ? dna.activeForgeTab.trim() : "";
-  const tab = rawTab ? normalizeForgeThemeTabIdForMerge(rawTab) : "";
-  if (tab === "anime_temptation") {
+  const artStyle = dna && typeof dna.artStyle === "string" ? dna.artStyle.trim() : "";
+  if (artStyle && isAnimeArtStyleLabel(artStyle)) {
     const hasAnimeWord = out.some((t) => /\banime\b/i.test(t) || /\bmanga\b/i.test(t) || /cel-shad/i.test(t));
     if (!hasAnimeWord) add("Anime Style");
+  }
+
+  if (artStyle && !isAnimeArtStyleLabel(artStyle)) {
+    return out
+      .filter((t) => !/\banime\b/i.test(t) && !/\bmanga\b/i.test(t) && !/cel-shad/i.test(t))
+      .slice(0, maxTags);
   }
 
   return out.slice(0, maxTags);

@@ -30,8 +30,8 @@ export function NexusMergeRitualOverlay({
   const phaseTitle = ritualPhase === "veil" ? "Merge in progress" : "Almost ready";
   const phaseSubtitle =
     ritualPhase === "veil"
-      ? "Two companions become one in the Nexus. Read their dialogue while the forge works — she appears when the merge finishes."
-      : "Your new companion is taking shape. Her loop portrait renders next.";
+      ? "Two companions become one in the Nexus. Read their dialogue while the forge works — the new companion appears when the merge finishes."
+      : "Your new companion is taking shape. Their loop portrait renders next.";
 
   return (
     <motion.div

@@ -3,6 +3,8 @@
  * Deno-safe — no path-alias imports. Tab ids must match client `forgeThemeTabs.ts`.
  */
 
+import { isAnimeArtStyleLabel } from "./forgeAnimeStyleDna.ts";
+
 export const FORGE_THEME_TAB_IDS = [
   "anime_temptation",
   "monster_desire",
@@ -53,7 +55,45 @@ export function normalizeForgeThemeTabIdForMerge(raw: string): string {
   const t = raw.trim();
   const migrated = LEGACY_FORGE_TAB_ID_TO_CANONICAL[t] ?? t;
   if ((FORGE_THEME_TAB_IDS as readonly string[]).includes(migrated)) return migrated;
-  return "anime_temptation";
+  return "realistic_craving";
+}
+
+const PHOTOREAL_ART_RE =
+  /\b(photoreal|hyper-real|cinematic\s+photography|studio\s+portrait|boudoir\s+photography|dark\s+moody\s+realism|high\s+fashion\s+editorial|film\s+noir)\b/i;
+
+function isPhotorealForgeArtStyle(art: string): boolean {
+  const t = art.trim();
+  if (!t) return false;
+  return PHOTOREAL_ART_RE.test(t) || /^photorealistic$/i.test(t);
+}
+
+/** Pick a forge tab that matches the blended artStyle lane (tab is hint-only when artStyle is set). */
+export function forgeTabForArtStyleLane(artStyle: string): string {
+  const art = artStyle.trim();
+  if (!art) return "realistic_craving";
+  if (isAnimeArtStyleLabel(art)) return "anime_temptation";
+  if (isPhotorealForgeArtStyle(art)) return "realistic_craving";
+  if (/\bgothic\b/i.test(art)) return "gothic_seduction";
+  if (/\bfantasy\b/i.test(art)) return "dark_fantasy";
+  if (/\bcyberpunk\b|\bneon\b/i.test(art)) return "mechanical_seduction";
+  if (/\bwatercolor\b|\boil\s+paint|\billustrat/i.test(art)) return "plant_bloom";
+  return "realistic_craving";
+}
+
+export function reconcileActiveForgeTabWithArtStyle(merged: Record<string, unknown>): void {
+  const art = typeof merged.artStyle === "string" ? merged.artStyle.trim() : "";
+  if (!art) return;
+  const tab =
+    typeof merged.activeForgeTab === "string" ? normalizeForgeThemeTabIdForMerge(merged.activeForgeTab) : "";
+  const artIsAnime = isAnimeArtStyleLabel(art);
+  const tabIsAnime = tab === "anime_temptation";
+  if (artIsAnime && !tabIsAnime) {
+    merged.activeForgeTab = "anime_temptation";
+    return;
+  }
+  if (!artIsAnime && tabIsAnime) {
+    merged.activeForgeTab = forgeTabForArtStyleLane(art);
+  }
 }
 
 export function fnv1a32(s: string): number {
@@ -376,8 +416,10 @@ export function mergeForgeThemeSnapshotsV1(
   if (typeof merged.activeForgeTab === "string") {
     merged.activeForgeTab = normalizeForgeThemeTabIdForMerge(merged.activeForgeTab);
     const ok = (FORGE_THEME_TAB_IDS as readonly string[]).includes(merged.activeForgeTab);
-    if (!ok) merged.activeForgeTab = "anime_temptation";
+    if (!ok) merged.activeForgeTab = "realistic_craving";
   }
+
+  reconcileActiveForgeTabWithArtStyle(merged);
 
   return merged;
 }

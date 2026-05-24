@@ -94,7 +94,7 @@ export function NexusMergeWeaveHero({
   const blurb =
     mergeSubphase === "fusion"
       ? "Two parents, one outcome — the Nexus forges a new companion between them."
-      : "Her loop portrait is rendering. Just a little longer.";
+      : "The loop portrait is rendering. Just a little longer.";
 
   return (
     <div className="w-full max-w-3xl px-1 sm:max-w-4xl sm:px-2 md:max-w-5xl">
