@@ -80,6 +80,8 @@ export function buildForgeCompanionNamingBrief(ctx: ForgeCompanionNamingContext)
     appearance ? `Appearance flavor: ${appearance}` : "",
     "",
     "Invent ONE display name that sounds native to this exact mix — not a generic dark-fantasy default.",
+    "Never output procedural compounds (Shadowveil, Grimdawn, Nightbane, Dreadmarch, Failfrost, Gearlock).",
+    "Prefer realistic given names when the theme is modern/contemporary; theme-native handles or proper nouns otherwise.",
   ].filter(Boolean);
 
   const raw = parts.join("\n");

@@ -24,6 +24,9 @@ import {
   SURNAME_DARK,
   SURNAME_JAPAN,
 } from "./forgeNameBanks";
+import {
+  isStockFantasyCompoundName,
+} from "./forgeCompanionNameQuality";
 import { DEFAULT_FORGE_PERSONALITY } from "./forgePersonalityProfile";
 
 export function normalizeNameKey(s: string): string {
@@ -167,7 +170,7 @@ export function generateForgeName(input: ForgeNameInput): string {
       }
     }
     const k = normalizeNameKey(out);
-    if (k && !ex.has(k) && out.length >= 2 && out.length <= 64) {
+    if (k && !ex.has(k) && out.length >= 2 && out.length <= 64 && !isStockFantasyCompoundName(out)) {
       ex.add(k);
       return out;
     }

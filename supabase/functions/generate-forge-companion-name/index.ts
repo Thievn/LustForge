@@ -6,18 +6,16 @@ import {
   grokChatCompletionRaw,
 } from "../_shared/xaiGrokChatRaw.ts";
 import { buildForgeCompanionNamingBrief } from "../_shared/buildForgeCompanionNamingBrief.ts";
+import {
+  isAcceptableForgeDisplayName,
+  isStockFantasyCompoundName,
+  normalizeNameKey,
+} from "../_shared/forgeCompanionNameQuality.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-function normalizeNameKey(s: string): string {
-  return s
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
 
 function sanitizeGender(g: unknown): string {
   if (typeof g !== "string") return "non-binary";
@@ -55,9 +53,11 @@ Rules:
 1. Invent a **one-of-one** display name that sounds native to the brief's era, theme tab, personality, and visual lane.
 2. **Allowed:** a single first name OR first + last (2–4 words total, max 120 characters).
 3. **Forbidden:** Luna/Raven/Scarlett/Nova/Lilith-class clichés; stock gothic surname lists (Grimholt, Nightbane, Shadowmere, Thorne, Dreadmarch, etc.); repeating syllable-mash patterns; copying any name in the avoid list.
-4. **Do not** default to cyber-goth or generic dark fantasy unless the brief explicitly calls for that lane.
-5. Phonetics and cadence should match the brief (modern casual, feudal Japan, cyberpunk handle, mythic compound, etc.).
-6. Respond with **only** the companion's display name — no quotation marks, no labels, no explanation, no trailing sentence punctuation.`;
+4. **Forbidden name recipes:** do NOT glue two mood words into one label (Shadowveil, Grimdawn, Failfrost, Gearlock, Nightfall, Gloomwraith, Mourningveil, Ironbane, etc.). Do NOT output names that sound like a random fantasy name generator.
+5. **Do not** default to cyber-goth or generic dark fantasy unless the brief explicitly calls for that lane.
+6. Match the brief's culture: modern companions get believable human first names; anime lanes get Japanese or stylized given names; cyber lanes get handles; Victorian/medieval only when the brief says so — archaic compounds only for explicitly gothic/eldritch themes.
+7. Phonetics and cadence should match the brief (modern casual, feudal Japan, cyberpunk handle, mythic proper noun, etc.).
+8. Respond with **only** the companion's display name — no quotation marks, no labels, no explanation, no trailing sentence punctuation.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -179,6 +179,16 @@ Deno.serve(async (req) => {
     const nk = normalizeNameKey(name);
     if (avoidList.some((a) => normalizeNameKey(a) === nk)) {
       return new Response(JSON.stringify({ error: "Naming service returned a forbidden duplicate name" }), {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!isAcceptableForgeDisplayName(name)) {
+      const reason = isStockFantasyCompoundName(name)
+        ? "stock fantasy compound pattern"
+        : "cliché or invalid name";
+      return new Response(JSON.stringify({ error: `Naming service returned a rejected name (${reason})` }), {
         status: 422,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

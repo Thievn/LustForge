@@ -1,6 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { resolveXaiApiKey } from "../_shared/resolveXaiApiKey.ts";
-import { grokChatCompletionRaw } from "../_shared/xaiGrokChatRaw.ts";
+import { grokChatCompletionRaw, extractGrokAssistantText } from "../_shared/xaiGrokChatRaw.ts";
+import { buildNexusMergeNamingBrief } from "../_shared/buildNexusMergeNamingBrief.ts";
+import {
+  isAcceptableForgeDisplayName,
+  isBannedClicheName,
+  isStockFantasyCompoundName,
+  normalizeNameKey,
+} from "../_shared/forgeCompanionNameQuality.ts";
 import { generateAppearanceReferenceText } from "../_shared/generateAppearanceReferenceText.ts";
 import { renderPortraitToStorage } from "../_shared/renderCompanionPortrait.ts";
 import { requireAdminUser, requireSessionUser } from "../_shared/requireSessionUser.ts";
@@ -107,10 +114,6 @@ function parentAllowedForMerge(
   return false;
 }
 
-function normalizeNameKey(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 function titleCaseWords(input: string): string {
   return input
     .trim()
@@ -118,29 +121,6 @@ function titleCaseWords(input: string): string {
     .filter(Boolean)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(" ");
-}
-
-/** Banned clichés; Grok names hitting these still get a collision suffix, not a server name generator. */
-function isBannedClicheName(name: string): boolean {
-  const n = normalizeNameKey(name);
-  if (!n) return true;
-  const banned = new Set([
-    "luna",
-    "raven",
-    "scarlett",
-    "violet",
-    "nova",
-    "lilith",
-    "mistress raven",
-    "dark luna",
-    "velvet raven",
-    "shadow luna",
-    "midnight rose",
-  ]);
-  if (banned.has(n)) return true;
-  const parts = n.split(/\s+/).filter(Boolean);
-  if (parts.some((p) => banned.has(p))) return true;
-  return false;
 }
 
 function parentTokenSet(parentA: Record<string, unknown>, parentB: Record<string, unknown>): Set<string> {
@@ -177,7 +157,7 @@ async function chooseUniqueNexusName(
   };
 
   let base = titleCaseWords(String(proposedName || "").trim()).slice(0, 120);
-  if (!base || isBannedClicheName(base)) {
+  if (!base || !isAcceptableForgeDisplayName(base)) {
     base = titleCaseWords(`Unbound ${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`).slice(0, 120);
   }
 
@@ -189,6 +169,112 @@ async function chooseUniqueNexusName(
     if (isFree(candidate)) return candidate;
   }
   return titleCaseWords(`${base} ${Date.now().toString(36)}`.trim()).slice(0, 120);
+}
+
+async function grokInventNexusMergeName(opts: {
+  parentA: Record<string, unknown>;
+  parentB: Record<string, unknown>;
+  fused: Record<string, unknown>;
+  avoidDisplay: string[];
+  rejectReason?: string;
+  xaiKey: string;
+  model: string;
+}): Promise<string | null> {
+  const brief = buildNexusMergeNamingBrief({
+    parentA: opts.parentA,
+    parentB: opts.parentB,
+    fused: opts.fused,
+    rejectReason: opts.rejectReason,
+  });
+  const avoidNote = opts.avoidDisplay.length
+    ? `\nDo not duplicate any name in this JSON array:\n${JSON.stringify(opts.avoidDisplay.slice(0, 80))}`
+    : "";
+  const system = `You invent one-of-one display names for Nexus merge hybrids in LustForge.
+Follow the naming brief exactly. Forbidden: procedural gothic compounds (Shadowveil, Grimdawn, Failfrost, Gearlock, Nightbane, Dreadmarch, Mourningveil), Luna/Raven/Nova clichés, copying parent name tokens.
+Prefer theme-native realistic names when parents are modern/contemporary. Output ONLY the name — no quotes or labels.${avoidNote}`;
+
+  const r = await grokChatCompletionRaw(
+    {
+      model: opts.model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: brief },
+      ],
+      temperature: 0.92,
+      max_tokens: 64,
+    },
+    opts.xaiKey,
+  );
+  if (!r.ok || r.json === null) return null;
+  const text = extractGrokAssistantText(r.json);
+  let name = text.trim().replace(/^["'\u201c\u201d`]+|["'\u201c\u201d`]+$/g, "").trim();
+  name = (name.split(/\r?\n/).map((x) => x.trim()).find(Boolean) ?? "")
+    .replace(/^(name|companion)\s*:\s*/i, "")
+    .trim()
+    .slice(0, 120);
+  return name.length >= 2 ? name : null;
+}
+
+async function resolveNexusDisplayName(
+  supabase: ReturnType<typeof createClient>,
+  proposedName: string,
+  parentA: Record<string, unknown>,
+  parentB: Record<string, unknown>,
+  fused: Record<string, unknown>,
+  xaiKey: string,
+  model: string,
+): Promise<string> {
+  const avoid: string[] = [];
+  let candidate = String(proposedName || "").trim();
+  let rejectReason: string | undefined;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (isAcceptableForgeDisplayName(candidate)) {
+      const resolved = await chooseUniqueNexusName(supabase, candidate, parentA, parentB);
+      if (isAcceptableForgeDisplayName(resolved)) return resolved;
+      candidate = resolved;
+      rejectReason = "name collided with vault or echoed a parent token";
+    } else {
+      rejectReason = isStockFantasyCompoundName(candidate)
+        ? "sounded like a stock gothic compound (Shadowveil / Grimdawn style)"
+        : isBannedClicheName(candidate)
+          ? "used a banned cliché"
+          : "empty or invalid";
+    }
+    if (candidate) avoid.push(candidate);
+    const invented = await grokInventNexusMergeName({
+      parentA,
+      parentB,
+      fused,
+      avoidDisplay: avoid,
+      rejectReason,
+      xaiKey,
+      model,
+    });
+    if (!invented) break;
+    candidate = invented;
+  }
+
+  const lastTry = await grokInventNexusMergeName({
+    parentA,
+    parentB,
+    fused,
+    avoidDisplay: avoid,
+    rejectReason:
+      "Use a simple, theme-appropriate given name only (one or two words). No mood-word compounds.",
+    xaiKey,
+    model,
+  });
+  if (lastTry && isAcceptableForgeDisplayName(lastTry)) {
+    return chooseUniqueNexusName(supabase, lastTry, parentA, parentB);
+  }
+
+  return chooseUniqueNexusName(
+    supabase,
+    titleCaseWords(`Hybrid ${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`),
+    parentA,
+    parentB,
+  );
 }
 
 Deno.serve(async (req) => {
@@ -476,6 +562,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    const xaiKey = resolveXaiApiKey(getEnv)!;
+
     const nexusMergeGrokModel =
       getEnv("GROK_NEXUS_MERGE_MODEL")?.trim() ||
       getEnv("GROK_FORGE_PARSE_MODEL")?.trim() ||
@@ -573,8 +661,9 @@ ${sourceContext} Invent ONE new wholly original hybrid adult companion that beli
 - fantasy_starters: exactly 4; each description is the verbatim first USER chat line (in-world; seductive, explicit, or playful per fused persona). FORBIDDEN: meta quiz closers ("Are you ready?", "Tell me when..."). End on dialogue or desire.
 
 Naming (critical — **you** invent the name; the server does **not** apply any name templates):
-- Output \`name\` as a **one-of-one** label for this fusion only. It must **sound** like the hybrid of both parents' Companion Forge identity: read each parent's \`forge_theme_dna.activeForgeTab\` plus merged slider / visual flavor (gothic, latex, eldritch, anime, cyber, etc.) and let **phonetics + cadence** follow that blend (archaic compounds, clipped handles, velvet noir, uncanny celestial, etc. as appropriate).
-- **Forbidden:** Luna/Raven/Scarlett/Nova/Lilith-class clichés; stock "fantasy surname" lists; repeating syllable-mash patterns (Ari+la+ne style); copying either parent's full name or distinctive parent name tokens.${infuseLine}
+- Output \`name\` as a **one-of-one** label for this fusion only. Read each parent's \`forge_theme_dna.activeForgeTab\`, tagline, appearance, and personality — the name must sound **native to that hybrid**, not like a random gothic name generator.
+- **Match the theme lane:** modern/contemporary parents → believable human given names; anime → stylized Japanese or catalog given names; cyber → handles; Victorian/medieval/mythic only when parents' themes demand it.
+- **Forbidden:** Luna/Raven/Scarlett/Nova/Lilith-class clichés; stock fantasy surname lists; **mood-word compounds** (Shadowveil, Grimdawn, Failfrost, Gearlock, Nightbane, Dreadmarch, Mourningveil, Gloomwraith); syllable-mash patterns (Ari+la+ne style); copying either parent's full name or distinctive parent name tokens.${infuseLine}
 - If you cannot invent a strong name, still output your best attempt — never leave \`name\` empty.
 
 Visual inheritance rule (critical): preserve blended facial structure, body silhouette, and optional fantasy anatomy cues (ears/tail/horns/wings) when appropriate.
@@ -595,7 +684,7 @@ Output ONLY via the nexus_merge_companion tool call.`;
       "Naming cue (forge — steer the tool `name` field from this hybrid, invented each time):",
       `- Parent A primary forge tab id: "${tabA || "unknown"}"`,
       `- Parent B primary forge tab id: "${tabB || "unknown"}"`,
-      "Blend those lanes into a wholly original display name. Do not use procedural name recipes or stock fantasy surnames.",
+      "Blend those lanes into a wholly original display name. Do not use procedural name recipes or stock fantasy surnames. No Shadowveil/Grimdawn-style compounds.",
     ].join("\n");
 
     const userContent = `Parent A:\n${JSON.stringify(parentA)}\n\nParent B:\n${JSON.stringify(parentB)}\n\nFuse them.${namingCue}`;
@@ -631,7 +720,7 @@ Output ONLY via the nexus_merge_companion tool call.`;
         name: {
           type: "string",
           description:
-            "Wholly original display name for this merge only (2–5 words or one rare compound). Invent it yourself from the hybrid of both parents' forge_theme_dna (especially activeForgeTab + merged aesthetic). No Luna/Raven/Nova clichés, no template fantasy surnames, no syllable-mash generators. Must not echo parent names.",
+            "Wholly original display name for this merge only (1–4 words). Theme-native given name or handle — NOT a gothic compound generator output. Invent from both parents' forge_theme_dna and vibe. No Luna/Raven/Nova clichés, no Shadowveil/Grimdawn/Failfrost-style compounds, no syllable-mash. Must not echo parent names.",
         },
         tagline: { type: "string" },
         gender: { type: "string" },
@@ -748,11 +837,14 @@ Output ONLY via the nexus_merge_companion tool call.`;
       pb as Record<string, unknown>,
     );
 
-    const resolvedName = await chooseUniqueNexusName(
+    const resolvedName = await resolveNexusDisplayName(
       supabase,
-      String(fields.name || "Unnamed Hybrid"),
+      String(fields.name || ""),
       pa as Record<string, unknown>,
       pb as Record<string, unknown>,
+      fields,
+      xaiKey,
+      nexusMergeGrokModel,
     );
 
     const grokTags = Array.isArray(fields.tags) ? fields.tags.map((x) => String(x)) : [];

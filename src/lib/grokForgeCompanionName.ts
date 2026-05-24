@@ -12,6 +12,7 @@ import {
   generateUniqueForgeNameFromMergedExclusions,
   normalizeNameKey,
 } from "@/lib/forgeNameEngine";
+import { isAcceptableForgeDisplayName } from "@/lib/forgeCompanionNameQuality";
 import { invokeGenerateForgeCompanionName } from "@/lib/invokeGenerateForgeCompanionName";
 import { withAsyncTimeout } from "@/lib/withAsyncTimeout";
 
@@ -121,6 +122,11 @@ export async function pickGrokForgeCompanionName(opts: PickGrokForgeCompanionNam
       continue;
     }
     if (!avoidKeys.has(nk)) {
+      if (!isAcceptableForgeDisplayName(candidate)) {
+        avoidDisplay = [...avoidDisplay, candidate].filter(Boolean).slice(0, 400);
+        avoidKeys.add(nk);
+        continue;
+      }
       return { name: candidate, source: "grok" };
     }
     avoidDisplay = [...avoidDisplay, candidate].filter(Boolean).slice(0, 400);
