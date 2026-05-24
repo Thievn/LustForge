@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { DbCompanion } from "@/hooks/useCompanions";
 import { galleryStaticPortraitUrl } from "@/lib/companionMedia";
@@ -26,6 +26,9 @@ export function NexusBreedingDirtyChat({
   onScriptReady,
   onRevealMilestone,
   revealMilestoneLines = 2,
+  minChatElapsedMs = 0,
+  onChatMinimumMet,
+  footerSlot,
 }: {
   parentA: DbCompanion;
   parentB: DbCompanion;
@@ -38,6 +41,10 @@ export function NexusBreedingDirtyChat({
   onScriptReady?: () => void;
   onRevealMilestone?: (lineCount: number) => void;
   revealMilestoneLines?: number;
+  /** Elapsed ms since first line before firing onChatMinimumMet (merge overlay dismiss unlock). */
+  minChatElapsedMs?: number;
+  onChatMinimumMet?: () => void;
+  footerSlot?: ReactNode;
 }) {
   const [fetchState, setFetchState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [errMsg, setErrMsg] = useState<string | null>(null);
@@ -47,6 +54,9 @@ export function NexusBreedingDirtyChat({
   const endRef = useRef<HTMLDivElement>(null);
   const scriptReadyFiredRef = useRef(false);
   const milestoneFiredRef = useRef(false);
+  const chatMinFiredRef = useRef(false);
+  const firstLineAtRef = useRef<number | null>(null);
+  const chatMinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const aUrl = galleryStaticPortraitUrl(parentA, parentA.id);
   const bUrl = galleryStaticPortraitUrl(parentB, parentB.id);
@@ -84,6 +94,12 @@ export function NexusBreedingDirtyChat({
       scriptRef.current = [];
       scriptReadyFiredRef.current = false;
       milestoneFiredRef.current = false;
+      chatMinFiredRef.current = false;
+      firstLineAtRef.current = null;
+      if (chatMinTimerRef.current) {
+        clearTimeout(chatMinTimerRef.current);
+        chatMinTimerRef.current = null;
+      }
       return;
     }
 
@@ -94,6 +110,12 @@ export function NexusBreedingDirtyChat({
     scriptRef.current = [];
     scriptReadyFiredRef.current = false;
     milestoneFiredRef.current = false;
+    chatMinFiredRef.current = false;
+    firstLineAtRef.current = null;
+    if (chatMinTimerRef.current) {
+      clearTimeout(chatMinTimerRef.current);
+      chatMinTimerRef.current = null;
+    }
 
     void (async () => {
       const res = await invokeNexusBreedingDialogue({
@@ -123,7 +145,20 @@ export function NexusBreedingDirtyChat({
         const row = script[i]!;
         const id = `ln-${i}-${row.kind}-${Date.now().toString(36)}`;
         i += 1;
-        setShown((prev) => [...prev, { ...row, id }].slice(-220));
+        setShown((prev) => {
+          const next = [...prev, { ...row, id }].slice(-220);
+          if (prev.length === 0 && next.length > 0 && firstLineAtRef.current === null) {
+            firstLineAtRef.current = Date.now();
+            if (minChatElapsedMs > 0 && onChatMinimumMet && !chatMinFiredRef.current) {
+              chatMinTimerRef.current = window.setTimeout(() => {
+                if (chatMinFiredRef.current) return;
+                chatMinFiredRef.current = true;
+                onChatMinimumMet();
+              }, minChatElapsedMs);
+            }
+          }
+          return next;
+        });
         const baseMs =
           script.length > 0 ? (estimatedDurationSec * 1000) / script.length : 2400;
         const delay = Math.max(900, Math.min(5600, baseMs * (0.78 + Math.random() * 0.42)));
@@ -139,8 +174,21 @@ export function NexusBreedingDirtyChat({
         clearTimeout(revealTimerRef.current);
         revealTimerRef.current = null;
       }
+      if (chatMinTimerRef.current) {
+        clearTimeout(chatMinTimerRef.current);
+        chatMinTimerRef.current = null;
+      }
     };
-  }, [active, parentA.id, parentB.id, resolvedTargetCount, estimatedDurationSec, onScriptReady]);
+  }, [
+    active,
+    parentA.id,
+    parentB.id,
+    resolvedTargetCount,
+    estimatedDurationSec,
+    onScriptReady,
+    minChatElapsedMs,
+    onChatMinimumMet,
+  ]);
 
   useEffect(() => {
     if (milestoneFiredRef.current) return;
@@ -155,6 +203,13 @@ export function NexusBreedingDirtyChat({
       onRevealMilestone?.(0);
     }
   }, [fetchState, onRevealMilestone]);
+
+  useEffect(() => {
+    if (!isMergeWeave || fetchState !== "error") return;
+    if (chatMinFiredRef.current || !onChatMinimumMet) return;
+    chatMinFiredRef.current = true;
+    onChatMinimumMet();
+  }, [fetchState, isMergeWeave, onChatMinimumMet]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -328,6 +383,9 @@ export function NexusBreedingDirtyChat({
         </AnimatePresence>
         <div ref={endRef} />
       </div>
+      {footerSlot ? (
+        <div className="shrink-0 border-t border-white/[0.06] px-3 py-2 sm:px-4">{footerSlot}</div>
+      ) : null}
     </div>
   );
 }

@@ -10,7 +10,10 @@ import type { DbCompanion } from "@/hooks/useCompanions";
 import { mapSupabaseCustomCharacterRow, dbToCompanion } from "@/hooks/useCompanions";
 import { VAULT_COLLECTION_QUERY_KEY } from "@/hooks/useVaultCollection";
 import { cn } from "@/lib/utils";
-import { NexusMergeRitualOverlay } from "@/components/nexus/NexusMergeRitualOverlay";
+import {
+  NexusMergeRitualOverlay,
+  type NexusRitualPhase,
+} from "@/components/nexus/NexusMergeRitualOverlay";
 import { galleryStaticPortraitUrl, isVideoPortraitUrl, shouldShowProfileLoopVideo } from "@/lib/companionMedia";
 import { NEXUS_INFUSE_EXTRA_COST, NEXUS_MERGE_BASE_COST } from "@/lib/nexusCredits";
 import {
@@ -20,7 +23,10 @@ import {
   nexusCooldownRemainingMs,
 } from "@/lib/nexusMerge";
 import { messageFromFunctionsInvoke } from "@/lib/supabaseFunctionsError";
-import { startProfileLoopVideoInBackground } from "@/lib/invokeGenerateProfileLoopVideo";
+import {
+  invokeGenerateProfileLoopVideo,
+  resumePendingProfileLoopJob,
+} from "@/lib/invokeGenerateProfileLoopVideo";
 import { normalizeCompanionRarity } from "@/lib/companionRarity";
 import { TierHaloPortraitFrame } from "@/components/rarity/TierHaloPortraitFrame";
 import { AdminLoopingVideoBlock } from "@/components/admin/AdminLoopingVideoBlock";
@@ -62,6 +68,62 @@ function parseMergeStatsNexus(raw: Record<string, unknown> | null | undefined): 
 const NEON = "#FF2D7B";
 const NEXUS_PENDING_MERGE_KEY = "lustforge:nexus:pending-merge";
 const NEXUS_LAST_REVEAL_KEY = "lustforge:nexus:last-reveal";
+const NEXUS_AWAITING_REVEAL_KEY = "lustforge:nexus:awaiting-reveal";
+
+type MergeRevealPayload = {
+  childId: string;
+  name: string;
+  summary: string;
+  merge_stats?: Record<string, unknown>;
+  portraitReady: boolean;
+  token: string;
+};
+
+type AwaitingRevealRecord = {
+  userId: string;
+  childId: string;
+  parentAId: string;
+  parentBId: string;
+  name: string;
+  summary: string;
+  merge_stats?: Record<string, unknown>;
+  startedAtMs: number;
+};
+
+function companionHasLoopVideo(db: DbCompanion | null): boolean {
+  if (!db) return false;
+  const anim = db.animated_image_url?.trim();
+  return (
+    shouldShowProfileLoopVideo(db, db.profile_loop_video_enabled) &&
+    Boolean(anim && isVideoPortraitUrl(anim))
+  );
+}
+
+function writeAwaitingReveal(record: AwaitingRevealRecord) {
+  try {
+    localStorage.setItem(NEXUS_AWAITING_REVEAL_KEY, JSON.stringify(record));
+  } catch {
+    /* ignore */
+  }
+}
+
+function readAwaitingReveal(): AwaitingRevealRecord | null {
+  try {
+    const raw = localStorage.getItem(NEXUS_AWAITING_REVEAL_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AwaitingRevealRecord;
+  } catch {
+    return null;
+  }
+}
+
+function clearAwaitingReveal() {
+  try {
+    localStorage.removeItem(NEXUS_AWAITING_REVEAL_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 function portraitFor(db: DbCompanion): string | null {
   return galleryStaticPortraitUrl(db, db.id);
@@ -195,6 +257,7 @@ function NexusRevealPanel({
   onReset,
   isAdmin,
   queryClient,
+  loopVideoFailed = false,
 }: {
   revealChild: DbCompanion | null;
   revealFallback: { childId: string; name: string; summary: string; merge_stats?: Record<string, unknown> };
@@ -202,6 +265,7 @@ function NexusRevealPanel({
   onReset: () => void;
   isAdmin: boolean;
   queryClient: ReturnType<typeof useQueryClient>;
+  loopVideoFailed?: boolean;
 }) {
   const stats = parseMergeStatsNexus(revealChild?.merge_stats ?? revealFallback.merge_stats);
   const companionUi = revealChild ? dbToCompanion(revealChild) : null;
@@ -262,10 +326,9 @@ function NexusRevealPanel({
               muted
               playsInline
             />
-          ) : companionUi ? (
-            <p className="text-[11px] text-muted-foreground text-center">
-              Looping portrait video will appear here when generation completes — check the profile if it&apos;s still
-              processing.
+          ) : loopVideoFailed && companionUi ? (
+            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+              Loop video did not finish — open their profile and tap Regenerate loop video.
             </p>
           ) : null}
         </div>
@@ -379,14 +442,17 @@ export default function TheNexus({
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [nexusRarityInfoOpen, setNexusRarityInfoOpen] = useState(false);
-  const [ascendantSealed, setAscendantSealed] = useState(false);
+  const [ritualPhase, setRitualPhase] = useState<NexusRitualPhase>("veil");
+  const [chatMinMet, setChatMinMet] = useState(false);
+  const [loopVideoFailed, setLoopVideoFailed] = useState(false);
   const recoverAttemptedRef = useRef(false);
-  const mergeRevealPayloadRef = useRef<{
-    childId: string;
-    portraitReady: boolean;
-    token: string;
-  } | null>(null);
-  const dialogueRevealOkRef = useRef(false);
+  const mergeRevealPayloadRef = useRef<MergeRevealPayload | null>(null);
+  const mergeCompleteRef = useRef(false);
+  const chatMinMetRef = useRef(false);
+  const loopVideoReadyRef = useRef(false);
+  const loopVideoFailedRef = useRef(false);
+  const backgroundDismissedRef = useRef(false);
+  const loopPollStartedRef = useRef<string | null>(null);
 
   const nexusRarityTableRows = useMemo(() => {
     const arr = getNexusRarityOutcomesTable();
@@ -422,72 +488,248 @@ export default function TheNexus({
       (nexusCooldownRemainingMs(alpha.nexus_cooldown_until ?? null) <= 0 &&
         nexusCooldownRemainingMs(omega.nexus_cooldown_until ?? null) <= 0));
 
-  const startNexusChildLoopInBackground = useCallback(
-    (childId: string, token: string) => {
-      toast.info("Loop video rendering in background — open their profile to watch.", { duration: 7000 });
-      startProfileLoopVideoInBackground(
-        { companionId: childId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          onComplete: () => {
-            toast.success("Loop video saved — refresh their profile to watch.");
-            void queryClient.invalidateQueries({ queryKey: ["companions"] });
-            void queryClient.invalidateQueries({
-              queryKey: ["companion-display-override", userId, childId],
-            });
-          },
-          onError: (msg) => {
-            const vm = msg || "Loop video failed — open profile and tap Regenerate loop video.";
-            toast.error(vm.length > 220 ? `${vm.slice(0, 217)}…` : vm);
-          },
-        },
-      );
-    },
-    [queryClient, userId],
-  );
+  const refreshRevealChild = useCallback(async (childId: string) => {
+    const uuid = childId.replace(/^cc-/, "");
+    const { data: row, error: rowErr } = await supabase
+      .from("custom_characters")
+      .select("*")
+      .eq("id", uuid)
+      .maybeSingle();
+    if (!rowErr && row) {
+      setRevealChild(mapSupabaseCustomCharacterRow(row as Record<string, unknown>));
+      return mapSupabaseCustomCharacterRow(row as Record<string, unknown>);
+    }
+    return null;
+  }, []);
 
   const completeMergeReveal = useCallback(() => {
     const pending = mergeRevealPayloadRef.current;
+    if (!pending) return;
+
     mergeRevealPayloadRef.current = null;
-    dialogueRevealOkRef.current = false;
-    setAscendantSealed(false);
-    setPhase("revealed");
-    if (pending?.portraitReady && pending.token) {
-      startNexusChildLoopInBackground(pending.childId, pending.token);
+    mergeCompleteRef.current = false;
+    chatMinMetRef.current = false;
+    loopVideoReadyRef.current = false;
+    loopVideoFailedRef.current = false;
+    setChatMinMet(false);
+    setRitualPhase("veil");
+    setMergeSubphase("fusion");
+
+    setRevealFallback({
+      childId: pending.childId,
+      name: pending.name,
+      summary: pending.summary,
+      merge_stats: pending.merge_stats,
+    });
+
+    try {
+      localStorage.setItem(
+        NEXUS_LAST_REVEAL_KEY,
+        JSON.stringify({
+          userId,
+          childId: pending.childId,
+          name: pending.name,
+          summary: pending.summary,
+          merge_stats: pending.merge_stats,
+          ts: Date.now(),
+        }),
+      );
+    } catch {
+      /* ignore */
     }
-  }, [startNexusChildLoopInBackground]);
+    clearAwaitingReveal();
+
+    const dismissed = backgroundDismissedRef.current;
+    backgroundDismissedRef.current = false;
+    setPhase("revealed");
+
+    if (dismissed) {
+      toast.success(`${pending.name} has emerged from The Nexus`, {
+        duration: 9000,
+        description: "Your ascendant is ready — loop video and profile unlocked.",
+      });
+    }
+  }, [userId]);
 
   const tryCompleteMergeReveal = useCallback(() => {
-    if (!mergeRevealPayloadRef.current || !dialogueRevealOkRef.current) return;
+    if (!mergeCompleteRef.current || !chatMinMetRef.current) return;
+    if (!loopVideoReadyRef.current && !loopVideoFailedRef.current) return;
+    if (!mergeRevealPayloadRef.current) return;
     completeMergeReveal();
   }, [completeMergeReveal]);
 
-  const handleDialogueRevealMilestone = useCallback(() => {
-    dialogueRevealOkRef.current = true;
+  const startLoopVideoPoll = useCallback(
+    (childId: string, token: string) => {
+      if (loopPollStartedRef.current === childId) return;
+      loopPollStartedRef.current = childId;
+
+      void (async () => {
+        try {
+          const existing = await resumePendingProfileLoopJob(childId, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (existing?.publicUrl) {
+            await refreshRevealChild(childId);
+            loopVideoReadyRef.current = true;
+            setLoopVideoFailed(false);
+            loopVideoFailedRef.current = false;
+            tryCompleteMergeReveal();
+            return;
+          }
+        } catch {
+          /* fall through to fresh invoke */
+        }
+
+        try {
+          await invokeGenerateProfileLoopVideo(
+            { companionId: childId },
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          await refreshRevealChild(childId);
+          loopVideoReadyRef.current = true;
+          setLoopVideoFailed(false);
+          loopVideoFailedRef.current = false;
+          void queryClient.invalidateQueries({ queryKey: ["companions"] });
+          void queryClient.invalidateQueries({ queryKey: [...VAULT_COLLECTION_QUERY_KEY, userId] });
+          void queryClient.invalidateQueries({
+            queryKey: ["companion-display-override", userId, childId],
+          });
+          tryCompleteMergeReveal();
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Loop video failed";
+          loopVideoFailedRef.current = true;
+          setLoopVideoFailed(true);
+          toast.error(
+            msg.length > 180 ? `${msg.slice(0, 177)}…` : msg,
+            { description: "Ascendant is in your vault — open profile to regenerate loop video." },
+          );
+          tryCompleteMergeReveal();
+        } finally {
+          if (loopPollStartedRef.current === childId) {
+            loopPollStartedRef.current = null;
+          }
+        }
+      })();
+    },
+    [queryClient, refreshRevealChild, tryCompleteMergeReveal, userId],
+  );
+
+  const handleChatMinimumMet = useCallback(() => {
+    if (chatMinMetRef.current) return;
+    chatMinMetRef.current = true;
+    setChatMinMet(true);
+    if (mergeCompleteRef.current) {
+      setRitualPhase("circuit");
+      setMergeSubphase("video");
+    }
     tryCompleteMergeReveal();
   }, [tryCompleteMergeReveal]);
 
+  const handleContinueInBackground = useCallback(() => {
+    backgroundDismissedRef.current = true;
+    setPhase("select");
+    toast.info("Your ascendant is still forging — we'll notify you when they're ready.", {
+      duration: 8000,
+    });
+  }, []);
+
   useEffect(() => {
-    if (!ascendantSealed) return;
+    if (phase !== "merging") return;
     const id = window.setTimeout(() => {
-      dialogueRevealOkRef.current = true;
-      tryCompleteMergeReveal();
-    }, 16_000);
+      if (!chatMinMetRef.current) {
+        handleChatMinimumMet();
+      }
+    }, 60_000);
     return () => window.clearTimeout(id);
-  }, [ascendantSealed, tryCompleteMergeReveal]);
+  }, [phase, handleChatMinimumMet]);
+
+  const applyMergeSuccess = useCallback(
+    (
+      payload: {
+        childId: string;
+        name: string;
+        trait_fusion_summary?: string;
+        portraitGenerated?: boolean;
+        portraitError?: string | null;
+        merge_stats?: Record<string, unknown>;
+      },
+      token: string,
+      parentAId: string,
+      parentBId: string,
+      startedAtMs: number,
+    ) => {
+      const summaryFallback =
+        payload.trait_fusion_summary?.trim() ||
+        "A third ascendant steps forward — adult, deliberate, and entirely their own.";
+
+      if (payload.portraitGenerated === false && payload.portraitError) {
+        toast.error(
+          `Portrait did not render: ${payload.portraitError.slice(0, 120)}${payload.portraitError.length > 120 ? "…" : ""}`,
+        );
+      }
+
+      mergeRevealPayloadRef.current = {
+        childId: payload.childId,
+        name: payload.name,
+        summary: summaryFallback,
+        merge_stats: payload.merge_stats,
+        portraitReady: payload.portraitGenerated !== false,
+        token,
+      };
+      mergeCompleteRef.current = true;
+
+      writeAwaitingReveal({
+        userId,
+        childId: payload.childId,
+        parentAId,
+        parentBId,
+        name: payload.name,
+        summary: summaryFallback,
+        merge_stats: payload.merge_stats,
+        startedAtMs,
+      });
+
+      void refreshRevealChild(payload.childId);
+      startLoopVideoPoll(payload.childId, token);
+
+      if (chatMinMetRef.current) {
+        setRitualPhase("circuit");
+        setMergeSubphase("video");
+      }
+      tryCompleteMergeReveal();
+
+      try {
+        localStorage.removeItem(NEXUS_PENDING_MERGE_KEY);
+      } catch {
+        /* ignore */
+      }
+      void queryClient.invalidateQueries({ queryKey: ["companions"] });
+      void queryClient.invalidateQueries({ queryKey: [...VAULT_COLLECTION_QUERY_KEY, userId] });
+      onCreditsChanged?.();
+    },
+    [onCreditsChanged, queryClient, refreshRevealChild, startLoopVideoPoll, tryCompleteMergeReveal, userId],
+  );
 
   const resetFlow = useCallback(() => {
     setPhase("select");
     setMergeSubphase("fusion");
+    setRitualPhase("veil");
     setRevealChild(null);
     setRevealFallback(null);
     setBusy(false);
-    setAscendantSealed(false);
+    setChatMinMet(false);
+    setLoopVideoFailed(false);
     mergeRevealPayloadRef.current = null;
-    dialogueRevealOkRef.current = false;
+    mergeCompleteRef.current = false;
+    chatMinMetRef.current = false;
+    loopVideoReadyRef.current = false;
+    loopVideoFailedRef.current = false;
+    backgroundDismissedRef.current = false;
+    loopPollStartedRef.current = null;
     setPicked([]);
     try {
       localStorage.removeItem(NEXUS_LAST_REVEAL_KEY);
+      clearAwaitingReveal();
     } catch {
       /* ignore */
     }
@@ -496,9 +738,43 @@ export default function TheNexus({
   useEffect(() => {
     if (recoverAttemptedRef.current) return;
     recoverAttemptedRef.current = true;
-    const rawPending = localStorage.getItem(NEXUS_PENDING_MERGE_KEY);
-    const rawReveal = localStorage.getItem(NEXUS_LAST_REVEAL_KEY);
 
+    const resumeAwaitingReveal = async (record: AwaitingRevealRecord) => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return;
+
+      mergeRevealPayloadRef.current = {
+        childId: record.childId,
+        name: record.name,
+        summary: record.summary,
+        merge_stats: record.merge_stats,
+        portraitReady: true,
+        token,
+      };
+      mergeCompleteRef.current = true;
+      chatMinMetRef.current = true;
+
+      const db = await refreshRevealChild(record.childId);
+      if (companionHasLoopVideo(db)) {
+        loopVideoReadyRef.current = true;
+        completeMergeReveal();
+        return;
+      }
+
+      toast.info("Resuming your Nexus ascendant — loop video still rendering.", { duration: 6000 });
+      startLoopVideoPoll(record.childId, token);
+    };
+
+    const rawAwaiting = readAwaitingReveal();
+    if (rawAwaiting?.userId === userId && phase === "select") {
+      void resumeAwaitingReveal(rawAwaiting);
+      return;
+    }
+
+    const rawReveal = localStorage.getItem(NEXUS_LAST_REVEAL_KEY);
     if (rawReveal && phase === "select") {
       try {
         const parsed = JSON.parse(rawReveal) as {
@@ -511,19 +787,30 @@ export default function TheNexus({
         };
         const freshEnough = Date.now() - (parsed.ts || 0) < 1000 * 60 * 60 * 8;
         if (parsed.userId === userId && freshEnough) {
-          setRevealFallback({
-            childId: parsed.childId,
-            name: parsed.name,
-            summary: parsed.summary,
-            merge_stats: parsed.merge_stats,
-          });
-          setPhase("revealed");
+          void (async () => {
+            const db = await refreshRevealChild(parsed.childId);
+            if (!companionHasLoopVideo(db)) {
+              const awaiting = readAwaitingReveal();
+              if (awaiting?.childId === parsed.childId) {
+                void resumeAwaitingReveal(awaiting);
+              }
+              return;
+            }
+            setRevealFallback({
+              childId: parsed.childId,
+              name: parsed.name,
+              summary: parsed.summary,
+              merge_stats: parsed.merge_stats,
+            });
+            setPhase("revealed");
+          })();
         }
       } catch {
         /* ignore */
       }
     }
 
+    const rawPending = localStorage.getItem(NEXUS_PENDING_MERGE_KEY);
     if (!rawPending) return;
     let pending: {
       userId: string;
@@ -556,28 +843,35 @@ export default function TheNexus({
           success?: boolean;
           status?: string;
           childId?: string;
+          name?: string;
+          trait_fusion_summary?: string;
+          merge_stats?: Record<string, unknown>;
+          portraitGenerated?: boolean;
+          portraitError?: string | null;
           refunded?: number;
         };
         if (payload.status === "completed" && payload.childId) {
-          const uuid = payload.childId.replace(/^cc-/, "");
-          const { data: row } = await supabase.from("custom_characters").select("*").eq("id", uuid).maybeSingle();
-          if (row) {
-            const db = mapSupabaseCustomCharacterRow(row as Record<string, unknown>);
-            const summary =
-              typeof db.trait_fusion_summary === "string" && db.trait_fusion_summary.trim()
-                ? db.trait_fusion_summary.trim()
-                : "A third ascendant steps forward — adult, deliberate, and entirely their own.";
-            setRevealChild(db);
-            setRevealFallback({
-              childId: payload.childId,
-              name: db.name,
-              summary,
-              merge_stats: db.merge_stats as Record<string, unknown> | undefined,
-            });
-            setPhase("revealed");
-            toast.success("Recovered your Nexus merge.");
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          const token = session?.access_token;
+          if (token) {
+            applyMergeSuccess(
+              {
+                childId: payload.childId,
+                name: payload.name ?? "Ascendant",
+                trait_fusion_summary: payload.trait_fusion_summary,
+                portraitGenerated: payload.portraitGenerated,
+                portraitError: payload.portraitError,
+                merge_stats: payload.merge_stats,
+              },
+              token,
+              pending.parentAId,
+              pending.parentBId,
+              pending.startedAtMs,
+            );
+            toast.success("Recovered your Nexus merge — ascendant forging continues.");
           }
-          localStorage.removeItem(NEXUS_PENDING_MERGE_KEY);
           return;
         }
         if (payload.status === "refunded" && (payload.refunded ?? 0) > 0) {
@@ -590,17 +884,32 @@ export default function TheNexus({
         /* ignore; keep pending marker for a later return */
       }
     })();
-  }, [onCreditsChanged, phase, userId, recoverAttemptedRef]);
+  }, [
+    applyMergeSuccess,
+    completeMergeReveal,
+    onCreditsChanged,
+    phase,
+    refreshRevealChild,
+    startLoopVideoPoll,
+    userId,
+  ]);
 
   const runMerge = async () => {
     if (!alpha || !omega || !canMerge) return;
     setBusy(true);
     setMergeSubphase("fusion");
+    setRitualPhase("veil");
     setRevealChild(null);
     setRevealFallback(null);
-    setAscendantSealed(false);
+    setChatMinMet(false);
+    setLoopVideoFailed(false);
     mergeRevealPayloadRef.current = null;
-    dialogueRevealOkRef.current = false;
+    mergeCompleteRef.current = false;
+    chatMinMetRef.current = false;
+    loopVideoReadyRef.current = false;
+    loopVideoFailedRef.current = false;
+    backgroundDismissedRef.current = false;
+    loopPollStartedRef.current = null;
     setPhase("merging");
     const startedAtMs = Date.now();
     try {
@@ -665,69 +974,7 @@ export default function TheNexus({
         rarity?: string;
       };
 
-      const summaryFallback =
-        payload.trait_fusion_summary?.trim() ||
-        "A third ascendant steps forward — adult, deliberate, and entirely their own.";
-
-      setRevealFallback({
-        childId: payload.childId,
-        name: payload.name,
-        summary: summaryFallback,
-        merge_stats: payload.merge_stats,
-      });
-      try {
-        localStorage.setItem(
-          NEXUS_LAST_REVEAL_KEY,
-          JSON.stringify({
-            userId,
-            childId: payload.childId,
-            name: payload.name,
-            summary: summaryFallback,
-            merge_stats: payload.merge_stats,
-            ts: Date.now(),
-          }),
-        );
-      } catch {
-        /* ignore */
-      }
-
-      if (payload.portraitGenerated === false && payload.portraitError) {
-        toast.error(
-          `Portrait did not render: ${payload.portraitError.slice(0, 120)}${payload.portraitError.length > 120 ? "…" : ""}`,
-        );
-      }
-
-      const portraitReady = payload.portraitGenerated !== false;
-
-      const uuid = payload.childId.replace(/^cc-/, "");
-      const { data: row, error: rowErr } = await supabase
-        .from("custom_characters")
-        .select("*")
-        .eq("id", uuid)
-        .maybeSingle();
-
-      if (!rowErr && row) {
-        setRevealChild(mapSupabaseCustomCharacterRow(row as Record<string, unknown>));
-      } else {
-        setRevealChild(null);
-      }
-
-      mergeRevealPayloadRef.current = {
-        childId: payload.childId,
-        portraitReady,
-        token,
-      };
-      setAscendantSealed(true);
-      tryCompleteMergeReveal();
-
-      try {
-        localStorage.removeItem(NEXUS_PENDING_MERGE_KEY);
-      } catch {
-        /* ignore */
-      }
-      void queryClient.invalidateQueries({ queryKey: ["companions"] });
-      void queryClient.invalidateQueries({ queryKey: [...VAULT_COLLECTION_QUERY_KEY, userId] });
-      onCreditsChanged?.();
+      applyMergeSuccess(payload, token, alpha.id, omega.id, startedAtMs);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Merge failed.");
       setPhase("select");
@@ -1056,6 +1303,7 @@ export default function TheNexus({
             onReset={resetFlow}
             isAdmin={isAdmin}
             queryClient={queryClient}
+            loopVideoFailed={loopVideoFailed}
           />
         )}
       </AnimatePresence>
@@ -1068,9 +1316,11 @@ export default function TheNexus({
                   key="nexus-ritual"
                   parentA={alpha}
                   parentB={omega}
+                  ritualPhase={ritualPhase}
                   mergeSubphase={mergeSubphase}
-                  ascendantSealed={ascendantSealed}
-                  onDialogueRevealMilestone={handleDialogueRevealMilestone}
+                  chatMinMet={chatMinMet}
+                  onChatMinimumMet={handleChatMinimumMet}
+                  onContinueInBackground={handleContinueInBackground}
                 />
               ) : null}
             </AnimatePresence>,

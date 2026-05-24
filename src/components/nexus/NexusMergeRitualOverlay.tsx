@@ -5,26 +5,33 @@ import { NexusBreedingDirtyChat } from "@/components/nexus/NexusBreedingDirtyCha
 import { NexusMergeWeaveHero } from "@/components/nexus/NexusMergeWeaveHero";
 import { cn } from "@/lib/utils";
 
+export type NexusRitualPhase = "veil" | "circuit";
+
+export const NEXUS_MERGE_CHAT_DURATION_SEC = 180;
+export const NEXUS_CHAT_MIN_MS = 60_000;
+
 export function NexusMergeRitualOverlay({
   parentA,
   parentB,
+  ritualPhase,
   mergeSubphase,
-  ascendantSealed,
-  onDialogueRevealMilestone,
+  chatMinMet,
+  onChatMinimumMet,
+  onContinueInBackground,
 }: {
   parentA: DbCompanion;
   parentB: DbCompanion;
+  ritualPhase: NexusRitualPhase;
   mergeSubphase: "fusion" | "video";
-  /** True once nexus-merge API finished — ascendant exists but reveal may wait on dialogue. */
-  ascendantSealed?: boolean;
-  onDialogueRevealMilestone?: () => void;
+  chatMinMet?: boolean;
+  onChatMinimumMet?: () => void;
+  onContinueInBackground?: () => void;
 }) {
-  const phaseTitle = mergeSubphase === "fusion" ? "Twinned veil" : "Living circuit";
-  const phaseSubtitle = ascendantSealed
-    ? "The ascendant is sealed in the vault — listen to the threads before they step into the light."
-    : mergeSubphase === "fusion"
-      ? "The forge drinks two silhouettes down to one spark — nothing surfaces until the weave is sealed."
-      : "Still heat wakes into motion — her loop stitches itself to skin under violet glass.";
+  const phaseTitle = ritualPhase === "veil" ? "Twinned veil" : "Living circuit";
+  const phaseSubtitle =
+    ritualPhase === "veil"
+      ? "The forge drinks two silhouettes down to one spark — listen to their hunger before anything steps into the light."
+      : "Still heat wakes into motion — the weave crystallizes under violet glass.";
 
   return (
     <motion.div
@@ -64,10 +71,24 @@ export function NexusMergeRitualOverlay({
               parentB={parentB}
               active
               surface="nexus_merge"
-              estimatedDurationSec={300}
-              revealMilestoneLines={2}
-              onRevealMilestone={onDialogueRevealMilestone}
+              estimatedDurationSec={NEXUS_MERGE_CHAT_DURATION_SEC}
+              minChatElapsedMs={NEXUS_CHAT_MIN_MS}
+              onChatMinimumMet={onChatMinimumMet}
               className="max-h-[min(52vh,400px)] w-full lg:max-h-[min(56vh,440px)]"
+              footerSlot={
+                chatMinMet && onContinueInBackground ? (
+                  <button
+                    type="button"
+                    onClick={onContinueInBackground}
+                    className={cn(
+                      "mx-auto block w-full max-w-xs rounded-lg py-1.5 text-center text-[11px] font-medium",
+                      "text-muted-foreground/75 transition-colors hover:text-cyan-200/90 hover:underline underline-offset-2",
+                    )}
+                  >
+                    Continue in background
+                  </button>
+                ) : null
+              }
             />
           </div>
         </div>

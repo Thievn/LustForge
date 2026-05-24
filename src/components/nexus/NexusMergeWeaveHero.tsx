@@ -1,12 +1,7 @@
 import type { CSSProperties } from "react";
 import { motion } from "framer-motion";
 import type { DbCompanion } from "@/hooks/useCompanions";
-import {
-  galleryStaticPortraitUrl,
-  profileAnimatedPortraitUrl,
-  isEligibleLoopPortraitVideoUrl,
-  isVideoPortraitUrl,
-} from "@/lib/companionMedia";
+import { galleryStaticPortraitUrl } from "@/lib/companionMedia";
 import { cn } from "@/lib/utils";
 
 const NEON = "#FF2D7B";
@@ -23,36 +18,13 @@ function OrbitGlyph({ className, style }: { className?: string; style?: CSSPrope
   );
 }
 
-/** Looping profile video, animated still, or breathing still — always some motion in-frame. */
+/** Merge overlay: stationary portrait with subtle in-frame breathe (bounce is on MergeAnchor). */
 function MergeAnchorPortrait({ who }: { who: DbCompanion }) {
   const still = galleryStaticPortraitUrl(who, who.id);
-  const anim = profileAnimatedPortraitUrl(who);
-  const loopVideo = Boolean(anim && isEligibleLoopPortraitVideoUrl(anim, who.profile_loop_video_enabled));
-  const animatedStill = Boolean(anim && !loopVideo && !isVideoPortraitUrl(anim));
 
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden rounded-2xl bg-black/40">
-      {loopVideo && anim ? (
-        <video
-          key={anim}
-          className="h-full w-full scale-[1.02] object-cover object-top"
-          src={anim}
-          poster={still}
-          autoPlay
-          muted
-          playsInline
-          loop
-          preload="metadata"
-        />
-      ) : animatedStill ? (
-        <motion.img
-          src={anim}
-          alt=""
-          className="h-full w-full object-cover object-top"
-          animate={{ scale: [1, 1.015, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ) : still ? (
+      {still ? (
         <motion.img
           src={still}
           alt=""
