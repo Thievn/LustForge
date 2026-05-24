@@ -323,8 +323,13 @@ export default function BuyCredits() {
                         </span>
                       ) : null}
                     </div>
+                    {pack.name ? (
+                      <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-[#FF2D7B]/90">{pack.name}</p>
+                    ) : null}
                     <p className="mt-1 text-sm text-white/90">{pack.fc.toLocaleString()} FC</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Best for: {pack.badge ?? "General use"}</p>
+                    <p className="mt-1 text-xs text-muted-foreground leading-snug">
+                      {pack.description ?? (pack.badge ? pack.badge : "General use")}
+                    </p>
                   </button>
                 );
               })}

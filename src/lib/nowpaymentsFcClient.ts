@@ -4,8 +4,10 @@ export type FcPack = {
   id: string;
   usd: number;
   fc: number;
+  name?: string;
   label: string;
   badge?: string;
+  description?: string;
   popular?: boolean;
 };
 
@@ -29,7 +31,7 @@ async function invoke<T>(body: Record<string, unknown>): Promise<T> {
 
 export async function fetchFcPacks(): Promise<FcPack[]> {
   const data = await invoke<{ packs: FcPack[] }>({ mode: "packs" });
-  return (data.packs ?? []).map((p) => ({ ...p, popular: p.id === "popular_1650" }));
+  return (data.packs ?? []).map((p) => ({ ...p, popular: p.id === "best_4500" }));
 }
 
 export async function createFcInvoice(packId: string, payCurrency?: string): Promise<{ orderId: string; checkoutUrl: string }> {

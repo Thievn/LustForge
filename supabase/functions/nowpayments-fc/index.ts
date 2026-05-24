@@ -7,12 +7,44 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-nowpayments-sig",
 };
 
-type Pack = { id: string; usd: number; fc: number; label: string; badge: string };
+type Pack = { id: string; usd: number; fc: number; name: string; label: string; badge: string; description: string };
 const PACKS: Pack[] = [
-  { id: "starter_750", usd: 5, fc: 800, label: "$5 - 800 FC", badge: "Starter" },
-  { id: "popular_1650", usd: 10, fc: 1650, label: "$10 - 1,650 FC", badge: "Popular" },
-  { id: "best_4500", usd: 25, fc: 4200, label: "$25 - 4,200 FC", badge: "Best Value" },
-  { id: "heavy_9500", usd: 50, fc: 9000, label: "$50 - 9,000 FC", badge: "Heavy User" },
+  {
+    id: "starter_750",
+    usd: 5,
+    fc: 600,
+    name: "Awakening",
+    label: "Awakening — 600 FC",
+    badge: "",
+    description: "Begin your journey into temptation.",
+  },
+  {
+    id: "popular_1650",
+    usd: 10,
+    fc: 1320,
+    name: "Desire",
+    label: "Desire — 1,320 FC",
+    badge: "Popular",
+    description: "The most popular path. More pleasure awaits.",
+  },
+  {
+    id: "best_4500",
+    usd: 25,
+    fc: 3450,
+    name: "Obsession",
+    label: "Obsession — 3,450 FC",
+    badge: "Best Value",
+    description: "Best value. Feed your deepest cravings.",
+  },
+  {
+    id: "heavy_9500",
+    usd: 50,
+    fc: 7200,
+    name: "Eternal",
+    label: "Eternal — 7,200 FC",
+    badge: "",
+    description: "Unlimited indulgence. For those who never want to stop.",
+  },
 ];
 
 function getNowPaymentsKey(): string {
