@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Flame, Shield, LogOut, UserRound, Menu } from "lucide-react";
+import { Flame, Shield, LogOut, UserRound, Menu, LayoutDashboard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -7,6 +7,24 @@ import { isPlatformAdmin } from "@/config/auth";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 import { cn } from "@/lib/utils";
+
+const ghostNavPill =
+  "inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 min-h-10 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.07] hover:border-white/15 transition-all";
+
+const accountNavPill =
+  "inline-flex items-center gap-1.5 rounded-xl border border-[#FF2D7B]/35 bg-[#FF2D7B]/[0.08] px-3 py-2 min-h-10 text-sm font-medium text-[#FF2D7B] hover:bg-[#FF2D7B]/15 hover:border-[#FF2D7B]/55 transition-all shadow-[0_0_16px_rgba(255,45,123,0.12)]";
+
+function MobileSheetHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div
+      className="shrink-0 border-b border-white/[0.06] pl-4 pr-14 py-3"
+      style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+    >
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      {subtitle ? <p className="mt-0.5 text-xs text-muted-foreground truncate">{subtitle}</p> : null}
+    </div>
+  );
+}
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -52,6 +70,9 @@ const Navbar = () => {
   const sheetLinkClass =
     "flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06] active:bg-white/[0.08] touch-manipulation";
 
+  const sheetPanelClass =
+    "flex w-[min(100vw-1rem,20rem)] flex-col border-l border-white/10 bg-[#050508]/98 p-0";
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 bg-[#050508]/94 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
@@ -66,41 +87,36 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm shrink-0">
-          <ShopSyncableToysButton />
+        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm shrink-0">
+          {!user ? <ShopSyncableToysButton /> : null}
           {user ? (
             <>
-              <div className="hidden md:flex items-center gap-4">
-                <Link
-                  to="/dashboard"
-                  className="text-muted-foreground hover:text-[#FF2D7B] transition-colors py-2 min-h-10 inline-flex items-center"
-                >
+              <div className="hidden md:flex items-center gap-1 rounded-2xl border border-white/[0.08] bg-zinc-950/50 p-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+                <Link to="/dashboard" className={ghostNavPill}>
+                  <LayoutDashboard className="h-4 w-4 shrink-0 opacity-80" />
                   Dashboard
                 </Link>
-                <Link
-                  to="/account"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-[#FF2D7B]/35 bg-[#FF2D7B]/[0.08] px-3 py-1.5 sm:px-3.5 sm:py-2 text-[#FF2D7B] hover:bg-[#FF2D7B]/15 hover:border-[#FF2D7B]/55 transition-all shadow-[0_0_16px_rgba(255,45,123,0.12)] min-h-10"
-                >
-                  <UserRound className="h-4 w-4" />
+                <Link to="/account" className={accountNavPill}>
+                  <UserRound className="h-4 w-4 shrink-0" />
                   Account
                 </Link>
-                {isAdmin && (
+                {isAdmin ? (
                   <Link
                     to="/admin"
-                    className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-[hsl(280_50%_35%)] to-[#FF2D7B] text-white font-medium hover:scale-[1.02] transition-transform shadow-md shadow-[#FF2D7B]/20 border border-white/10 text-xs sm:text-sm min-h-10"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-[hsl(280_50%_35%)] to-[#FF2D7B] text-white font-medium hover:scale-[1.02] transition-transform shadow-md shadow-[#FF2D7B]/20 border border-white/10 text-sm min-h-10"
                   >
-                    <Shield className="h-4 w-4" />
+                    <Shield className="h-4 w-4 shrink-0" />
                     Admin
                   </Link>
-                )}
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="text-sm text-muted-foreground hover:text-[hsl(170_100%_45%)] transition-colors py-2 min-h-10 inline-flex items-center"
-                >
-                  Logout
-                </button>
+                ) : null}
               </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="hidden md:inline-flex text-sm text-muted-foreground hover:text-[hsl(170_100%_45%)] transition-colors py-2 px-2 min-h-10 items-center"
+              >
+                Logout
+              </button>
 
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
@@ -112,28 +128,22 @@ const Navbar = () => {
                     <Menu className="h-6 w-6 text-[#FF2D7B]" />
                   </button>
                 </SheetTrigger>
-                <SheetContent
-                  side="right"
-                  className="flex w-[min(100vw-1rem,20rem)] flex-col border-l border-white/10 bg-[#050508]/98 p-0 pt-[max(1rem,env(safe-area-inset-top))]"
-                >
+                <SheetContent side="right" className={sheetPanelClass}>
                   <SheetTitle className="sr-only">Main menu</SheetTitle>
-                  <div className="border-b border-white/[0.06] px-4 py-3">
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                  </div>
-                  <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-                    <ShopSyncableToysButton variant="menu" onClick={() => setMobileOpen(false)} />
+                  <MobileSheetHeader title="Menu" subtitle={user?.email} />
+                  <div
+                    className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
+                    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                  >
                     <Link
                       to="/dashboard"
                       onClick={() => setMobileOpen(false)}
-                      className={sheetLinkClass}
+                      className={cn(sheetLinkClass, "border border-white/10 bg-white/[0.03]")}
                     >
+                      <LayoutDashboard className="h-4 w-4 shrink-0 text-[#FF2D7B]" />
                       Dashboard
                     </Link>
-                    <Link
-                      to="/create-companion"
-                      onClick={() => setMobileOpen(false)}
-                      className={sheetLinkClass}
-                    >
+                    <Link to="/create-companion" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
                       Companion Forge
                     </Link>
                     <Link
@@ -144,14 +154,10 @@ const Navbar = () => {
                       <UserRound className="h-4 w-4 shrink-0" />
                       Account
                     </Link>
-                    <Link
-                      to="/settings"
-                      onClick={() => setMobileOpen(false)}
-                      className={sheetLinkClass}
-                    >
+                    <Link to="/settings" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
                       Preferences
                     </Link>
-                    {isAdmin && (
+                    {isAdmin ? (
                       <Link
                         to="/admin"
                         onClick={() => setMobileOpen(false)}
@@ -163,7 +169,7 @@ const Navbar = () => {
                         <Shield className="h-4 w-4 shrink-0" />
                         Admin
                       </Link>
-                    )}
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => void handleLogout()}
@@ -204,12 +210,13 @@ const Navbar = () => {
                     <Menu className="h-6 w-6 text-[#FF2D7B]" />
                   </button>
                 </SheetTrigger>
-                <SheetContent
-                  side="right"
-                  className="flex w-[min(100vw-1rem,20rem)] flex-col border-l border-white/10 bg-[#050508]/98 p-0 pt-[max(1rem,env(safe-area-inset-top))]"
-                >
+                <SheetContent side="right" className={sheetPanelClass}>
                   <SheetTitle className="sr-only">Menu</SheetTitle>
-                  <div className="flex flex-1 flex-col gap-1 p-3">
+                  <MobileSheetHeader title="Menu" />
+                  <div
+                    className="flex flex-1 flex-col gap-2 overflow-y-auto p-3"
+                    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                  >
                     <ShopSyncableToysButton variant="menu" onClick={() => setMobileOpen(false)} />
                     <Link to="/" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
                       Home
@@ -219,7 +226,7 @@ const Navbar = () => {
                       onClick={() => setMobileOpen(false)}
                       className={cn(
                         sheetLinkClass,
-                        "mt-2 justify-center font-semibold text-white border border-white/10",
+                        "justify-center font-semibold text-white border border-white/10",
                       )}
                       style={{
                         background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",

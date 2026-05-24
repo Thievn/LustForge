@@ -10,6 +10,7 @@ import { disconnectToy, getToys, type LovenseToy } from "@/lib/lovense";
 import { useLovensePairing } from "@/hooks/useLovensePairing";
 import { useWindowVisibleRefresh } from "@/hooks/useWindowVisibleRefresh";
 import { LovensePairingQrBlock } from "@/components/toy/LovensePairingQrBlock";
+import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 import {
   Select,
   SelectContent,
@@ -513,9 +514,13 @@ const Settings = () => {
                   <WifiOff className="h-4 w-4" />
                   Disconnect all devices
                 </button>
+                <div className="pt-2">
+                  <ShopSyncableToysButton variant="promo" />
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
+                <ShopSyncableToysButton variant="promo" />
                 <p className="text-xs text-muted-foreground">
                   Generate a QR code, then scan it with the <strong className="text-foreground">Lovense Remote</strong>{" "}
                   app (not the browser). Your phone bridges the toy to LustForge. Once linked,{" "}

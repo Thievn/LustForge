@@ -32,6 +32,7 @@ import {
   CHAT_LIKENESS_SUBJECT_FEATURES_INLINE,
   chatLikenessSameSubjectMandate,
 } from "@/lib/chatLikenessAnchors";
+import { sanitizeGrokImagineLexicon, sanitizeImagineProfileText } from "@/lib/momentsPromptSanitize";
 
 function resolvePersonalityMatrix(companion: Companion): ForgePersonalityProfile {
   if (companion.personalityForge) {
@@ -204,7 +205,7 @@ export function buildMasterChatImagePrompt(args: MasterImagePromptArgs): {
     inferForgeBodyTypeFromAppearance(dbComp.appearance) ??
     "Average Build";
   const art = resolveChatArtStyleLabel(dbComp);
-  const pack = (dbComp.image_prompt || "").trim().slice(0, 900);
+  const pack = sanitizeImagineProfileText((dbComp.image_prompt || "").trim().slice(0, 900), 900);
   const mood = classifyChatImageMood({ rawUserMessage, menuBasePrompt: menuImagePrompt });
   const nexusHybrid = Boolean(dbComp.is_nexus_hybrid);
   const animeArtLane = isAnimeArtStyleLabel(art);
@@ -304,8 +305,8 @@ export function buildMasterChatImagePrompt(args: MasterImagePromptArgs): {
     "No duplicate faces, no collage, no watermark, no app UI, no on-image text, no disembodied parts unless the user explicitly asked.",
   ].join(" ");
 
-  const coreLook = (resolveEffectiveCharacterReference(dbComp) ?? "").trim();
-  const longAppear = (companion.appearance || "").trim();
+  const coreLook = sanitizeImagineProfileText((resolveEffectiveCharacterReference(dbComp) ?? "").trim(), 2000);
+  const longAppear = sanitizeImagineProfileText((companion.appearance || "").trim(), 2000);
   const characterRefPreamble = coreLook
     ? [
         "— CHARACTER REFERENCE (READ FIRST — EXECUTE BEFORE ANY SCENE TEXT) —",
@@ -415,7 +416,8 @@ export function buildMasterChatImagePrompt(args: MasterImagePromptArgs): {
     .join("\n\n")
     .slice(0, 12_000);
 
-  const portraitConsistencyLock = [
+  const portraitConsistencyLock = sanitizeGrokImagineLexicon(
+    [
     `Use this exact character's face, hair style, eye color, body type, tattoos, piercings, species marks, and overall appearance exactly as reference. Maintain 100% consistency with the main portrait and CHARACTER APPEARANCE — only change pose, outfit, background, and scene per PRIMARY SCENE / menu.`,
     `CHARACTER LOCK for ${companion.name}: keep **${CHAT_LIKENESS_SUBJECT_FEATURES_INLINE}** and **${bodyType}** consistent with CHARACTER APPEARANCE — do not invent a different person. **Face-first:** atmosphere (smoke, fog, particles, dramatic backlight) stays **subordinate** to a readable face unless the menu scene text explicitly demands that effect.`,
     menuSceneLock
@@ -430,7 +432,8 @@ export function buildMasterChatImagePrompt(args: MasterImagePromptArgs): {
   ]
     .filter(Boolean)
     .join(" ")
-    .slice(0, 8_000);
+    .slice(0, 8_000),
+  );
 
   return { prompt, portraitConsistencyLock, visualIdentityCapsule };
 }

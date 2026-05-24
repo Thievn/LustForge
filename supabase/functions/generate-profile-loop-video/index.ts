@@ -123,6 +123,42 @@ function profileLoopGrokPollFailReason(
   return `Video render failed: ${raw}`;
 }
 
+async function resolveAlternatePortraitStillForModerationRetry(
+  svc: ReturnType<typeof createClient>,
+  sessionUserId: string,
+  companionId: string,
+  row: Record<string, unknown>,
+  currentStill: string,
+): Promise<string | null> {
+  const currentNorm = currentStill.trim().toLowerCase();
+  const candidates: string[] = [];
+
+  const galleryStill = await resolveLatestGalleryStillUrl(svc, companionId);
+  if (galleryStill) candidates.push(galleryStill);
+
+  for (const url of rowStillCandidateUrls(row)) {
+    const ready = publicHttpsImageUrlForGrok(url);
+    if (ready) candidates.push(ready);
+  }
+
+  const { data: existingOv } = await svc
+    .from("user_companion_portrait_overrides")
+    .select("portrait_url")
+    .eq("user_id", sessionUserId)
+    .eq("companion_id", companionId)
+    .maybeSingle();
+  const ovPortrait = typeof existingOv?.portrait_url === "string" ? existingOv.portrait_url.trim() : "";
+  if (ovPortrait) {
+    const ready = publicHttpsImageUrlForGrok(ovPortrait);
+    if (ready) candidates.push(ready);
+  }
+
+  for (const c of candidates) {
+    if (c.trim().toLowerCase() !== currentNorm) return c;
+  }
+  return null;
+}
+
 async function tryProfileLoopModerationRetry(args: {
   svc: ReturnType<typeof createClient>;
   job: ProfileLoopJobRow;
@@ -133,17 +169,17 @@ async function tryProfileLoopModerationRetry(args: {
   if (!jobId) return false;
 
   const ctx = (job.context && typeof job.context === "object" ? job.context : {}) as Record<string, unknown>;
-  if (ctx.moderationRetried === true) return false;
-
   const sourceImageUrl = typeof ctx.sourceImageUrl === "string" ? ctx.sourceImageUrl.trim() : "";
   if (!sourceImageUrl) return false;
 
   const table =
     ctx.table === "custom_characters" ? "custom_characters" : ctx.table === "companions" ? "companions" : null;
   const rowPk = String(ctx.rowPk ?? "").trim();
+  const companionId = String(job.companion_id ?? ctx.companionId ?? "").trim();
+  const sessionUserId = String(job.user_id ?? "").trim();
   let row: Record<string, unknown> = { name: "Character" };
   if (table && rowPk) {
-    const { data } = await svc.from(table).select("name, tagline").eq("id", rowPk).maybeSingle();
+    const { data } = await svc.from(table).select("*").eq("id", rowPk).maybeSingle();
     if (data && typeof data === "object") row = data as Record<string, unknown>;
   }
 
@@ -155,11 +191,52 @@ async function tryProfileLoopModerationRetry(args: {
     DEFAULT_GROK_VIDEO_MODEL;
   const prompt = buildUltraSafeProfileLoopRetryPrompt(row);
 
+  /** Pass 1: ultra-safe prompt, same still. */
+  if (ctx.moderationRetried !== true) {
+    try {
+      const { requestId } = await startGrokImagineImageToVideo({
+        apiKey: xaiKey,
+        prompt,
+        sourceImageUrl,
+        durationSeconds: durationSec,
+        aspectRatio: "2:3",
+        resolution: "480p",
+        model: videoModel,
+      });
+      await svc
+        .from("profile_loop_video_jobs")
+        .update({
+          xai_request_id: requestId,
+          status: "pending",
+          error_message: null,
+          context: { ...ctx, moderationRetried: true, retryPrompt: "ultra_safe", moderationReason: "text" },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", jobId);
+      console.info("profile loop moderation retry started", { jobId, requestId });
+      return true;
+    } catch (e) {
+      console.error("profile loop moderation retry failed:", e);
+    }
+  }
+
+  /** Pass 2: ultra-safe prompt, alternate still (image-level moderation). */
+  if (ctx.alternateStillRetried === true) return false;
+
+  const altStill = await resolveAlternatePortraitStillForModerationRetry(
+    svc,
+    sessionUserId,
+    companionId,
+    row,
+    sourceImageUrl,
+  );
+  if (!altStill) return false;
+
   try {
     const { requestId } = await startGrokImagineImageToVideo({
       apiKey: xaiKey,
       prompt,
-      sourceImageUrl,
+      sourceImageUrl: altStill,
       durationSeconds: durationSec,
       aspectRatio: "2:3",
       resolution: "480p",
@@ -171,14 +248,22 @@ async function tryProfileLoopModerationRetry(args: {
         xai_request_id: requestId,
         status: "pending",
         error_message: null,
-        context: { ...ctx, moderationRetried: true, retryPrompt: "ultra_safe" },
+        context: {
+          ...ctx,
+          moderationRetried: true,
+          alternateStillRetried: true,
+          retryPrompt: "ultra_safe_alt_still",
+          moderationReason: "image",
+          sourceImageUrl: altStill,
+          previousSourceImageUrl: sourceImageUrl,
+        },
         updated_at: new Date().toISOString(),
       })
       .eq("id", jobId);
-    console.info("profile loop moderation retry started", { jobId, requestId });
+    console.info("profile loop alternate-still moderation retry started", { jobId, requestId, altStill });
     return true;
   } catch (e) {
-    console.error("profile loop moderation retry failed:", e);
+    console.error("profile loop alternate-still retry failed:", e);
     return false;
   }
 }

@@ -22,6 +22,16 @@ import {
   resolveForgeThemeInnerForNexusMerge,
 } from "../_shared/nexusForgeThemeMerge.ts";
 import { mergeNexusChildVisualStyleTags } from "../_shared/nexusChildStyleTags.ts";
+import { sanitizeImagineProfileText } from "../_shared/momentsPromptSanitize.ts";
+
+function sanitizeNexusImagineFields(fields: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...fields,
+    tagline: sanitizeImagineProfileText(String(fields.tagline || ""), 200),
+    appearance: sanitizeImagineProfileText(String(fields.appearance || ""), 1200),
+    image_prompt: sanitizeImagineProfileText(String(fields.image_prompt || ""), 2000),
+  };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -828,6 +838,8 @@ Output ONLY via the nexus_merge_companion tool call.`;
       });
     }
 
+    fields = sanitizeNexusImagineFields(fields);
+
     const merge_stats = normalizeMergeStats(fields.merge_stats);
     const coolUntil = new Date(Date.now() + COOLDOWN_MS).toISOString();
     const childRarity = rollNexusChildRarity(String(pa.rarity || "common"), String(pb.rarity || "common"));
@@ -1012,7 +1024,7 @@ Output ONLY via the nexus_merge_companion tool call.`;
         identityAnatomyDetail: undefined,
         appearanceDraft: String(fields.appearance || ""),
       });
-      const trimmed = refText.replace(/\s+/g, " ").trim();
+      const trimmed = sanitizeImagineProfileText(refText.replace(/\s+/g, " ").trim(), 2000);
       if (trimmed.length >= 12) {
         const patch: Record<string, unknown> = {
           appearance_reference: trimmed,

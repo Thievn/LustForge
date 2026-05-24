@@ -10,6 +10,11 @@ import {
   resolveAnatomyVariant,
 } from "../_shared/anatomyImageRules.ts";
 import { sanitizeGrokImagineLexicon } from "../_shared/momentsPromptSanitize.ts";
+import { sanitizeForGrokImagine } from "../_shared/sanitizeForGrokImagine.ts";
+import {
+  buildImagineSafeCompanionContext,
+  sanitizeCharacterReferenceForImagine,
+} from "../_shared/buildCompanionDescriptionForSanitize.ts";
 import { maybeAppendForgeStyleSceneBlock } from "../_shared/forgePortraitAugmentation.ts";
 import {
   buildAnimeTemptationStyleLead,
@@ -84,6 +89,59 @@ async function refundTokens(
     });
   } catch (e) {
     console.error("refundTokens failed", e);
+  }
+}
+
+function isGrokImageModerationMessage(msg: string): boolean {
+  return /xai|together|content policy|moderation|blocked|safety|422|content safety/i.test(msg);
+}
+
+function buildUltraSafeChatStillRetryPrompt(
+  sceneLine: string,
+  companionCtx: string,
+  artLabel: string,
+): string {
+  const scene = sanitizeGrokImagineLexicon(sceneLine.trim().slice(0, 1200));
+  const id = companionCtx.trim().slice(0, 800);
+  return sanitizeGrokImagineLexicon(
+    [
+      "Perfume-ad editorial portrait still. Same person as companion identity below.",
+      artLabel ? `Art style: ${artLabel}.` : "",
+      id ? `Identity lock: ${id}` : "",
+      scene ? `Scene (tasteful coverage, editorial boudoir): ${scene}` : "Elegant sensual portrait with layered wardrobe and soft lighting.",
+      "Vertical 2:3, single subject, cinematic lighting, no phone, no on-image text.",
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
+async function grokGenerateWithModerationRetry(args: {
+  apiKey: string;
+  prompt: string;
+  retryPrompt: string;
+}): Promise<string> {
+  try {
+    const { dataUrl } = await grokGenerateImageDataUrl({
+      apiKey: args.apiKey,
+      prompt: args.prompt,
+      getEnv: (n) => Deno.env.get(n),
+      aspectRatio: "2:3",
+      likenessEditSourceUrl: undefined,
+    });
+    return dataUrl;
+  } catch (firstErr) {
+    const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
+    if (!isGrokImageModerationMessage(msg)) throw firstErr;
+    console.warn("generate-image moderation retry with softer prompt");
+    const { dataUrl } = await grokGenerateImageDataUrl({
+      apiKey: args.apiKey,
+      prompt: args.retryPrompt,
+      getEnv: (n) => Deno.env.get(n),
+      aspectRatio: "2:3",
+      likenessEditSourceUrl: undefined,
+    });
+    return dataUrl;
   }
 }
 
@@ -395,7 +453,27 @@ serve(async (req) => {
               .join("\n\n")
           : rawForRewrite;
       const rawClamped = clampPromptForImagine(rawForMenuClamp, rawBudget);
-      const fused = [headJoined, rawClamped].filter((s) => String(s).trim()).join("\n\n\n");
+      const menuSceneLine =
+        menuPrimaryExtractForImagine ||
+        menuTileScenePrompt ||
+        (menuTileLabel ? `Gallery menu: ${menuTileLabel}` : "");
+      const companionCtx = buildImagineSafeCompanionContext(cd);
+      let rewrittenCore = rawClamped;
+      try {
+        if (menuSceneLine.trim().length >= 20) {
+          rewrittenCore = await sanitizeForGrokImagine({
+            userInput: `Execute this gallery menu still literally — location, wardrobe, pose, props, camera:\n${menuSceneLine.trim().slice(0, 3500)}`,
+            companionDescription: companionCtx,
+            mode: "chat_moment",
+          });
+        } else {
+          rewrittenCore = sanitizeGrokImagineLexicon(rawClamped);
+        }
+      } catch (menuSanErr) {
+        console.warn("menu gallery hybrid sanitize fallback:", menuSanErr);
+        rewrittenCore = sanitizeGrokImagineLexicon(rawClamped);
+      }
+      const fused = [headJoined, rewrittenCore].filter((s) => String(s).trim()).join("\n\n\n");
       safeRewritten = clampPromptForImagine(fused, GROK_IMAGINE_PROMPT_SOFT_LIMIT);
     } else {
       try {
@@ -476,9 +554,9 @@ serve(async (req) => {
         ? menuScenePoseLine
         : String(characterData.pose ?? "").trim() || defaultPose;
 
-    const visualCapsuleRaw = String(
-      cd.visual_identity_capsule ?? cd.visualIdentityCapsule ?? "",
-    ).trim();
+    const visualCapsuleRaw = sanitizeGrokImagineLexicon(
+      String(cd.visual_identity_capsule ?? cd.visualIdentityCapsule ?? "").trim(),
+    );
     const visualCapsuleLine =
       menuSceneLockEffective && visualCapsuleRaw
         ? `- FORGE_VISUAL_IDENTITY (binding — looks + art style; echo of client capsule): ${visualCapsuleRaw.slice(0, 2200)}${visualCapsuleRaw.length > 2200 ? "…" : ""}`
@@ -626,7 +704,8 @@ PRIMARY SCENE (follow closely — rewriter output is authoritative for mood and 
 ${safeRewritten}`.trim();
       })();
     const companionIdForRef = String(cd.companionId ?? cd.companion_id ?? "").trim();
-    const charRefResolved = await resolveCharacterReferenceForImagine(supabase, companionIdForRef, cd);
+    const charRefResolvedRaw = await resolveCharacterReferenceForImagine(supabase, companionIdForRef, cd);
+    const charRefResolved = sanitizeCharacterReferenceForImagine(charRefResolvedRaw);
     const finalPromptRawEnriched = enrichImaginePromptUniversal({
       corePrompt: finalPromptRaw,
       characterReference: charRefResolved,
@@ -639,16 +718,26 @@ ${safeRewritten}`.trim();
     const finalPromptClamped = clampPromptForImagine(finalPromptRawEnriched, GROK_IMAGINE_PROMPT_SOFT_LIMIT);
     const finalPrompt = sanitizeGrokImagineLexicon(finalPromptClamped);
 
+    const retrySceneLine =
+      menuSceneLockEffective && isChatSessionStill
+        ? menuTileScenePrompt || menuPrimaryExtractForImagine || menuTileLabel
+        : String(sceneBlock).trim();
+    const ultraSafeRetryPrompt = clampPromptForImagine(
+      buildUltraSafeChatStillRetryPrompt(
+        retrySceneLine,
+        buildImagineSafeCompanionContext(cd),
+        artLabelForLead,
+      ),
+      GROK_IMAGINE_PROMPT_SOFT_LIMIT,
+    );
+
     let imageDataUrl: string;
     try {
-      const { dataUrl } = await grokGenerateImageDataUrl({
+      imageDataUrl = await grokGenerateWithModerationRetry({
         apiKey: xaiKey,
         prompt: finalPrompt,
-        getEnv: (n) => Deno.env.get(n),
-        aspectRatio: "2:3",
-        likenessEditSourceUrl: undefined,
+        retryPrompt: ultraSafeRetryPrompt,
       });
-      imageDataUrl = dataUrl;
     } catch (imgErr) {
       if (tokensCharged) {
         await refundTokens(supabase, userId, tokenCost, "Grok image error");
@@ -659,7 +748,7 @@ ${safeRewritten}`.trim();
         JSON.stringify({
           success: false,
           error:
-            /xai|together|content policy|moderation|blocked|safety|422/i.test(msg)
+            isGrokImageModerationMessage(msg)
               ? msg
               : `Image generation failed: ${msg}. Your forge credits were refunded if this run charged you.`,
           tokensRefunded: tokenCost > 0,

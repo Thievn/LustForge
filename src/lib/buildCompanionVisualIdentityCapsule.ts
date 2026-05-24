@@ -12,6 +12,7 @@ import {
   inferForgeBodyTypeFromTags,
   normalizeForgeBodyType,
 } from "@/lib/forgeBodyTypes";
+import { sanitizeGrokImagineLexicon } from "@/lib/momentsPromptSanitize";
 
 /** Sentences that usually describe the roster card / marketing still, not portable likeness. */
 const SCENE_CONTAMINATION =
@@ -104,13 +105,20 @@ export function buildCompanionVisualIdentityCapsule(companion: Companion, dbComp
     art = "Anime Style";
   }
   const silCat = forgeBodyCategoryIdForType(bodyType);
-  const idAnatomy = (dbComp.identity_anatomy_detail ?? "").trim().slice(0, 280);
+  const idAnatomyRaw = (dbComp.identity_anatomy_detail ?? "").trim().slice(0, 280);
+  const idAnatomy = idAnatomyRaw
+    ? sanitizeGrokImagineLexicon(
+        idAnatomyRaw.toLowerCase() === "futa"
+          ? "fantasy hybrid silhouette (editorial coverage)"
+          : idAnatomyRaw,
+      )
+    : "";
 
   const appearanceSource = (
     (companion.appearanceReference || "").trim() ||
     (companion.appearance || dbComp.appearance || "").trim()
   );
-  const cleaned = stripNonLikenessSentences(appearanceSource, 900);
+  const cleaned = sanitizeGrokImagineLexicon(stripNonLikenessSentences(appearanceSource, 900));
   const figureLine = figureNotesFromTagsAndText(tags, cleaned);
   const tagAnchors = physicalTagsLine(tags);
 

@@ -9,6 +9,7 @@ import { isPlatformAdmin } from "@/config/auth";
 import type { User } from "@supabase/supabase-js";
 import { fetchFcPaymentHistory, type FcOrderRow } from "@/lib/nowpaymentsFcClient";
 import { useProfileWallet } from "@/hooks/useProfileWallet";
+import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 
 type UserTransactionRow = {
   id: string;
@@ -247,6 +248,13 @@ export default function Account() {
                 </p>
               </div>
             </div>
+          </div>
+
+          <div className="mb-6 space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Hardware & sync
+            </p>
+            <ShopSyncableToysButton variant="promo" />
           </div>
 
           <div className="space-y-6">
