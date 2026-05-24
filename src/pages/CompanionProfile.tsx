@@ -257,6 +257,7 @@ const CompanionProfile = () => {
     companion &&
       !isDropLanding &&
       !isOwnForge &&
+      !forgeRowFetching &&
       (!paidCardQueryDone || !hasPaidForThisCard),
   );
   /** Global pre-launch: block spend features for everyone except platform admin. */
@@ -851,10 +852,12 @@ const CompanionProfile = () => {
     }
     const prompt = starterPrompt?.trim();
     const profileEntry = location.state as { from?: string } | undefined;
+    const profileBack =
+      profileEntry?.from ?? (isOwnForge ? "/dashboard?nav=collection" : "/discover");
     navigate(`/chat/${companion.id}`, {
       state: {
         from: `/companions/${companion.id}`,
-        profileBackTarget: profileEntry?.from ?? "/discover",
+        profileBackTarget: profileBack,
         starterPrompt: prompt || undefined,
         starterTitle: starterTitle || undefined,
       },

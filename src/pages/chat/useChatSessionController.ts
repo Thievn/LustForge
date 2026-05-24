@@ -639,10 +639,6 @@ export function useChatSessionController() {
   }, [navigate, id]);
 
   useEffect(() => {
-    if (!user) setForgeBalanceReady(false);
-  }, [user]);
-
-  useEffect(() => {
     if (!user?.id || !companion || companion.id !== id) return;
     void loadChatHistory(user.id);
   }, [user?.id, companion?.id, id]);

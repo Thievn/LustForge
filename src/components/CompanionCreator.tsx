@@ -2496,7 +2496,6 @@ User flavor notes: ${extraNotes || "none"}`;
         const rowPersonality = `${personalityLabel}${extraNotes ? `. ${extraNotes}` : ""}`.trim();
         const basePrompt = buildSystemPromptFor(displayName);
         const charter = effectiveCharter || basePrompt;
-        const goPublic = saveVisibility === "public" && !isAdmin;
         const startersForRow = padFantasyStartersToFour(effectiveStartersVault, displayName);
         const adminTier = adminAbyssalForge
           ? "abyssal"
@@ -2543,8 +2542,8 @@ User flavor notes: ${extraNotes || "none"}`;
           image_prompt: imagePromptOut,
           appearance_reference: characterRefPersistBase,
           character_reference: characterRefPersistBase,
-          is_public: isAdmin && forcePrivateForgeRef.current ? false : isAdmin ? true : goPublic,
-          approved: isAdmin && forcePrivateForgeRef.current ? false : isAdmin ? true : goPublic,
+          is_public: isAdmin && forcePrivateForgeRef.current ? false : isAdmin ? true : false,
+          approved: isAdmin && forcePrivateForgeRef.current ? false : isAdmin ? true : false,
           ...(isAdmin
             ? {
                 rarity: adminTier,
@@ -4410,7 +4409,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         <Globe className="h-4 w-4 shrink-0 mt-0.5 text-[hsl(170_100%_50%)]" />
                         <span>
                           <span className="font-semibold block">Public gallery</span>
-                          <span className="text-[10px] opacity-80">Listed for all visitors on the site</span>
+                          <span className="text-[10px] opacity-80">Site landing showcase only — not the paid Discover catalog</span>
                         </span>
                       </button>
                     </div>
