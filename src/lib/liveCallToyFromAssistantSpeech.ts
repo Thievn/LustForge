@@ -1,4 +1,6 @@
 import type { LovenseCommand } from "@/lib/lovense";
+import { buildLovenseCommand } from "@/lib/buildLovenseCommand";
+import type { CompanionVibrationPatternRow } from "@/hooks/useCompanionVibrationPatterns";
 
 /**
  * Heuristic mapping from assistant *spoken* transcript to a Lovense command.
@@ -7,7 +9,10 @@ import type { LovenseCommand } from "@/lib/lovense";
  */
 export function liveCallToyCommandFromAssistantLine(
   line: string,
-  opts: { toyDeviceUid: string },
+  opts: {
+    toyDeviceUid: string;
+    companionPatterns?: CompanionVibrationPatternRow[];
+  },
 ): LovenseCommand | null {
   const t = String(line ?? "").toLowerCase();
   if (t.length < 6) return null;
@@ -16,6 +21,29 @@ export function liveCallToyCommandFromAssistantLine(
 
   if (/\b(stop (it|the toy|this)|hold (it|everything)|cool (down|off)|ease off completely|full stop)\b/.test(t)) {
     return { command: "stop", intensity: 0, duration: 0, toyId: opts.toyDeviceUid };
+  }
+
+  if (opts.companionPatterns?.length) {
+    for (const row of opts.companionPatterns) {
+      const name = row.display_name.trim().toLowerCase();
+      if (!name || name.length < 3) continue;
+      if (t.includes(name)) {
+        const cmd = buildLovenseCommand({
+          source: "db_payload",
+          raw: row.vibration_pattern_pool?.payload,
+          deviceUid: opts.toyDeviceUid,
+        });
+        if (cmd) return cmd;
+      }
+      if (row.is_abyssal_signature && /\b(signature move|abyssal pulse|your signature)\b/.test(t)) {
+        const cmd = buildLovenseCommand({
+          source: "db_payload",
+          raw: row.vibration_pattern_pool?.payload,
+          deviceUid: opts.toyDeviceUid,
+        });
+        if (cmd) return cmd;
+      }
+    }
   }
 
   if (

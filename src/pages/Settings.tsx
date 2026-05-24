@@ -6,7 +6,7 @@ import ParticleBackground from "@/components/ParticleBackground";
 import { motion } from "framer-motion";
 import { Save, Trash2, Shield, Loader2, Wifi, WifiOff, QrCode, Volume2, Bell, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { disconnectToy, getToys, type LovenseToy } from "@/lib/lovense";
+import { disconnectToy, getToys, testToy, type LovenseToy } from "@/lib/lovense";
 import { useLovensePairing } from "@/hooks/useLovensePairing";
 import { useWindowVisibleRefresh } from "@/hooks/useWindowVisibleRefresh";
 import { LovensePairingQrBlock } from "@/components/toy/LovensePairingQrBlock";
@@ -47,6 +47,7 @@ const Settings = () => {
   const [linkedToys, setLinkedToys] = useState<LovenseToy[]>([]);
   const [pushCount, setPushCount] = useState(0);
   const [pushBusy, setPushBusy] = useState(false);
+  const [testPulseBusy, setTestPulseBusy] = useState(false);
 
   const refreshLinkedToys = useCallback(async (userId: string) => {
     const toys = await getToys(userId);
@@ -500,6 +501,29 @@ const Settings = () => {
                 >
                   <QrCode className="h-4 w-4" />
                   Add another device
+                </button>
+                <button
+                  type="button"
+                  disabled={testPulseBusy || linkedToys.length === 0}
+                  onClick={() => {
+                    if (!user?.id) return;
+                    const target = linkedToys.find((t) => t.enabled !== false) ?? linkedToys[0];
+                    if (!target) {
+                      toast.error("No linked toy to test.");
+                      return;
+                    }
+                    setTestPulseBusy(true);
+                    void testToy(user.id, target.id)
+                      .then((ok) => {
+                        if (ok) toast.success("Test pulse sent — check your toy.");
+                        else toast.error("Test pulse failed — re-pair in Lovense Remote and try again.");
+                      })
+                      .finally(() => setTestPulseBusy(false));
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#00ffd4]/35 bg-[#00ffd4]/[0.06] text-[#00ffd4] text-sm hover:bg-[#00ffd4]/10 transition-colors disabled:opacity-50"
+                >
+                  {testPulseBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Test pulse
                 </button>
                 <LovensePairingQrBlock
                   qrImageUrl={qrImageUrl}

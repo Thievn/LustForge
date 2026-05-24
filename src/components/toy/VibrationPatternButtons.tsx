@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Loader2, Square, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { CompanionVibrationPatternRow } from "@/hooks/useCompanionVibrationPatterns";
 import { payloadToLovenseCommand } from "@/lib/vibrationPatternPayload";
@@ -29,6 +30,19 @@ export function VibrationPatternButtons({
 
   const isChat = variant === "chat";
 
+  const handleTap = (row: CompanionVibrationPatternRow, cmd: ReturnType<typeof payloadToLovenseCommand>) => {
+    if (disabled) {
+      toast.message("Link a Lovense toy in Preferences to feel signature moves.");
+      return;
+    }
+    if (!cmd) {
+      toast.error("Pattern data is missing for this move — try another pattern or contact support.");
+      return;
+    }
+    if (sendingId === row.id) return;
+    onTrigger(row);
+  };
+
   return (
     <div
       className={cn(
@@ -41,31 +55,34 @@ export function VibrationPatternButtons({
         const busy = sendingId === row.id;
         const isSig = row.is_abyssal_signature;
         const isLive = activePatternId === row.id;
+        const blocked = disabled || !cmd;
 
         return (
           <motion.button
             key={row.id}
             type="button"
-            disabled={disabled || !cmd || busy}
+            disabled={busy}
             aria-pressed={isLive}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.03 }}
-            whileHover={disabled ? undefined : { scale: 1.02 }}
-            whileTap={disabled ? undefined : { scale: 0.98 }}
-            onClick={() => cmd && onTrigger(row)}
+            whileHover={blocked || busy ? undefined : { scale: 1.02 }}
+            whileTap={blocked || busy ? undefined : { scale: 0.98 }}
+            onClick={() => handleTap(row, cmd)}
             title={
               !cmd
-                ? "Invalid pattern payload"
-                : isLive
-                  ? "Tap to stop"
-                  : "Tap to start — tap again to stop"
+                ? "Invalid pattern payload — tap for details"
+                : disabled
+                  ? "Connect a Lovense toy first"
+                  : isLive
+                    ? "Tap to stop"
+                    : "Tap to start — tap again to stop"
             }
             className={cn(
               "group relative overflow-hidden rounded-2xl border text-left transition-all duration-300",
               isChat ? "px-3 py-2.5 text-xs" : "px-4 py-3.5 text-sm",
-              disabled || !cmd
-                ? "border-white/[0.06] bg-white/[0.02] text-muted-foreground/50 cursor-not-allowed"
+              blocked
+                ? "border-white/[0.06] bg-white/[0.02] text-muted-foreground/60 cursor-pointer hover:border-white/10"
                 : isLive
                   ? "border-[#00ffd4]/55 bg-[#00ffd4]/[0.14] text-white shadow-[0_0_32px_rgba(0,255,212,0.22)] ring-1 ring-[#00ffd4]/40"
                   : isSig
@@ -76,8 +93,7 @@ export function VibrationPatternButtons({
             <span
               className={cn(
                 "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-                !disabled &&
-                  cmd &&
+                !blocked &&
                   !isLive &&
                   "bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(255,45,123,0.22),transparent_55%)]",
               )}

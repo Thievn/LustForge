@@ -65,7 +65,7 @@ import { cn } from "@/lib/utils";
 import { getToys, type LovenseToy } from "@/lib/lovense";
 import { useCompanionVibrationPatterns, type CompanionVibrationPatternRow } from "@/hooks/useCompanionVibrationPatterns";
 import { VibrationPatternButtons } from "@/components/toy/VibrationPatternButtons";
-import { payloadToLovenseCommand } from "@/lib/vibrationPatternPayload";
+import { buildLovenseCommand } from "@/lib/buildLovenseCommand";
 import { createSustainedLovenseSession } from "@/lib/sustainedLovenseSession";
 import { formatNexusCooldownShort, nexusCooldownRemainingMs } from "@/lib/nexusMerge";
 import { splitProseIntoParagraphs } from "@/lib/profileProseSplit";
@@ -657,7 +657,11 @@ const CompanionProfile = () => {
       return;
     }
 
-    const cmd = payloadToLovenseCommand(row.vibration_pattern_pool?.payload);
+    const cmd = buildLovenseCommand({
+      source: "db_payload",
+      raw: row.vibration_pattern_pool?.payload,
+      deviceUid: target,
+    });
     if (!cmd) {
       toast.error("Invalid pattern.");
       return;
@@ -665,7 +669,12 @@ const CompanionProfile = () => {
     setSendingVibrationId(row.id);
     try {
       await stopSustainedToy();
-      const session = createSustainedLovenseSession(user.id, { ...cmd, toyId: target });
+      const session = await createSustainedLovenseSession(user.id, cmd, {
+        onRefreshError: (err) => {
+          toast.error(err.message || "Toy connection lost");
+          void stopSustainedToy();
+        },
+      });
       sustainedToySessionRef.current = session;
       setLivePatternId(row.id);
     } catch (e) {

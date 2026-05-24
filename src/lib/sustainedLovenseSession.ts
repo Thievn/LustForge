@@ -6,6 +6,11 @@ export const LOVENSE_MAX_SEGMENT_MS = 30_000;
 /** Re-fire before the hardware segment ends so sensation stays continuous. */
 const REFRESH_INTERVAL_MS = 25_000;
 
+export type SustainedLovenseSessionOptions = {
+  /** Called when a refresh tick fails (not the initial send). Session auto-stops. */
+  onRefreshError?: (err: Error) => void;
+};
+
 function segmentCommand(cmd: LovenseCommand): LovenseCommand {
   return {
     ...cmd,
@@ -16,41 +21,51 @@ function segmentCommand(cmd: LovenseCommand): LovenseCommand {
 /**
  * Keeps a vibrate/pattern command active by re-sending until `stop()` (safe word, emergency, or user toggle).
  * The Lovense API caps a single segment at 30s; this bridges longer sessions.
+ * Awaits the first send so callers can surface errors before showing "On" UI state.
  */
-export function createSustainedLovenseSession(
+export async function createSustainedLovenseSession(
   userId: string,
   command: LovenseCommand,
-): { stop: () => Promise<void> } {
+  opts?: SustainedLovenseSessionOptions,
+): Promise<{ stop: () => Promise<void> }> {
   let intervalId: ReturnType<typeof setInterval> | null = null;
   let stopped = false;
 
-  const tick = () => {
-    void sendCommand(userId, segmentCommand(command)).catch(() => {
-      /* toast handled at call sites for one-shot; sustain failures are best-effort */
-    });
+  const stopInternal = async () => {
+    if (stopped) return;
+    stopped = true;
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    try {
+      await sendCommand(userId, {
+        command: "stop",
+        intensity: 0,
+        duration: 0,
+        toyId: command.toyId,
+      });
+    } catch {
+      /* still clear local state */
+    }
   };
 
-  tick();
-  intervalId = setInterval(tick, REFRESH_INTERVAL_MS);
+  const sendSegment = async (isFirst: boolean) => {
+    try {
+      await sendCommand(userId, segmentCommand(command));
+    } catch (err) {
+      if (isFirst) throw err;
+      opts?.onRefreshError?.(err instanceof Error ? err : new Error(String(err)));
+      await stopInternal();
+    }
+  };
+
+  await sendSegment(true);
+  intervalId = setInterval(() => {
+    void sendSegment(false);
+  }, REFRESH_INTERVAL_MS);
 
   return {
-    stop: async () => {
-      if (stopped) return;
-      stopped = true;
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-      try {
-        await sendCommand(userId, {
-          command: "stop",
-          intensity: 0,
-          duration: 0,
-          toyId: command.toyId,
-        });
-      } catch {
-        /* still clear local state */
-      }
-    },
+    stop: stopInternal,
   };
 }

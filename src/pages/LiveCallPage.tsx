@@ -25,6 +25,7 @@ import { spendForgeCoins } from "@/lib/forgeCoinsClient";
 import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 import { LiveCallPhoneShell, type LiveCallUiPhase } from "@/components/liveCall/LiveCallPhoneShell";
 import { useCompanionDisplayOverride } from "@/hooks/useCompanionDisplayOverride";
+import { useCompanionVibrationPatterns } from "@/hooks/useCompanionVibrationPatterns";
 import { galleryStaticPortraitUrl } from "@/lib/companionMedia";
 import { mergeCompanionDisplayWithUserOverride } from "@/lib/mergeCompanionDisplayOverride";
 import { stripDiscoverForgeTemplateCanonicalLoop } from "@/lib/discoverTemplateMedia";
@@ -64,6 +65,12 @@ const LiveCallPage = () => {
   const { data: dbRows = [], isLoading } = useCompanions();
   const [userId, setUserId] = useState<string | null>(null);
   const { data: displayOverride } = useCompanionDisplayOverride(id, userId ?? undefined);
+  const { data: vibrationPatterns = [] } = useCompanionVibrationPatterns(id);
+  const vibrationPatternsRef = useRef(vibrationPatterns);
+
+  useEffect(() => {
+    vibrationPatternsRef.current = vibrationPatterns;
+  }, [vibrationPatterns]);
 
   const dbComp: DbCompanion | null = useMemo(() => {
     if (!id) return null;
@@ -240,13 +247,14 @@ const LiveCallPage = () => {
       userId,
       toyId: primaryToy.id,
       toyName: primaryToy.name,
+      companionPatterns: vibrationPatterns,
       onToyUiDial: (dial: string) => {
         lastDuplexMsRef.current = Date.now();
         if (phaseRef.current !== "live") return;
         sendUserTextRef.current(dial);
       },
     };
-  }, [userId, primaryToy]);
+  }, [userId, primaryToy, vibrationPatterns]);
 
   const hangUp = useCallback(() => {
     const billSec =
@@ -513,7 +521,10 @@ const LiveCallPage = () => {
           }
           const t = toyForSessionRef.current;
           if (!t || !u) return;
-          const cmd = liveCallToyCommandFromAssistantLine(String(text), { toyDeviceUid: t.id });
+          const cmd = liveCallToyCommandFromAssistantLine(String(text), {
+            toyDeviceUid: t.id,
+            companionPatterns: vibrationPatternsRef.current,
+          });
           if (!cmd) return;
           if (cmd.command === "stop") {
             void sustainedToySessionRef.current?.stop();
@@ -521,9 +532,21 @@ const LiveCallPage = () => {
             void sendCommand(u, cmd).catch(() => undefined);
             return;
           }
-          if (cmd.command === "vibrate" || cmd.command === "pattern") {
-            void sustainedToySessionRef.current?.stop();
-            sustainedToySessionRef.current = createSustainedLovenseSession(u, cmd);
+          if (cmd.command === "vibrate" || cmd.command === "pattern" || cmd.command === "thrust" || cmd.command === "rotate") {
+            void (async () => {
+              try {
+                await sustainedToySessionRef.current?.stop();
+                sustainedToySessionRef.current = await createSustainedLovenseSession(u, cmd, {
+                  onRefreshError: (err) => {
+                    toast.error(err.message || "Toy connection lost");
+                    void sustainedToySessionRef.current?.stop();
+                    sustainedToySessionRef.current = null;
+                  },
+                });
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Toy command failed");
+              }
+            })();
             return;
           }
           void sendCommand(u, cmd).catch(() => undefined);

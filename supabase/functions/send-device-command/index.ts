@@ -307,6 +307,7 @@ Deno.serve(async (req) => {
       vibrate: "Vibrate",
       pulse: "Vibrate",
       rotate: "Rotate",
+      thrust: "Thrusting",
     };
     const mappedCommand = commandMap[command] || "Vibrate";
     const action = `${mappedCommand}:${scaledIntensity}`;

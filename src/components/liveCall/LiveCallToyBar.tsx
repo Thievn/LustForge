@@ -1,16 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { type LovenseCommand } from "@/lib/lovense";
+import { buildLovenseCommand } from "@/lib/buildLovenseCommand";
 import { createSustainedLovenseSession } from "@/lib/sustainedLovenseSession";
 import { buildLiveCallToyUiDialLine, type LiveCallToyUiSignal } from "@/lib/liveCallToyUiReaction";
+import type { CompanionVibrationPatternRow } from "@/hooks/useCompanionVibrationPatterns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Waves, Zap, HeartPulse, Square, ArrowBigUpDash, RotateCw } from "lucide-react";
+import { Waves, Zap, HeartPulse, Square, ArrowBigUpDash, RotateCw, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -36,6 +41,7 @@ type Props = {
   userId: string;
   toyId: string;
   toyName: string | null;
+  companionPatterns?: CompanionVibrationPatternRow[];
   className?: string;
   /** Live Voice: after a successful command, inject dial line so Grok speaks a short reaction. */
   onToyUiDial?: (dialLine: string) => void;
@@ -53,7 +59,14 @@ function vibrateSignal(next: number, lastVibrate: number | null): LiveCallToyUiS
  * Voice reactions are triggered only when `onToyUiDial` is passed (Live Call page, live phase).
  * Haptics use a sustained session (30s Lovense segments + refresh) until Stop or a different command.
  */
-export function LiveCallToyBar({ userId, toyId, toyName, className, onToyUiDial }: Props) {
+export function LiveCallToyBar({
+  userId,
+  toyId,
+  toyName,
+  companionPatterns = [],
+  className,
+  onToyUiDial,
+}: Props) {
   const [level, setLevel] = useState<"low" | "mid" | "high">("mid");
   const [sending, setSending] = useState(false);
   const [open, setOpen] = useState(false);
@@ -124,8 +137,21 @@ export function LiveCallToyBar({ userId, toyId, toyName, className, onToyUiDial 
       }
 
       await stopSustained();
-      const fullCmd: LovenseCommand = { ...base, toyId };
-      sustainedRef.current = createSustainedLovenseSession(userId, fullCmd);
+      const fullCmd = buildLovenseCommand({
+        source: "direct",
+        raw: { ...base, toyId },
+        deviceUid: toyId,
+      });
+      if (!fullCmd) {
+        toast.error("Could not build toy command.");
+        return;
+      }
+      sustainedRef.current = await createSustainedLovenseSession(userId, fullCmd, {
+        onRefreshError: (err) => {
+          toast.error(err.message || "Toy connection lost");
+          void stopSustained();
+        },
+      });
       onToyUiDial?.(buildLiveCallToyUiDialLine(signal));
 
       if (base.command === "vibrate") {
@@ -138,6 +164,22 @@ export function LiveCallToyBar({ userId, toyId, toyName, className, onToyUiDial 
     } finally {
       setSending(false);
     }
+  };
+
+  const triggerCompanionPattern = async (row: CompanionVibrationPatternRow) => {
+    const cmd = buildLovenseCommand({
+      source: "db_payload",
+      raw: row.vibration_pattern_pool?.payload,
+      deviceUid: toyId,
+    });
+    if (!cmd) {
+      toast.error("Could not read this signature move.");
+      return;
+    }
+    const signal: LiveCallToyUiSignal = row.is_abyssal_signature
+      ? { kind: "new_pattern", pattern: row.display_name, intensity: cmd.intensity }
+      : { kind: "new_pattern", pattern: row.display_name, intensity: cmd.intensity };
+    await go(cmd, signal);
   };
 
   return (
@@ -189,6 +231,30 @@ export function LiveCallToyBar({ userId, toyId, toyName, className, onToyUiDial 
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator className="bg-white/10" />
+        {companionPatterns.length > 0 ? (
+          <>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="gap-2 text-sm focus:bg-white/10 focus:text-white">
+                <Sparkles className="h-3.5 w-3.5 text-amber-200/90" />
+                Signature moves
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="border-white/10 bg-[#0a0a10]/95 text-white backdrop-blur-xl">
+                {companionPatterns.map((row) => (
+                  <DropdownMenuItem
+                    key={row.id}
+                    disabled={sending}
+                    onClick={() => void triggerCompanionPattern(row)}
+                    className="gap-2 text-sm focus:bg-white/10 focus:text-white"
+                  >
+                    <Waves className="h-3.5 w-3.5 text-cyan-300/80" />
+                    <span className="truncate">{row.display_name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator className="bg-white/10" />
+          </>
+        ) : null}
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-white/35">Patterns & motors</DropdownMenuLabel>
         {presets.map((p) => (
           <DropdownMenuItem

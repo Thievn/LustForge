@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { TtsUxVoiceId } from "@/lib/ttsVoicePresets";
+import type { CompanionVibrationPatternRow } from "@/hooks/useCompanionVibrationPatterns";
 import { TTS_UX_LABELS } from "@/lib/ttsVoicePresets";
 
 export type LiveCallUiPhase = "preparing" | "ringing" | "connecting" | "live" | "ended" | "error";
@@ -32,6 +32,7 @@ type ToyBarInput = {
   userId: string;
   toyId: string;
   toyName: string | null;
+  companionPatterns?: CompanionVibrationPatternRow[];
   onToyUiDial?: (dialLine: string) => void;
 } | null;
 
@@ -370,6 +371,7 @@ export function LiveCallPhoneShell({
                   userId={toyBar.userId}
                   toyId={toyBar.toyId}
                   toyName={toyBar.toyName}
+                  companionPatterns={toyBar.companionPatterns}
                   onToyUiDial={toyBar.onToyUiDial}
                 />
               ) : (

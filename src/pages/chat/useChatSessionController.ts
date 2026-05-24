@@ -40,7 +40,7 @@ import {
 } from "@/lib/lovense";
 import { buildChatSystemPrompt } from "@/lib/companionSystemPrompts";
 import { useCompanionVibrationPatterns, type CompanionVibrationPatternRow } from "@/hooks/useCompanionVibrationPatterns";
-import { payloadToLovenseCommand } from "@/lib/vibrationPatternPayload";
+import { buildLovenseCommand } from "@/lib/buildLovenseCommand";
 import { createSustainedLovenseSession } from "@/lib/sustainedLovenseSession";
 import {
   getChatSessionMode,
@@ -586,7 +586,11 @@ export function useChatSessionController() {
       return;
     }
 
-    const cmd = payloadToLovenseCommand(row.vibration_pattern_pool?.payload);
+    const cmd = buildLovenseCommand({
+      source: "db_payload",
+      raw: row.vibration_pattern_pool?.payload,
+      deviceUid: target,
+    });
     if (!cmd) {
       toast.error("Could not read this pattern.");
       return;
@@ -594,7 +598,12 @@ export function useChatSessionController() {
     setSendingVibrationId(row.id);
     try {
       await stopSustainedToy();
-      const session = createSustainedLovenseSession(user.id, { ...cmd, toyId: target });
+      const session = await createSustainedLovenseSession(user.id, cmd, {
+        onRefreshError: (err) => {
+          toast.error(err.message || "Toy connection lost");
+          void stopSustainedToy();
+        },
+      });
       sustainedToySessionRef.current = session;
       setLivePatternId(row.id);
       setToyDriveActive(true);
@@ -1254,44 +1263,42 @@ export function useChatSessionController() {
   const executeDeviceCommand = async (command: any, opts?: { fromTts?: boolean }) => {
     if (!user || !hasDevice || !command) return;
 
-    const baseCmdEarly = String(command.command || "vibrate").toLowerCase();
-    if (baseCmdEarly === "stop") {
-      await stopSustainedToy();
-      return;
-    }
-
-    await stopSustainedToy();
-
-    const intensityLimit = parseInt(localStorage.getItem("lustforge-intensity") || "100", 10);
-    let raw = Number(command.intensity ?? 50);
-    if (raw <= 20) raw = raw * 5;
-    const scaledIntensity = Math.round(raw * (intensityLimit / 100));
-
-    const baseCmd = String(command.command || "vibrate").toLowerCase();
     const deviceUid =
       (typeof command.device_uid === "string" && command.device_uid.trim()) ||
       (typeof command.deviceUid === "string" && command.deviceUid.trim()) ||
       primaryToyUid ||
       activeToys[0]?.id;
 
-    const lovenseCommand: LovenseCommand =
-      baseCmd === "pattern" && command.pattern
-        ? {
-            command: "pattern",
-            pattern: String(command.pattern),
-            intensity: Math.min(100, Math.max(0, scaledIntensity)),
-            duration: command.duration || 5000,
-            toyId: deviceUid,
-          }
-        : {
-            command: "vibrate",
-            intensity: Math.min(100, Math.max(0, scaledIntensity)),
-            duration: command.duration || 5000,
-            toyId: deviceUid,
-          };
+    if (!deviceUid) {
+      toast.error("No active toy selected.");
+      return;
+    }
+
+    const baseCmdEarly = String(command.command || "vibrate").toLowerCase();
+    if (baseCmdEarly === "stop") {
+      await stopSustainedToy();
+      return;
+    }
+
+    const lovenseCommand = buildLovenseCommand({
+      source: "ai_json",
+      raw: command,
+      deviceUid,
+    });
+    if (!lovenseCommand) {
+      toast.error("Could not parse toy command.");
+      return;
+    }
+
+    await stopSustainedToy();
 
     try {
-      const session = createSustainedLovenseSession(user.id, lovenseCommand);
+      const session = await createSustainedLovenseSession(user.id, lovenseCommand, {
+        onRefreshError: (err) => {
+          toast.error(err.message || "Toy connection lost");
+          void stopSustainedToy();
+        },
+      });
       sustainedToySessionRef.current = session;
       lovenseSustainedFromTtsRef.current = Boolean(opts?.fromTts);
       setToyDriveActive(true);
