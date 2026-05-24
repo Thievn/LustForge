@@ -1,56 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  capabilitiesForToyType,
+  extractToysFromCallback,
+  isLikelyUserUidNotToyId,
+} from "../_shared/lovenseToyParse.ts";
+import { fetchCloudToysForUser, fetchLanToysFromCallback } from "../_shared/lovenseFetchToys.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
-
-/**
- * Lovense may send `toyList` (array) or `toys` (id → object map).
- * Map keys are often the device id; inner objects may omit `id` (see Standard API docs).
- */
-function normalizeToyList(callbackData: Record<string, unknown>): Array<Record<string, unknown>> {
-  const toyList = callbackData.toyList;
-  if (Array.isArray(toyList)) return toyList as Array<Record<string, unknown>>;
-  const toys = callbackData.toys;
-  if (Array.isArray(toys)) return toys as Array<Record<string, unknown>>;
-  if (toys && typeof toys === "object" && !Array.isArray(toys)) {
-    return Object.entries(toys as Record<string, Record<string, unknown>>).map(([mapKey, toy]) => {
-      const rawId = toy.id ?? toy.uid ?? mapKey;
-      const id = rawId != null ? String(rawId).trim() : "";
-      return { ...toy, id: id || mapKey };
-    });
-  }
-  return [];
-}
-
-function toyTypeFromRecord(toy: Record<string, unknown>): string {
-  if (typeof toy.toyType === "string" && toy.toyType.trim()) return toy.toyType.toLowerCase();
-  if (typeof toy.type === "string" && toy.type.trim()) return toy.type.toLowerCase();
-  // Standard LAN callback uses `name` for model id (e.g. "max", "lush")
-  if (typeof toy.name === "string" && toy.name.trim()) return String(toy.name).toLowerCase();
-  return "unknown";
-}
-
-function capabilitiesForToyType(toyType: string): string[] {
-  const t = (toyType || "").toLowerCase();
-  const map: Record<string, string[]> = {
-    lush: ["vibrate"],
-    hush: ["vibrate"],
-    nora: ["vibrate", "rotate"],
-    max: ["vibrate", "thrust"],
-    calor: ["vibrate"],
-    gush: ["vibrate"],
-    ferri: ["vibrate"],
-    domi: ["vibrate"],
-    osci: ["vibrate"],
-    edge: ["vibrate"],
-    solace: ["vibrate", "thrust"],
-    default: ["vibrate"],
-  };
-  return map[t] || map.default;
-}
 
 /** Lovense may send `toys` / `toyList` as JSON strings or use GET query params. */
 function normalizeCallbackPayload(
@@ -78,6 +38,20 @@ function normalizeCallbackPayload(
       out.toyList = JSON.parse(toyListVal) as unknown;
     } catch {
       /* keep */
+    }
+  }
+  const dataVal = out.data;
+  if (dataVal && typeof dataVal === "object" && !Array.isArray(dataVal)) {
+    const dataObj = dataVal as Record<string, unknown>;
+    if (out.toys == null && dataObj.toys != null) out.toys = dataObj.toys;
+    if (out.toyList == null && dataObj.toyList != null) out.toyList = dataObj.toyList;
+    const nestedToys = dataObj.toys;
+    if (typeof nestedToys === "string" && nestedToys.trim()) {
+      try {
+        out.toys = JSON.parse(nestedToys) as unknown;
+      } catch {
+        /* keep */
+      }
     }
   }
   return out;
@@ -151,86 +125,74 @@ Deno.serve(async (req) => {
       });
     }
 
-    const toys = normalizeToyList(callbackData);
+    const toysFromCallback = extractToysFromCallback(callbackData).filter(
+      (t) => !isLikelyUserUidNotToyId(t.deviceUid, pairing.user_id),
+    );
 
-    const legacyUid =
-      (typeof callbackData.uid === "string" && callbackData.uid) ||
-      (typeof callbackData.deviceId === "string" && callbackData.deviceId) ||
-      null;
+    let toys = toysFromCallback;
+
+    if (toys.length === 0) {
+      console.log("No toys in callback payload, trying cloud getToys for user:", pairing.user_id);
+      toys = await fetchCloudToysForUser(pairing.user_id);
+    }
+
+    if (toys.length === 0) {
+      console.log("Cloud getToys empty, trying LAN GetToys from callback domain");
+      toys = await fetchLanToysFromCallback(callbackData).filter(
+        (t) => !isLikelyUserUidNotToyId(t.deviceUid, pairing.user_id),
+      );
+    }
+
+    // Remove legacy bad rows where device_uid was stored as the account id.
+    await serviceClient
+      .from("user_lovense_toys")
+      .delete()
+      .eq("user_id", pairing.user_id)
+      .eq("device_uid", pairing.user_id);
+
+    if (toys.length === 0) {
+      console.warn("Pairing callback accepted but no toys resolved yet:", JSON.stringify(callbackData));
+      await serviceClient.from("lovense_pairings").delete().eq("pairing_token", pairingToken);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          count: 0,
+          syncRequired: true,
+          message: "Link registered — refresh device list if your toy does not appear.",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
     let firstDeviceUid: string | null = null;
 
-    if (toys.length > 0) {
-      for (const toy of toys) {
-        const rawId = toy.id ?? toy.uid;
-        const deviceUid = rawId != null ? String(rawId).trim() : "";
-        if (!deviceUid) continue;
+    for (const toy of toys) {
+      if (!firstDeviceUid) firstDeviceUid = toy.deviceUid;
 
-        if (!firstDeviceUid) firstDeviceUid = deviceUid;
-
-        const name =
-          (typeof toy.nickName === "string" && toy.nickName.trim()) ||
-          (typeof toy.nickname === "string" && toy.nickname.trim()) ||
-          (typeof toy.name === "string" && toy.name.trim()) ||
-          "Lovense toy";
-        const toyType = toyTypeFromRecord(toy);
-        const nickname =
-          typeof toy.nickName === "string"
-            ? toy.nickName
-            : typeof toy.nickname === "string"
-              ? toy.nickname
-              : null;
-        const battery =
-          typeof toy.battery === "number" && Number.isFinite(toy.battery) ? Math.round(toy.battery) : null;
-
-        const { error: upsertErr } = await serviceClient.from("user_lovense_toys").upsert(
-          {
-            user_id: pairing.user_id,
-            device_uid: deviceUid,
-            display_name: name,
-            toy_type: toyType,
-            nickname,
-            capabilities: capabilitiesForToyType(toyType),
-            battery,
-            enabled: true,
-          },
-          { onConflict: "user_id,device_uid" },
-        );
-
-        if (upsertErr) {
-          console.error("user_lovense_toys upsert error:", upsertErr);
-          return new Response(JSON.stringify({ error: "Failed to save device" }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-    } else if (legacyUid) {
-      firstDeviceUid = legacyUid.trim();
       const { error: upsertErr } = await serviceClient.from("user_lovense_toys").upsert(
         {
           user_id: pairing.user_id,
-          device_uid: firstDeviceUid,
-          display_name: "Connected device",
-          toy_type: "unknown",
-          capabilities: capabilitiesForToyType("unknown"),
+          device_uid: toy.deviceUid,
+          display_name: toy.displayName,
+          toy_type: toy.toyType,
+          nickname: toy.nickname,
+          capabilities: capabilitiesForToyType(toy.toyType),
+          battery: toy.battery,
           enabled: true,
         },
         { onConflict: "user_id,device_uid" },
       );
 
       if (upsertErr) {
-        console.error("user_lovense_toys legacy upsert error:", upsertErr);
+        console.error("user_lovense_toys upsert error:", upsertErr);
         return new Response(JSON.stringify({ error: "Failed to save device" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-    } else {
-      return new Response(JSON.stringify({ error: "No toy data in callback" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     await serviceClient
@@ -242,7 +204,7 @@ Deno.serve(async (req) => {
 
     console.log("Device(s) connected for user:", pairing.user_id, "primary uid:", firstDeviceUid);
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, count: toys.length }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -9,12 +9,14 @@ type Props = {
   className?: string;
   /** Smaller copy for popovers */
   compact?: boolean;
+  /** True once Lovense Remote has likely scanned (pairing row cleared or toys updated). */
+  finishing?: boolean;
 };
 
 /**
  * Lovense returns an **image URL** for the QR — show it inline; do not use it as a browser link.
  */
-export function LovensePairingQrBlock({ qrImageUrl, loading, onCancel, className, compact }: Props) {
+export function LovensePairingQrBlock({ qrImageUrl, loading, onCancel, className, compact, finishing }: Props) {
   const [handheldHint, setHandheldHint] = useState(false);
 
   useEffect(() => {
@@ -87,7 +89,9 @@ export function LovensePairingQrBlock({ qrImageUrl, loading, onCancel, className
         </div>
         <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground animate-pulse">
           <QrCode className="h-3.5 w-3.5 shrink-0 opacity-70" />
-          Finishing link with LustForge — keep this page open…
+          {finishing
+            ? "Finishing link with LustForge — keep this page open…"
+            : "Scan with Lovense Remote — this page will update when the link completes."}
         </p>
       </div>
       {onCancel ? (

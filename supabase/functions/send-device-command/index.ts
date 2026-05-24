@@ -65,6 +65,15 @@ function lovenseInvokeFailed(result: unknown): string | null {
   }
 
   if (typeof r.code === "number" && r.code >= 400) {
+    if (r.code === 507) {
+      return "Lovense Remote is offline. Open the Lovense Remote app on your phone, connect your toy, and keep the app running in the background.";
+    }
+    if (r.code === 402) {
+      return "Toy not connected. Power on your toy and confirm Bluetooth in Lovense Remote.";
+    }
+    if (r.code === 401) {
+      return "Toy not found. Use Settings → Refresh device list, or scan the QR code again.";
+    }
     return typeof r.message === "string" && r.message.trim()
       ? r.message.trim()
       : `Lovense error (${r.code})`;
@@ -140,22 +149,27 @@ Deno.serve(async (req) => {
 
     const owned = new Set((toys ?? []).map((t: { device_uid: string }) => t.device_uid));
 
-    const requestedUid = deviceUidFromBody || legacyUid;
+    const requestedUid = (deviceUidFromBody || legacyUid).trim();
+    const hasRegistry = (toys ?? []).length > 0;
+    const hasLegacyLink = Boolean(legacyUid);
 
     if (!requestedUid) {
-      return new Response(JSON.stringify({ error: "No device connected. Connect your device in Settings." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const inRegistry = owned.has(requestedUid);
-    const legacyMatch = Boolean(legacyUid && requestedUid === legacyUid);
-    if (!inRegistry && !legacyMatch) {
-      return new Response(JSON.stringify({ error: "That device is not linked to your account." }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (!hasRegistry && !hasLegacyLink) {
+        return new Response(JSON.stringify({ error: "No device connected. Connect your device in Settings." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      const inRegistry = owned.has(requestedUid);
+      const legacyMatch = Boolean(legacyUid && requestedUid === legacyUid);
+      const mistakenAccountUid = requestedUid === user.id;
+      if (!inRegistry && !legacyMatch && !mistakenAccountUid) {
+        return new Response(JSON.stringify({ error: "That device is not linked to your account." }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const developerToken = Deno.env.get("LOVENSE_DEVELOPER_TOKEN");
@@ -171,21 +185,27 @@ Deno.serve(async (req) => {
      * Target toy is passed via `toy` per Lovense Server API v2.
      */
     const lovenseUserUid = user.id;
-    const targetToyId = requestedUid;
+    /** Omit `toy` when id is missing or wrongly stored as the account uuid — Lovense then targets all linked toys. */
+    const targetToyId =
+      requestedUid && requestedUid !== lovenseUserUid ? requestedUid : null;
+
+    const withToy = (payload: Record<string, unknown>) =>
+      targetToyId ? { ...payload, toy: targetToyId } : payload;
 
     if (command === "Stop" || command === "stop") {
       const lovenseResponse = await fetch("https://api.lovense.com/api/lan/v2/command", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: developerToken,
-          uid: lovenseUserUid,
-          toy: targetToyId,
-          command: "Function",
-          action: "Stop",
-          timeSec: 0,
-          apiVer: 1,
-        }),
+        body: JSON.stringify(
+          withToy({
+            token: developerToken,
+            uid: lovenseUserUid,
+            command: "Function",
+            action: "Stop",
+            timeSec: 0,
+            apiVer: 1,
+          }),
+        ),
       });
 
       const result = await lovenseResponse.json().catch(() => ({}));
@@ -244,16 +264,17 @@ Deno.serve(async (req) => {
         const lovenseResponse = await fetch("https://api.lovense.com/api/lan/v2/command", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: developerToken,
-            uid: lovenseUserUid,
-            toy: targetToyId,
-            command: "Pattern",
-            rule,
-            strength,
-            timeSec: clampedDuration,
-            apiVer: 2,
-          }),
+          body: JSON.stringify(
+            withToy({
+              token: developerToken,
+              uid: lovenseUserUid,
+              command: "Pattern",
+              rule,
+              strength,
+              timeSec: clampedDuration,
+              apiVer: 2,
+            }),
+          ),
         });
 
         const result = await lovenseResponse.json().catch(() => ({}));
@@ -276,15 +297,16 @@ Deno.serve(async (req) => {
       const lovenseResponse = await fetch("https://api.lovense.com/api/lan/v2/command", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: developerToken,
-          uid: lovenseUserUid,
-          toy: targetToyId,
-          command: "Preset",
-          name: presetName,
-          timeSec: clampedDuration,
-          apiVer: 1,
-        }),
+        body: JSON.stringify(
+          withToy({
+            token: developerToken,
+            uid: lovenseUserUid,
+            command: "Preset",
+            name: presetName,
+            timeSec: clampedDuration,
+            apiVer: 1,
+          }),
+        ),
       });
 
       const result = await lovenseResponse.json().catch(() => ({}));
@@ -315,15 +337,16 @@ Deno.serve(async (req) => {
     const lovenseResponse = await fetch("https://api.lovense.com/api/lan/v2/command", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        token: developerToken,
-        uid: lovenseUserUid,
-        toy: targetToyId,
-        command: "Function",
-        action,
-        timeSec: clampedDuration,
-        apiVer: 1,
-      }),
+      body: JSON.stringify(
+        withToy({
+          token: developerToken,
+          uid: lovenseUserUid,
+          command: "Function",
+          action,
+          timeSec: clampedDuration,
+          apiVer: 1,
+        }),
+      ),
     });
 
     const result = await lovenseResponse.json().catch(() => ({}));

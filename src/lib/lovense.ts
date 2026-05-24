@@ -53,6 +53,50 @@ export interface LovenseCommand {
   toyId?: string;
 }
 
+function isBadDeviceUid(deviceUid: string, userId: string): boolean {
+  const d = deviceUid.trim();
+  const u = userId.trim();
+  return Boolean(d && u && d === u);
+}
+
+function formatToyLabel(displayName: string, toyType: string): string {
+  const name = displayName.trim();
+  if (name && name !== "Connected device" && name !== "Lovense toy") return name;
+  const t = toyType.trim().toLowerCase();
+  if (t && t !== "unknown") return t.charAt(0).toUpperCase() + t.slice(1);
+  return "Lovense toy";
+}
+
+function mapToyRow(
+  row: {
+    id: string;
+    device_uid: string;
+    display_name: string;
+    toy_type: string;
+    capabilities: string[] | null;
+    enabled: boolean;
+    battery: number | null;
+    image_url: string | null;
+  },
+  userId: string,
+): LovenseToy | null {
+  if (isBadDeviceUid(row.device_uid, userId)) return null;
+  const type = row.toy_type?.trim() || "unknown";
+  const name = formatToyLabel(row.display_name, type);
+  const imageUrl = row.image_url?.trim() || lovenseToyAvatarUrl(row.device_uid, type);
+  return {
+    rowId: row.id,
+    id: row.device_uid,
+    name,
+    type,
+    status: "online",
+    battery: typeof row.battery === "number" && row.battery >= 0 ? row.battery : 100,
+    capabilities: row.capabilities?.length ? row.capabilities : ["vibrate"],
+    enabled: row.enabled,
+    imageUrl,
+  };
+}
+
 export const connectToy = async (callbackData: Record<string, unknown>): Promise<boolean> => {
   try {
     const {
@@ -60,18 +104,13 @@ export const connectToy = async (callbackData: Record<string, unknown>): Promise
     } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    const toyData = {
-      uid: callbackData.uid,
-      name: callbackData.name || "Unknown Toy",
-      type: callbackData.toyType || "Unknown",
-      status: "online" as const,
-      battery: callbackData.battery || 100,
-      capabilities: parseCapabilities(String(callbackData.toyType || "")),
-      connected_at: new Date().toISOString(),
-    };
+    const toyUid = callbackData.uid;
+    if (typeof toyUid !== "string" || !toyUid.trim() || isBadDeviceUid(toyUid, user.id)) {
+      throw new Error("Invalid toy id from callback");
+    }
 
     const { error } = await supabase.from("profiles").update({
-      device_uid: toyData.uid,
+      device_uid: toyUid.trim(),
     }).eq("user_id", user.id);
 
     if (error) throw error;
@@ -90,21 +129,24 @@ export const sendCommand = async (userId: string, command: LovenseCommand): Prom
       .eq("user_id", userId)
       .single();
 
-    const targetUid = command.toyId?.trim() || profile?.device_uid?.trim() || null;
-    if (!targetUid) {
-      throw new Error("No toy connected");
+    let targetUid = command.toyId?.trim() || profile?.device_uid?.trim() || null;
+    if (targetUid && isBadDeviceUid(targetUid, userId)) {
+      targetUid = null;
     }
 
-    const { data: toyRow } = await supabase
-      .from("user_lovense_toys")
-      .select("capabilities")
-      .eq("user_id", userId)
-      .eq("device_uid", targetUid)
-      .maybeSingle();
+    const { data: toyRow } = targetUid
+      ? await supabase
+          .from("user_lovense_toys")
+          .select("capabilities")
+          .eq("user_id", userId)
+          .eq("device_uid", targetUid)
+          .maybeSingle()
+      : { data: null };
 
     const caps = toyRow?.capabilities ?? ["vibrate"];
 
     if (
+      targetUid &&
       caps.length > 0 &&
       command.command !== "pattern" &&
       command.command !== "stop" &&
@@ -122,7 +164,7 @@ export const sendCommand = async (userId: string, command: LovenseCommand): Prom
         patternSubtype: command.patternSubtype,
         patternRule: command.patternRule,
         patternStrength: command.patternStrength,
-        deviceUid: targetUid,
+        ...(targetUid ? { deviceUid: targetUid } : {}),
       },
     });
 
@@ -167,72 +209,53 @@ export const getToys = async (userId: string): Promise<LovenseToy[]> => {
       .eq("user_id", userId)
       .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error("getToys:", error);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("device_uid")
-        .eq("user_id", userId)
-        .single();
-      if (!profile?.device_uid) return [];
-      return [
-        {
-          rowId: `legacy-${profile.device_uid}`,
-          id: profile.device_uid,
-          name: "Connected device",
-          type: "unknown",
-          status: "online",
-          battery: 100,
-          capabilities: ["vibrate"],
-          enabled: true,
-          imageUrl: lovenseToyAvatarUrl(profile.device_uid),
-        },
-      ];
+    if (!error && rows?.length) {
+      return rows.map((row) => mapToyRow(row, userId)).filter((t): t is LovenseToy => t != null);
     }
 
-    if (!rows?.length) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("device_uid")
-        .eq("user_id", userId)
-        .single();
+    if (error) console.error("getToys:", error);
 
-      if (!profile?.device_uid) return [];
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("device_uid")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-      return [
-        {
-          rowId: `legacy-${profile.device_uid}`,
-          id: profile.device_uid,
-          name: "Connected device",
-          type: "unknown",
-          status: "online",
-          battery: 100,
-          capabilities: ["vibrate"],
-          enabled: true,
-          imageUrl: lovenseToyAvatarUrl(profile.device_uid),
-        },
-      ];
-    }
+    const legacyUid = profile?.device_uid?.trim();
+    if (!legacyUid || isBadDeviceUid(legacyUid, userId)) return [];
 
-    return rows.map((row) => {
-      const seed = `${row.device_uid}:${row.display_name}`;
-      const imageUrl = row.image_url?.trim() || lovenseToyAvatarUrl(seed);
-      return {
-        rowId: row.id,
-        id: row.device_uid,
-        name: row.display_name,
-        type: row.toy_type,
-        status: "online" as const,
-        battery: typeof row.battery === "number" && row.battery >= 0 ? row.battery : 100,
-        capabilities: row.capabilities?.length ? row.capabilities : ["vibrate"],
-        enabled: row.enabled,
-        imageUrl,
-      };
-    });
+    return [
+      {
+        rowId: `legacy-${legacyUid}`,
+        id: legacyUid,
+        name: "Lovense toy",
+        type: "unknown",
+        status: "online",
+        battery: 100,
+        capabilities: ["vibrate"],
+        enabled: true,
+        imageUrl: lovenseToyAvatarUrl(legacyUid, "unknown"),
+      },
+    ];
   } catch (error) {
     console.error("Failed to get toys:", error);
     return [];
   }
+};
+
+/** Pull current toy names/ids from Lovense cloud and repair local registry rows. */
+export const syncLovenseToys = async (): Promise<{ count: number }> => {
+  const { data, error } = await supabase.functions.invoke("lovense-sync-toys", { body: {} });
+  if (error) {
+    throw new Error(await messageFromFunctionsInvoke(error, data));
+  }
+  const logical = logicalErrorFromDeviceInvokeData(data);
+  if (logical) throw new Error(logical);
+  const count =
+    data && typeof data === "object" && typeof (data as { count?: unknown }).count === "number"
+      ? (data as { count: number }).count
+      : 0;
+  return { count };
 };
 
 export const setToyEnabled = async (
@@ -258,13 +281,9 @@ export const testToy = async (userId: string, toyDeviceUid: string): Promise<boo
     command: "vibrate",
     intensity: 35,
     duration: 2000,
-    toyId: toyDeviceUid,
+    toyId: isBadDeviceUid(toyDeviceUid, userId) ? undefined : toyDeviceUid,
   };
-  try {
-    return await sendCommand(userId, testCommand);
-  } catch {
-    return false;
-  }
+  return sendCommand(userId, testCommand);
 };
 
 const parseCapabilities = (toyType: string): string[] => {

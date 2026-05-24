@@ -52,6 +52,7 @@ export function useLovensePairing(
   onConnectedRef.current = options?.onConnected;
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<LovensePairingStatus>("idle");
+  const [linkFinishing, setLinkFinishing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const baselineDeviceUidRef = useRef<string | null>(null);
@@ -92,6 +93,7 @@ export function useLovensePairing(
     activePairingTokenRef.current = null;
     setQrImageUrl(null);
     setStatus("idle");
+    setLinkFinishing(false);
     setLastError(null);
     onConnectedRef.current?.();
   }, [clearPoll, tearDownRealtime]);
@@ -161,6 +163,7 @@ export function useLovensePairing(
           .limit(1);
 
         if (!pairingErr && (!pairingRows || pairingRows.length === 0)) {
+          setLinkFinishing(true);
           completeSession();
           return;
         }
@@ -180,6 +183,7 @@ export function useLovensePairing(
       const toysNew = toyCount > baseCount;
 
       if (uidNew || toysNew) {
+        setLinkFinishing(true);
         completeSession();
       }
     };
@@ -192,6 +196,7 @@ export function useLovensePairing(
     if (!userId) return;
     setLastError(null);
     setQrImageUrl(null);
+    setLinkFinishing(false);
     activePairingTokenRef.current = null;
     completedThisSessionRef.current = false;
     setStatus("loading");
@@ -228,6 +233,7 @@ export function useLovensePairing(
     tearDownRealtime();
     activePairingTokenRef.current = null;
     completedThisSessionRef.current = false;
+    setLinkFinishing(false);
     setQrImageUrl(null);
     setStatus("idle");
     setLastError(null);
@@ -248,6 +254,7 @@ export function useLovensePairing(
     setLastError,
     isLoading: status === "loading",
     isPolling: status === "polling" || status === "awaiting_scan",
+    linkFinishing,
     startPairing,
     cancelPairing,
   };

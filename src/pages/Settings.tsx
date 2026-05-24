@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import ParticleBackground from "@/components/ParticleBackground";
 import { motion } from "framer-motion";
-import { Save, Trash2, Shield, Loader2, Wifi, WifiOff, QrCode, Volume2, Bell, Sparkles } from "lucide-react";
+import { Save, Trash2, Shield, Loader2, Wifi, WifiOff, QrCode, Volume2, Bell, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { disconnectToy, getToys, testToy, type LovenseToy } from "@/lib/lovense";
+import { disconnectToy, getToys, syncLovenseToys, testToy, type LovenseToy } from "@/lib/lovense";
 import { useLovensePairing } from "@/hooks/useLovensePairing";
 import { useWindowVisibleRefresh } from "@/hooks/useWindowVisibleRefresh";
 import { LovensePairingQrBlock } from "@/components/toy/LovensePairingQrBlock";
@@ -48,6 +48,7 @@ const Settings = () => {
   const [pushCount, setPushCount] = useState(0);
   const [pushBusy, setPushBusy] = useState(false);
   const [testPulseBusy, setTestPulseBusy] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
 
   const refreshLinkedToys = useCallback(async (userId: string) => {
     const toys = await getToys(userId);
@@ -94,6 +95,7 @@ const Settings = () => {
   const {
     qrImageUrl,
     isLoading: pairingLoading,
+    linkFinishing,
     startPairing,
     cancelPairing,
     lastError: pairingError,
@@ -101,9 +103,16 @@ const Settings = () => {
   } = useLovensePairing(user?.id, {
     onConnected: () => {
       if (!user?.id) return;
-      void loadProfileSettings(user.id);
-      void refreshLinkedToys(user.id);
-      toast.success("Lovense linked — you’re ready for haptics in chat.");
+      void (async () => {
+        await loadProfileSettings(user.id);
+        try {
+          await syncLovenseToys();
+        } catch {
+          /* Lovense Remote may still be starting — user can tap Refresh */
+        }
+        await refreshLinkedToys(user.id);
+        toast.success("Lovense linked — device list updated.");
+      })();
     },
   });
 
@@ -195,6 +204,30 @@ const Settings = () => {
   };
 
   const hasLinkedDevice = Boolean(deviceUid?.trim()) || linkedToys.length > 0;
+  const pairingNeedsRepair =
+    Boolean(user?.id && deviceUid?.trim() === user.id) ||
+    (Boolean(deviceUid?.trim()) && linkedToys.length === 0);
+
+  const handleRefreshDevices = async () => {
+    if (!user?.id) return;
+    setSyncBusy(true);
+    try {
+      const { count } = await syncLovenseToys();
+      await loadProfileSettings(user.id);
+      await refreshLinkedToys(user.id);
+      if (count > 0) {
+        toast.success(`Found ${count} device${count === 1 ? "" : "s"} from Lovense.`);
+      } else {
+        toast.message("No devices returned", {
+          description: "Open Lovense Remote, connect your toy, and try again.",
+        });
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not refresh devices from Lovense.");
+    } finally {
+      setSyncBusy(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -469,6 +502,12 @@ const Settings = () => {
                   <strong className="text-foreground">same behavior on mobile PWA and PC</strong>. Disconnect to remove
                   all links from this account.
                 </p>
+                {pairingNeedsRepair ? (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-100/90">
+                    We couldn&apos;t read your toy name yet — usually fixed by refreshing while{" "}
+                    <strong className="font-semibold">Lovense Remote</strong> is open with your toy connected.
+                  </div>
+                ) : null}
                 <div className="space-y-2">
                   {linkedToys.map((t) => (
                     <div
@@ -480,19 +519,28 @@ const Settings = () => {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
-                        <p className="text-[11px] text-muted-foreground capitalize">{t.type}</p>
-                        <p className="text-[10px] font-mono text-muted-foreground/80 truncate" title={t.id}>
-                          {t.id}
-                        </p>
+                        {t.type && t.type !== "unknown" ? (
+                          <p className="text-[11px] text-muted-foreground capitalize">{t.type.replace(/_/g, " ")}</p>
+                        ) : null}
+                        <p className="text-[10px] text-muted-foreground/70">Connected · ready for haptics</p>
                       </div>
                     </div>
                   ))}
-                  {linkedToys.length === 0 && deviceUid ? (
-                    <div className="rounded-xl border border-accent/20 bg-accent/5 px-3 py-2 text-xs text-muted-foreground">
-                      Primary device id: <span className="font-mono text-foreground/90">{deviceUid}</span>
+                  {linkedToys.length === 0 && deviceUid && pairingNeedsRepair ? (
+                    <div className="rounded-xl border border-white/[0.08] bg-black/30 px-3 py-3 text-xs text-muted-foreground">
+                      Device link saved, but toy details are missing. Tap <strong className="text-foreground">Refresh device list</strong> below.
                     </div>
                   ) : null}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void handleRefreshDevices()}
+                  disabled={syncBusy}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-accent/40 text-accent text-sm hover:bg-accent/10 transition-colors disabled:opacity-50"
+                >
+                  {syncBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  Refresh device list
+                </button>
                 <button
                   type="button"
                   onClick={() => void startPairing()}
@@ -504,19 +552,17 @@ const Settings = () => {
                 </button>
                 <button
                   type="button"
-                  disabled={testPulseBusy || linkedToys.length === 0}
+                  disabled={testPulseBusy || !hasLinkedDevice}
                   onClick={() => {
                     if (!user?.id) return;
                     const target = linkedToys.find((t) => t.enabled !== false) ?? linkedToys[0];
-                    if (!target) {
-                      toast.error("No linked toy to test.");
-                      return;
-                    }
                     setTestPulseBusy(true);
-                    void testToy(user.id, target.id)
-                      .then((ok) => {
-                        if (ok) toast.success("Test pulse sent — check your toy.");
-                        else toast.error("Test pulse failed — re-pair in Lovense Remote and try again.");
+                    void testToy(user.id, target?.id ?? "")
+                      .then(() => {
+                        toast.success("Test pulse sent — check your toy.");
+                      })
+                      .catch((e) => {
+                        toast.error(e instanceof Error ? e.message : "Test pulse failed.");
                       })
                       .finally(() => setTestPulseBusy(false));
                   }}
@@ -528,6 +574,7 @@ const Settings = () => {
                 <LovensePairingQrBlock
                   qrImageUrl={qrImageUrl}
                   loading={pairingLoading}
+                  finishing={linkFinishing}
                   onCancel={cancelPairing}
                 />
                 <button
@@ -554,6 +601,7 @@ const Settings = () => {
                 <LovensePairingQrBlock
                   qrImageUrl={qrImageUrl}
                   loading={pairingLoading}
+                  finishing={linkFinishing}
                   onCancel={cancelPairing}
                 />
                 {!qrImageUrl ? (

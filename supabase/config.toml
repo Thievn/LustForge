@@ -60,6 +60,9 @@ verify_jwt = false
 [functions.lovense-callback]
 verify_jwt = false
 
+[functions.lovense-sync-toys]
+verify_jwt = false
+
 [functions.send-device-command]
 verify_jwt = false
 
