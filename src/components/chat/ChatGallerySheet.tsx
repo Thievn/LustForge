@@ -1,6 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { CompanionGalleryGrid } from "@/components/companion/CompanionGalleryGrid";
 import type { CompanionGalleryRow } from "@/hooks/useCompanionGeneratedImages";
+import type { SetPortraitFromGalleryHandler } from "@/lib/setPortraitFromGalleryTypes";
 
 type Props = {
   open: boolean;
@@ -9,7 +10,7 @@ type Props = {
   images: CompanionGalleryRow[];
   loading: boolean;
   currentPortraitUrl: string | null | undefined;
-  onSetAsPortrait: (imageUrl: string) => Promise<void>;
+  onSetAsPortrait: SetPortraitFromGalleryHandler;
   canDelete?: boolean;
   onDelete?: (row: CompanionGalleryRow) => Promise<void>;
 };

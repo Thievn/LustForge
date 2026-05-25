@@ -8,6 +8,7 @@ import { CANONICAL_PORTRAIT_GALLERY_ID_PREFIX } from "@/lib/companionGalleryWith
 import { ZoomableImageViewport } from "@/components/ZoomableImageViewport";
 import { loadImageNaturalSize } from "@/lib/chatImageSettings";
 import { isAcceptableChatPortraitUpload } from "@/lib/portraitAspect";
+import type { SetPortraitFromGalleryHandler } from "@/lib/setPortraitFromGalleryTypes";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -25,7 +26,7 @@ type Props = {
   images: CompanionGalleryRow[];
   loading?: boolean;
   currentPortraitUrl: string | null | undefined;
-  onSetAsPortrait: (imageUrl: string) => Promise<void>;
+  onSetAsPortrait: SetPortraitFromGalleryHandler;
   /** When set, this gallery row is the I2V source for “loop video” (optional). */
   selectedLoopSourceId?: string | null;
   onSelectForLoop?: (row: CompanionGalleryRow | null) => void;
@@ -130,9 +131,13 @@ export function CompanionGalleryGrid({
         );
         return;
       }
-      await onSetAsPortrait(url);
+      await onSetAsPortrait(url, {
+        generatedImageId: row.id.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX) ? undefined : row.id,
+        isCardArt: row.id.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX),
+      });
       toast.success("Portrait updated for your account", {
-        description: "Profile and chat use this still for you only — Discover and other players’ views stay unchanged.",
+        description:
+          "Profile and chat use this still for you only. If you generated a loop from this image, it plays on your profile too.",
       });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not update portrait.");

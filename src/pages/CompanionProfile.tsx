@@ -893,16 +893,28 @@ const CompanionProfile = () => {
     void invokeGenerateLiveCallOptions(companion.id);
   };
 
-  const handlePortraitFromGallery = async (imageUrl: string) => {
+  const handlePortraitFromGallery = async (
+    imageUrl: string,
+    options?: import("@/lib/setPortraitFromGalleryTypes").SetPortraitFromGalleryOptions,
+  ) => {
     if (!user?.id || !id || !dbComp) return;
     const baseAnim = dbComp.animated_image_url?.trim() ?? "";
-    await setCompanionPortraitFromGalleryUrl({
+    const result = await setCompanionPortraitFromGalleryUrl({
       userId: user.id,
       companionId: id,
       imageUrl,
+      options,
       fallbackLoopVideoUrl: baseAnim && isLoopVideoStorageUrl(baseAnim) ? baseAnim : null,
       fallbackLoopVideoEnabled: Boolean(dbComp.profile_loop_video_enabled),
     });
+    queryClient.setQueryData(
+      ["companion-display-override", user.id, id],
+      () => ({
+        portrait_url: result.portraitUrl,
+        animated_portrait_url: result.loopUrl,
+        profile_loop_video_enabled: result.loopEnabled,
+      }),
+    );
     await queryClient.invalidateQueries({ queryKey: ["companions"] });
     await queryClient.refetchQueries({ queryKey: ["companions"] });
     await queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
@@ -1147,9 +1159,10 @@ const CompanionProfile = () => {
                     <span className="text-foreground/85 font-medium">Loop</span> picks a still for{" "}
                     <span className="text-foreground/85 font-medium">Looping portrait video</span> above (FC applies).
                     {" "}
-                    <span className="text-emerald-200/85 font-medium">Portrait</span> always applies to{" "}
+                    <span className="text-emerald-200/85 font-medium">Portrait</span> applies to{" "}
                     <span className="text-foreground/85 font-medium">your account only</span> — Discover and other
-                    collectors still see the public card art.
+                    collectors still see the public card art. Picking a still also switches to its profile loop clip when
+                    you&apos;ve generated one from that image.
                   </p>
                   {portraitDiffersFromCardArt ? (
                     <div className="mb-3 flex flex-wrap items-center gap-2">

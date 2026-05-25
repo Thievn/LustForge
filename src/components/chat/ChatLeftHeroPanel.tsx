@@ -5,9 +5,11 @@ import { PortraitViewLightbox } from "@/components/PortraitViewLightbox";
 import type { Companion } from "@/data/companions";
 import { normalizeCompanionRarity } from "@/lib/companionRarity";
 import type { CompanionGalleryRow } from "@/hooks/useCompanionGeneratedImages";
+import { CANONICAL_PORTRAIT_GALLERY_ID_PREFIX } from "@/lib/companionGalleryWithCanonical";
 import { stablePortraitDisplayUrl } from "@/lib/companionMedia";
 import { loadImageNaturalSize } from "@/lib/chatImageSettings";
 import { isAcceptableChatPortraitUpload } from "@/lib/portraitAspect";
+import type { SetPortraitFromGalleryHandler } from "@/lib/setPortraitFromGalleryTypes";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +21,7 @@ type Props = {
   images: CompanionGalleryRow[];
   loading: boolean;
   currentPortraitUrl: string | null | undefined;
-  onSetAsPortrait: (url: string) => Promise<void>;
+  onSetAsPortrait: SetPortraitFromGalleryHandler;
   onOpenFullGallery: () => void;
   onAddReferenceLine: (line: string) => void;
   /** If set, the gallery “To chat” action runs a new still (similar heat) instead of only prepending a line. */
@@ -82,7 +84,10 @@ export function ChatLeftHeroPanel({
         toast.error("Use a 2:3, 3:4, or 9:16 portrait (tall) for chat.");
         return;
       }
-      await onSetAsPortrait(url);
+      await onSetAsPortrait(url, {
+        generatedImageId: row.id.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX) ? undefined : row.id,
+        isCardArt: row.id.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX),
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not set portrait.");
     } finally {
