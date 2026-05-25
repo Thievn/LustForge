@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import type { DbCompanion } from "@/hooks/useCompanions";
 import { supabase } from "@/integrations/supabase/client";
 import ParticleBackground from "@/components/ParticleBackground";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -136,7 +136,8 @@ import {
   normalizeForgeArtStyle,
   normalizeForgeScene,
 } from "@/lib/forgePortraitPrompt";
-import { MOMENTS_FORGE_EVERY_STILL_PANEL } from "@/lib/chatMomentsBrand";
+import { MOMENTS_FORGE_EVERY_STILL_PANEL, FORGE_SECTION_BIND_SUBCOPY, FORGE_SECTION_IDENTITY_LOOK_SUBCOPY, FORGE_SECTION_PORTRAIT_SCENE_SUBCOPY, FORGE_SECTION_SOUL_STORY_SUBCOPY } from "@/lib/chatMomentsBrand";
+import { ForgeMegaSection } from "@/components/forge/ForgeMegaSection";
 import {
   type IdentityAnatomyDetail,
   IDENTITY_ANATOMY_CHOICES,
@@ -1203,7 +1204,7 @@ const CompanionCreator = forwardRef<CompanionCreatorHandle, CompanionCreatorProp
   );
 
   const accordionDefaultOpen = useMemo((): string[] => {
-    return ["identity", "personalities", "appearance", "outfit", "rendering", "narrative", "reference", "output"];
+    return ["identityLook"];
   }, []);
 
   const combinedAccentSelections = useMemo(
@@ -3353,9 +3354,9 @@ User flavor notes: ${extraNotes || "none"}`;
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Forge focus tabs</p>
                   <p className="text-xs text-muted-foreground/85 mt-1">
-                    Each tab owns a different visual lane. <strong>Shuffle tab + lab</strong> rolls tab DNA, tab-affinity body
-                    shape, art/scene, and wardrobe — use <strong>Silhouette &amp; body shape</strong> (bottom) only when you want a
-                    manual override.
+                    Each tab owns a different visual lane. <strong>Shuffle tab + lab</strong> rolls tab DNA, body shape, and
+                    wardrobe — fine-tune silhouette and art style under <strong>Identity &amp; Look</strong> when you want manual
+                    control.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -3624,11 +3625,12 @@ User flavor notes: ${extraNotes || "none"}`;
             </div>
 
             <Accordion type="multiple" defaultValue={accordionDefaultOpen} className={cn(panelClass, "px-1")}>
-              <AccordionItem value="identity" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Gender, identity & ancestry
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-5">
+              <ForgeMegaSection
+                value="identityLook"
+                title="Identity & Look"
+                subtitle={FORGE_SECTION_IDENTITY_LOOK_SUBCOPY}
+                badge="locks"
+              >
                   <PillGroup
                     label="Identity"
                     options={GENDERS}
@@ -3720,70 +3722,16 @@ User flavor notes: ${extraNotes || "none"}`;
                       <span className="text-white/70">{FORGE_ETHNICITY_ANY_LABEL}</span> leaves it to the model.
                     </p>
                   </div>
-                </AccordionContent>
-              </AccordionItem>
 
-              <AccordionItem value="personalities" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Personalities
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-5">
-                  <div className="rounded-2xl border border-[#FF2D7B]/20 bg-gradient-to-br from-[#1a0a12]/90 to-black/50 p-4 sm:p-5 space-y-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff7eb3]/90">Personality &amp; voice</p>
-                    <h3 className="font-gothic text-xl sm:text-2xl text-white leading-tight">Personalities</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                      Voice, flirt cadence, and relationship frame — separate from silhouette and wardrobe. Feeds chat personality and
-                      Live Call the same way it will for players.
+                  <div className="rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/80 mb-1">
+                      What every Moments image uses
                     </p>
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-white/50">
-                        One choice per row · five dimensions
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setForgePersonality(randomForgePersonality())}
-                        className="text-[10px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-lg border border-white/15 bg-black/50 text-[hsl(170_100%_70%)] hover:border-[hsl(170_100%_42%)]/50 transition-colors"
-                      >
-                        {isAdmin ? "Randomize all" : "Shuffle the pillars"}
-                      </button>
-                    </div>
+                    <p className="text-[10px] leading-relaxed text-muted-foreground whitespace-pre-line">
+                      {MOMENTS_FORGE_EVERY_STILL_PANEL.replace(/\*\*/g, "")}
+                    </p>
                   </div>
 
-                  <div className="space-y-6">
-                    {PERSONALITY_PILL_CONFIG.map(({ key, label, cols }) => (
-                      <div
-                        key={key}
-                        className="rounded-xl border border-white/[0.07] bg-black/30 p-3 sm:p-4 space-y-3"
-                      >
-                        <PillGroup
-                          label={label}
-                          options={FORGE_PERSONALITY_BY_KEY[key]}
-                          value={forgePersonality[key]}
-                          onChange={(v) => setPersonalityPillar(key, v)}
-                          cols={cols}
-                          headerRight={
-                            <ForgeFieldDice
-                              title={`Random: ${label}`}
-                              onRoll={() =>
-                                setForgePersonality((prev) => ({
-                                  ...prev,
-                                  [key]: pick([...FORGE_PERSONALITY_BY_KEY[key]]),
-                                }))
-                              }
-                            />
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="appearance" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Appearance
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-5">
                   <motion.div
                     initial={{ opacity: 0.85, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -3793,8 +3741,7 @@ User flavor notes: ${extraNotes || "none"}`;
                     <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff7eb3]/85">Shared look lab</p>
                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
                       Breast size, curves, hair, eyes, skin, height, and accents apply on <strong>every</strong> forge tab. The{" "}
-                      <strong>Forge focus tab</strong> above adds theme DNA; silhouette category &amp; body shape live in{" "}
-                      <strong>Silhouette &amp; body shape</strong> at the bottom so the tab stays the star.
+                      <strong>Forge focus tab</strong> above adds theme DNA; silhouette and art style live here too.
                     </p>
                   </motion.div>
 
@@ -3852,14 +3799,263 @@ User flavor notes: ${extraNotes || "none"}`;
                       })}
                     </div>
                   </div>
-                </AccordionContent>
-              </AccordionItem>
 
-              <AccordionItem value="outfit" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Outfit &amp; aesthetic
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-5">
+                  <div className="space-y-3 pt-2 border-t border-white/10">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      Silhouette &amp; body shape
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
+                      Optional anchor for limb count, species, and scale. Shuffle on a tab also rolls a silhouette that fits that
+                      tab&apos;s lane.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 sm:items-start gap-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Category</p>
+                          <ForgeFieldDice
+                            title="Random category"
+                            onRoll={() => {
+                              const g = pick(FORGE_BODY_GROUPS);
+                              if (g.types?.length) setBodyType(normalizeForgeBodyType(g.types[0]!));
+                            }}
+                          />
+                        </div>
+                        <Select
+                          value={bodyCategoryId}
+                          onValueChange={(catId) => {
+                            const g = FORGE_BODY_GROUPS.find((x) => x.id === catId);
+                            if (g?.types?.length) setBodyType(normalizeForgeBodyType(g.types[0]!));
+                          }}
+                        >
+                          <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
+                            <SelectValue placeholder="Category" />
+                          </SelectTrigger>
+                          <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
+                            {FORGE_BODY_GROUPS.map((g) => (
+                              <SelectItem
+                                key={g.id}
+                                value={g.id}
+                                className="focus:bg-white/10 focus:text-white cursor-pointer"
+                              >
+                                {g.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Shape</p>
+                          <ForgeFieldDice
+                            title="Random shape in this category"
+                            onRoll={() => {
+                              if (bodyTypesInCategory.length)
+                                setBodyType(normalizeForgeBodyType(pick(bodyTypesInCategory)));
+                              else setBodyType(normalizeForgeBodyType(pick(FORGE_BODY_TYPES)));
+                            }}
+                          />
+                        </div>
+                        <Select
+                          value={bodyTypeSelectValue}
+                          onValueChange={(v) => setBodyType(normalizeForgeBodyType(v))}
+                        >
+                          <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
+                            <SelectValue placeholder="Pick a body type" />
+                          </SelectTrigger>
+                          <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
+                            {bodyTypesInCategory.map((opt) => (
+                              <SelectItem
+                                key={opt}
+                                value={opt}
+                                className="focus:bg-white/10 focus:text-white cursor-pointer"
+                              >
+                                {opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2 border-t border-white/10">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Art style</p>
+                      <ForgeFieldDice title="Random art style" onRoll={() => setArtStyle(normalizeForgeArtStyle(pick([...FORGE_ART_STYLES])))} />
+                    </div>
+                    <Select value={artStyle} onValueChange={(v) => setArtStyle(normalizeForgeArtStyle(v))}>
+                      <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
+                        <SelectValue placeholder="Art style" />
+                      </SelectTrigger>
+                      <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
+                        {FORGE_ART_STYLES.map((opt) => (
+                          <SelectItem
+                            key={opt}
+                            value={opt}
+                            className="focus:bg-white/10 focus:text-white cursor-pointer"
+                          >
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+              </ForgeMegaSection>
+
+              <ForgeMegaSection
+                value="soulStory"
+                title="Soul & Story"
+                subtitle={FORGE_SECTION_SOUL_STORY_SUBCOPY}
+              >
+                  <div className="rounded-2xl border border-[#FF2D7B]/20 bg-gradient-to-br from-[#1a0a12]/90 to-black/50 p-4 sm:p-5 space-y-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff7eb3]/90">Personality &amp; voice</p>
+                    <h3 className="font-gothic text-xl sm:text-2xl text-white leading-tight">Personalities</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                      Voice, flirt cadence, and relationship frame — separate from silhouette and wardrobe. Feeds chat personality and
+                      Live Call the same way it will for players.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-white/50">
+                        One choice per row · five dimensions
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setForgePersonality(randomForgePersonality())}
+                        className="text-[10px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-lg border border-white/15 bg-black/50 text-[hsl(170_100%_70%)] hover:border-[hsl(170_100%_42%)]/50 transition-colors"
+                      >
+                        {isAdmin ? "Randomize all" : "Shuffle the pillars"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    {PERSONALITY_PILL_CONFIG.map(({ key, label, cols }) => (
+                      <div
+                        key={key}
+                        className="rounded-xl border border-white/[0.07] bg-black/30 p-3 sm:p-4 space-y-3"
+                      >
+                        <PillGroup
+                          label={label}
+                          options={FORGE_PERSONALITY_BY_KEY[key]}
+                          value={forgePersonality[key]}
+                          onChange={(v) => setPersonalityPillar(key, v)}
+                          cols={cols}
+                          headerRight={
+                            <ForgeFieldDice
+                              title={`Random: ${label}`}
+                              onRoll={() =>
+                                setForgePersonality((prev) => ({
+                                  ...prev,
+                                  [key]: pick([...FORGE_PERSONALITY_BY_KEY[key]]),
+                                }))
+                              }
+                            />
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10 space-y-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                      Literary draft &amp; portrait brief
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {isAdmin ? (
+                        <>
+                          Filled by <strong className="text-white/90">Spin the forge</strong> or the design-lab when your chronicle is
+                          short. Edit freely
+                        </>
+                      ) : (
+                        <>
+                          Filled by <strong className="text-white/90">Spin the forge</strong> (a starter pass you can edit). This is what
+                          saves
+                        </>
+                      )}{" "}
+                      to your vault (appearance, bio, backstory, packshot prompt, chat charter). The{" "}
+                      <strong className="text-white/90">profile card</strong> under Live preview mirrors these fields.
+                    </p>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                        Cinematic appearance (prose)
+                      </p>
+                      <textarea
+                        value={narrativeAppearance}
+                        onChange={(e) => setNarrativeAppearance(e.target.value)}
+                        rows={5}
+                        placeholder="Flowing description — not a tag list…"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">Hook bio</p>
+                      <textarea
+                        value={hookBio}
+                        onChange={(e) => setHookBio(e.target.value)}
+                        rows={3}
+                        placeholder="Short elevator hook…"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                        Chronicle backstory
+                      </p>
+                      <textarea
+                        value={chronicleBackstory}
+                        onChange={(e) => setChronicleBackstory(e.target.value)}
+                        rows={8}
+                        placeholder="3–4 paragraphs of premium lore…"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                        SFW packshot prompt
+                        {isAdmin ? " (Grok / Imagine — pipeline)" : " (portrait engine)"}
+                      </p>
+                      <textarea
+                        value={packshotPrompt}
+                        onChange={(e) => setPackshotPrompt(e.target.value)}
+                        rows={4}
+                        placeholder="Dense cinematic portrait brief…"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                        Chat charter (system prompt)
+                      </p>
+                      <textarea
+                        value={charterSystemPrompt}
+                        onChange={(e) => setCharterSystemPrompt(e.target.value)}
+                        rows={6}
+                        placeholder={isAdmin ? "Full persona rules (xAI / chat pipeline)…" : "Full persona rules for their chat voice…"}
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      />
+                    </div>
+                    {fantasyStartersVault.length > 0 && (
+                      <div className="rounded-xl border border-white/10 bg-black/35 p-4 space-y-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                          Fantasy starters ({fantasyStartersVault.length})
+                        </p>
+                        {fantasyStartersVault.map((s, i) => (
+                          <div key={`${s.title}-${i}`} className="rounded-lg border border-white/10 bg-black/40 p-3 text-left">
+                            <p className="text-xs font-semibold text-white">{s.title}</p>
+                            <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{s.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+              </ForgeMegaSection>
+
+              <ForgeMegaSection
+                value="portraitScene"
+                title="Portrait Scene"
+                subtitle={FORGE_SECTION_PORTRAIT_SCENE_SUBCOPY}
+                badge="cardOnly"
+              >
                   <motion.div
                     initial={{ opacity: 0.85, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -3941,193 +4137,64 @@ User flavor notes: ${extraNotes || "none"}`;
                     the list or choose <strong className="text-foreground/90">Let the forge choose</strong> so clothing hues
                     follow the rest of the brief instead of a fixed recipe.
                   </p>
-                </AccordionContent>
-              </AccordionItem>
 
-              <AccordionItem value="rendering" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Art style &amp; scene
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 sm:items-start gap-4">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Art style</p>
-                        <ForgeFieldDice title="Random art style" onRoll={() => setArtStyle(normalizeForgeArtStyle(pick([...FORGE_ART_STYLES])))} />
-                      </div>
-                      <Select value={artStyle} onValueChange={(v) => setArtStyle(normalizeForgeArtStyle(v))}>
-                        <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
-                          <SelectValue placeholder="Art style" />
-                        </SelectTrigger>
-                        <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
-                          {FORGE_ART_STYLES.map((opt) => (
-                            <SelectItem
-                              key={opt}
-                              value={opt}
-                              className="focus:bg-white/10 focus:text-white cursor-pointer"
-                            >
-                              {opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="rounded-lg border border-white/[0.08] bg-black/30 px-3 py-2.5 text-[10px] leading-relaxed text-muted-foreground">
-                        <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/80 mb-1">
-                          What every Moments image uses
-                        </p>
-                        <p className="text-foreground/85 whitespace-pre-line">{MOMENTS_FORGE_EVERY_STILL_PANEL}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                          Scene &amp; atmosphere
-                        </p>
-                        <ForgeFieldDice
-                          title="Random scene"
-                          onRoll={() => setSceneAtmosphere(normalizeForgeScene(pick([...FORGE_SCENE_ATMOSPHERES])))}
-                        />
-                      </div>
-                      <Select
-                        value={sceneAtmosphere}
-                        onValueChange={(v) => setSceneAtmosphere(normalizeForgeScene(v))}
-                      >
-                        <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
-                          <SelectValue placeholder="Scene" />
-                        </SelectTrigger>
-                        <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
-                          {FORGE_SCENE_GROUPS.map((group) => (
-                            <SelectGroup key={group.id}>
-                              <SelectLabel className="px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                                {group.label}
-                              </SelectLabel>
-                              {group.scenes.map((opt) => (
-                                <SelectItem
-                                  key={opt}
-                                  value={opt}
-                                  className="focus:bg-white/10 focus:text-white cursor-pointer"
-                                >
-                                  {opt}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Lighting, lens, and set dressing — pair with the portrait prose tab; regenerate preview after big changes.
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="narrative" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Literary draft &amp; portrait brief
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-4">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {isAdmin ? (
-                      <>
-                        Filled by <strong className="text-white/90">Spin the forge</strong> or the design-lab when your chronicle is
-                        short. Edit freely
-                      </>
-                    ) : (
-                      <>
-                        Filled by <strong className="text-white/90">Spin the forge</strong> (a starter pass you can edit). This is what
-                        saves
-                      </>
-                    )}{" "}
-                    to your vault (appearance, bio, backstory, packshot prompt, chat charter). The{" "}
-                    <strong className="text-white/90">profile card</strong> under Live preview mirrors these fields.
-                  </p>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                      Cinematic appearance (prose)
-                    </p>
-                    <textarea
-                      value={narrativeAppearance}
-                      onChange={(e) => setNarrativeAppearance(e.target.value)}
-                      rows={5}
-                      placeholder="Flowing description — not a tag list…"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                      Hook bio
-                    </p>
-                    <textarea
-                      value={hookBio}
-                      onChange={(e) => setHookBio(e.target.value)}
-                      rows={3}
-                      placeholder="Short elevator hook…"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                      Chronicle backstory
-                    </p>
-                    <textarea
-                      value={chronicleBackstory}
-                      onChange={(e) => setChronicleBackstory(e.target.value)}
-                      rows={8}
-                      placeholder="3–4 paragraphs of premium lore…"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                      SFW packshot prompt
-                      {isAdmin ? " (Grok / Imagine — pipeline)" : " (portrait engine)"}
-                    </p>
-                    <textarea
-                      value={packshotPrompt}
-                      onChange={(e) => setPackshotPrompt(e.target.value)}
-                      rows={4}
-                      placeholder="Dense cinematic portrait brief…"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
-                    />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                      Chat charter (system prompt)
-                    </p>
-                    <textarea
-                      value={charterSystemPrompt}
-                      onChange={(e) => setCharterSystemPrompt(e.target.value)}
-                      rows={6}
-                      placeholder={isAdmin ? "Full persona rules (xAI / chat pipeline)…" : "Full persona rules for their chat voice…"}
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
-                    />
-                  </div>
-                  {fantasyStartersVault.length > 0 && (
-                    <div className="rounded-xl border border-white/10 bg-black/35 p-4 space-y-3">
+                  <div className="space-y-1.5 pt-2 border-t border-white/10">
+                    <div className="flex items-center justify-between gap-2">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                        Fantasy starters ({fantasyStartersVault.length})
+                        Scene &amp; atmosphere
                       </p>
-                      {fantasyStartersVault.map((s, i) => (
-                        <div key={`${s.title}-${i}`} className="rounded-lg border border-white/10 bg-black/40 p-3 text-left">
-                          <p className="text-xs font-semibold text-white">{s.title}</p>
-                          <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{s.description}</p>
-                        </div>
-                      ))}
+                      <ForgeFieldDice
+                        title="Random scene"
+                        onRoll={() => setSceneAtmosphere(normalizeForgeScene(pick([...FORGE_SCENE_ATMOSPHERES])))}
+                      />
                     </div>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
+                    <Select
+                      value={sceneAtmosphere}
+                      onValueChange={(v) => setSceneAtmosphere(normalizeForgeScene(v))}
+                    >
+                      <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
+                        <SelectValue placeholder="Scene" />
+                      </SelectTrigger>
+                      <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
+                        {FORGE_SCENE_GROUPS.map((group) => (
+                          <SelectGroup key={group.id}>
+                            <SelectLabel className="px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                              {group.label}
+                            </SelectLabel>
+                            {group.scenes.map((opt) => (
+                              <SelectItem
+                                key={opt}
+                                value={opt}
+                                className="focus:bg-white/10 focus:text-white cursor-pointer"
+                              >
+                                {opt}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Lighting, lens, and set dressing for the forge card — in-chat Moments use the scene you pick there instead.
+                    </p>
+                  </div>
+              </ForgeMegaSection>
 
-              <AccordionItem value="reference" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Reference look (optional)
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-4">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+              <ForgeMegaSection
+                value="bind"
+                title="Bind to roster"
+                subtitle={FORGE_SECTION_BIND_SUBCOPY}
+                borderBottom={!isAdmin}
+              >
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                      Reference look (optional)
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">
                     Upload a mood image — we sample its palette so previews echo its colors and energy. Faces stay invented; this is not a
                     likeness pass.
-                  </p>
+                    </p>
+                  </div>
                   <input
                     ref={referenceFileInputRef}
                     type="file"
@@ -4176,101 +4243,9 @@ User flavor notes: ${extraNotes || "none"}`;
                       className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
                     />
                   </div>
-                </AccordionContent>
-              </AccordionItem>
 
-              <AccordionItem value="silhouette" className="border-white/10 px-4">
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Silhouette &amp; body shape
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-5">
-                  <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl">
-                    Optional anchor for limb count, species, and scale — <strong>after</strong> you pick a forge tab. Shuffle on a tab
-                    also rolls a silhouette that fits that tab&apos;s lane (anime vs monster vs latex, etc.).
-                  </p>
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Body type</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 sm:items-start gap-3">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Category</p>
-                          <ForgeFieldDice
-                            title="Random category"
-                            onRoll={() => {
-                              const g = pick(FORGE_BODY_GROUPS);
-                              if (g.types?.length) setBodyType(normalizeForgeBodyType(g.types[0]!));
-                            }}
-                          />
-                        </div>
-                        <Select
-                          value={bodyCategoryId}
-                          onValueChange={(catId) => {
-                            const g = FORGE_BODY_GROUPS.find((x) => x.id === catId);
-                            if (g?.types?.length) setBodyType(normalizeForgeBodyType(g.types[0]!));
-                          }}
-                        >
-                          <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
-                            <SelectValue placeholder="Category" />
-                          </SelectTrigger>
-                          <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
-                            {FORGE_BODY_GROUPS.map((g) => (
-                              <SelectItem
-                                key={g.id}
-                                value={g.id}
-                                className="focus:bg-white/10 focus:text-white cursor-pointer"
-                              >
-                                {g.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Shape</p>
-                          <ForgeFieldDice
-                            title="Random shape in this category"
-                            onRoll={() => {
-                              if (bodyTypesInCategory.length)
-                                setBodyType(normalizeForgeBodyType(pick(bodyTypesInCategory)));
-                              else setBodyType(normalizeForgeBodyType(pick(FORGE_BODY_TYPES)));
-                            }}
-                          />
-                        </div>
-                        <Select
-                          value={bodyTypeSelectValue}
-                          onValueChange={(v) => setBodyType(normalizeForgeBodyType(v))}
-                        >
-                          <SelectTrigger className="w-full border-white/12 bg-black/40 text-white focus:ring-[hsl(170_100%_42%)]/40">
-                            <SelectValue placeholder="Pick a body type" />
-                          </SelectTrigger>
-                          <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
-                            {bodyTypesInCategory.map((opt) => (
-                              <SelectItem
-                                key={opt}
-                                value={opt}
-                                className="focus:bg-white/10 focus:text-white cursor-pointer"
-                              >
-                                {opt}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Humanoid, anthro, hybrid, and non-human silhouettes — combine with forge tab + rendering; stay SFW and
-                      respectful for compact-stature and mobility picks.
-                    </p>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="output" className={cn("border-white/10 px-4", !isAdmin && "border-b-0")}>
-                <AccordionTrigger className="font-gothic text-lg text-white hover:no-underline py-4">
-                  Naming & batch
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 space-y-5">
+                  <div className="pt-4 border-t border-white/10 space-y-5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Naming &amp; batch</p>
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">Name</p>
                     <div className="flex flex-col sm:flex-row gap-2 mb-2">
@@ -4432,8 +4407,8 @@ User flavor notes: ${extraNotes || "none"}`;
                       </label>
                     )}
                   </div>
-                </AccordionContent>
-              </AccordionItem>
+                  </div>
+              </ForgeMegaSection>
 
             </Accordion>
 

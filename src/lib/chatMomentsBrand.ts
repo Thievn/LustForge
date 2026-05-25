@@ -19,3 +19,14 @@ export const MOMENTS_DOCK_ARIA = "Open Moments gallery";
 
 /** Forge: shown under art style — what Moments stills inherit vs what changes in chat. */
 export const MOMENTS_FORGE_EVERY_STILL_PANEL = `**Moments stills** (in-chat) **lock** to this art style and your roster portrait for **identity** — face, hair, species, and rendering discipline. Each still uses a **new** pose, wardrobe, and environment from the **scene you choose in chat**; they are not remasters of the card photo.`;
+
+/** Compact badges for Forge mega-section headers. */
+export const FORGE_BADGE_LOCKS_IN_MOMENTS = "Locks in Moments";
+export const FORGE_BADGE_CARD_ONLY = "Card only";
+
+export const FORGE_SECTION_IDENTITY_LOOK_SUBCOPY =
+  "Face, body, species, and art style — carried into every in-chat still.";
+export const FORGE_SECTION_PORTRAIT_SCENE_SUBCOPY =
+  "Forge card photo only — Moments picks new outfits and places in chat.";
+export const FORGE_SECTION_SOUL_STORY_SUBCOPY = "Voice, lore, and chat charter.";
+export const FORGE_SECTION_BIND_SUBCOPY = "Name, reference mood, visibility, and batch.";
