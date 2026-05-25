@@ -51,20 +51,19 @@ describe("mergeCompanionDisplayWithUserOverride", () => {
     expect(merged?.animated_image_url).toBeNull();
   });
 
-  it("keeps forge row loop when override only changes still portrait", () => {
-    const privateForge = {
+  it("does not inherit catalog loop when override sets a different still without a private loop", () => {
+    const dbWithLoop = {
       ...baseDb,
-      is_public: false,
-      approved: false,
-      animated_image_url: "https://example.com/storage/v1/object/public/companion-images/profile-loops/cc-abc/loop.mp4",
+      animated_image_url: "https://example.com/profile-loops/canonical.mp4",
       profile_loop_video_enabled: true,
     } as DbCompanion;
-    const merged = mergeCompanionDisplayWithUserOverride(privateForge, {
+    const merged = mergeCompanionDisplayWithUserOverride(dbWithLoop, {
       portrait_url: "https://example.com/my-still.jpg",
       animated_portrait_url: null,
       profile_loop_video_enabled: false,
     });
-    expect(merged?.profile_loop_video_enabled).toBe(true);
-    expect(merged?.animated_image_url).toContain("profile-loops");
+    expect(merged?.profile_loop_video_enabled).toBe(false);
+    expect(merged?.animated_image_url).toBeNull();
+    expect(merged?.static_image_url).toBe("https://example.com/my-still.jpg");
   });
 });

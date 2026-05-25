@@ -11,6 +11,7 @@ import {
   History,
   Image as ImageIcon,
   ImagePlus,
+  Images,
   Loader2,
   Megaphone,
   MessageSquare,
@@ -50,6 +51,16 @@ import { LovensePromoPanel } from "@/components/admin/xmarketing/LovensePromoPan
 import { MarketingTweetPreview } from "@/components/admin/xmarketing/MarketingTweetPreview";
 import { XMarketingHeroCard } from "@/components/admin/xmarketing/XMarketingHeroCard";
 import {
+  adminGalleryRowMediaUrl,
+  adminGalleryStillMediaUrlsForX,
+  XMarketingGalleryPicker,
+} from "@/components/admin/xmarketing/XMarketingGalleryPicker";
+import { companionGalleryRowIsClip } from "@/components/companion/CompanionGalleryGrid";
+import { useAdminCompanionGallery } from "@/hooks/useAdminCompanionGallery";
+import { useAdminProfileLoopJobs } from "@/hooks/useAdminProfileLoopJobs";
+import { CANONICAL_PORTRAIT_GALLERY_ID_PREFIX, prependCanonicalPortraitIfMissing } from "@/lib/companionGalleryWithCanonical";
+import { resolveProfileLoopUrlForStill } from "@/lib/matchProfileLoopJobToStill";
+import {
   bakeFramedCardPngBlob,
   framedXBakeFingerprint,
   recordFramedCardWebmBlob,
@@ -70,6 +81,11 @@ const MARKETING_IMAGE_TOKEN_COST = 75;
 const HISTORY_KEY = "lustforge-x-marketing-history-v2";
 
 export type TweetVariation = { text: string; hashtags: string[] };
+
+export type XMarketingHeroSource =
+  | { type: "portrait" }
+  | { type: "render"; id: string }
+  | { type: "gallery"; ids: string[] };
 
 /** Echoes what admin-x-marketing sent to Grok for this run (profile + controls). */
 export type XMarketingStyleSource = {
@@ -240,7 +256,8 @@ export default function XMarketingHub() {
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [profileDisplayName, setProfileDisplayName] = useState<string | null>(null);
   const [marketingRenders, setMarketingRenders] = useState<{ id: string; url: string }[]>([]);
-  const [heroSource, setHeroSource] = useState<{ type: "portrait" } | { type: "render"; id: string }>({ type: "portrait" });
+  const [heroSource, setHeroSource] = useState<XMarketingHeroSource>({ type: "portrait" });
+  const [galleryUsePairedLoop, setGalleryUsePairedLoop] = useState(false);
   const [marketingScene, setMarketingScene] = useState("");
   const [marketingGenBusy, setMarketingGenBusy] = useState(false);
   const [tweetPostStyle, setTweetPostStyle] = useState<string>(POST_STYLES[0]!.label);
@@ -338,6 +355,13 @@ export default function XMarketingHub() {
   );
 
   /** For lewd/nude hero: scan generated_images (admin can read all) to pick best prompt match */
+  const { data: adminGalleryRows = [], isLoading: adminGalleryLoading } = useAdminCompanionGallery(selected?.id);
+  const { data: adminProfileLoopJobs = [] } = useAdminProfileLoopJobs(selected?.id);
+
+  useEffect(() => {
+    setGalleryUsePairedLoop(false);
+  }, [selected?.id]);
+
   const { data: generatedImagesForTier = [] } = useQuery({
     queryKey: ["x-marketing-generated-images", selected?.id, portraitTierForX],
     queryFn: async () => {
@@ -684,7 +708,64 @@ export default function XMarketingHub() {
     return resolvePortraitHeroUrlForX(selected, portraitTierForX, rows);
   }, [selected, portraitTierForX, generatedImagesForTier]);
 
+  const gallerySyntheticRows = useMemo(() => {
+    if (!selected) return [];
+    return prependCanonicalPortraitIfMissing(
+      adminGalleryRows.map((r) => ({
+        id: r.id,
+        image_url: r.image_url,
+        prompt: r.prompt,
+        created_at: r.created_at,
+        saved_to_personal_gallery: null,
+        is_video: r.is_video,
+      })),
+      {
+        companionId: selected.id,
+        canonicalStillUrl: galleryStaticPortraitUrl(selected, selected.id),
+      },
+    );
+  }, [adminGalleryRows, selected]);
+
+  const selectedGalleryPrimaryId =
+    heroSource.type === "gallery" ? (heroSource.ids[0] ?? null) : null;
+
+  const selectedGalleryRow = useMemo(() => {
+    if (heroSource.type !== "gallery" || !selected || !selectedGalleryPrimaryId) return null;
+    if (selectedGalleryPrimaryId.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX)) return null;
+    return adminGalleryRows.find((r) => r.id === selectedGalleryPrimaryId) ?? null;
+  }, [heroSource, adminGalleryRows, selected, selectedGalleryPrimaryId]);
+
+  const selectedGalleryStillRow = useMemo(() => {
+    if (heroSource.type !== "gallery") return null;
+    for (const id of heroSource.ids) {
+      const row = gallerySyntheticRows.find((r) => r.id === id);
+      if (row && !companionGalleryRowIsClip(row)) return row;
+    }
+    return null;
+  }, [heroSource, gallerySyntheticRows]);
+
+  const pairedProfileLoopUrl = useMemo(() => {
+    if (!selectedGalleryStillRow) return null;
+    const stillUrl = adminGalleryRowMediaUrl(selectedGalleryStillRow);
+    if (!stillUrl) return null;
+    const genId = selectedGalleryStillRow.id.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX)
+      ? undefined
+      : selectedGalleryStillRow.id;
+    return resolveProfileLoopUrlForStill(adminProfileLoopJobs, stillUrl, genId);
+  }, [selectedGalleryStillRow, adminProfileLoopJobs]);
+
   const heroVisual = useMemo(() => {
+    if (heroSource.type === "gallery") {
+      if (!heroSource.ids.length && selected) {
+        return galleryStaticPortraitUrl(selected, selected.id) ?? null;
+      }
+      const primaryId = heroSource.ids[0];
+      if (primaryId?.startsWith(CANONICAL_PORTRAIT_GALLERY_ID_PREFIX) && selected) {
+        return galleryStaticPortraitUrl(selected, selected.id) ?? null;
+      }
+      const primaryRow = gallerySyntheticRows.find((r) => r.id === primaryId);
+      return adminGalleryRowMediaUrl(primaryRow ?? selectedGalleryRow);
+    }
     if (heroSource.type === "render") {
       const row = marketingRenders.find((r) => r.id === heroSource.id);
       if (row?.url) return row.url;
@@ -693,26 +774,76 @@ export default function XMarketingHub() {
     }
     if (selected) return portraitHeroFromTier.url ?? galleryStaticPortraitUrl(selected, selected.id) ?? null;
     return null;
-  }, [heroSource, marketingRenders, selected, portraitHeroFromTier]);
+  }, [heroSource, marketingRenders, selected, portraitHeroFromTier, selectedGalleryRow, gallerySyntheticRows]);
 
-  const loopVideoPublicUrl = useMemo(
+  const galleryStillUrlsForX = useMemo(() => {
+    if (heroSource.type !== "gallery" || !selected) return [] as string[];
+    return adminGalleryStillMediaUrlsForX(
+      gallerySyntheticRows,
+      heroSource.ids,
+      galleryStaticPortraitUrl(selected, selected.id),
+    );
+  }, [heroSource, selected, gallerySyntheticRows]);
+
+  const profileLoopPublicUrl = useMemo(
     () => (selected ? resolvePublicLoopPortraitVideoUrlForX(selected) : null),
     [selected],
+  );
+
+  /** Loop MP4 for X: profile loop (selfie tier), gallery clip, or paired loop for a selected still. */
+  const effectiveLoopVideoUrl = useMemo(() => {
+    if (heroSource.type === "gallery" && selectedGalleryRow && companionGalleryRowIsClip(selectedGalleryRow)) {
+      return adminGalleryRowMediaUrl(selectedGalleryRow);
+    }
+    if (
+      heroSource.type === "gallery" &&
+      galleryUsePairedLoop &&
+      pairedProfileLoopUrl &&
+      galleryStillUrlsForX.length === 1
+    ) {
+      return pairedProfileLoopUrl;
+    }
+    if (
+      heroSource.type === "portrait" &&
+      portraitTierForX === "selfie" &&
+      profileLoopPublicUrl
+    ) {
+      return profileLoopPublicUrl;
+    }
+    return null;
+  }, [
+    heroSource.type,
+    selectedGalleryRow,
+    galleryUsePairedLoop,
+    pairedProfileLoopUrl,
+    galleryStillUrlsForX.length,
+    portraitTierForX,
+    profileLoopPublicUrl,
+  ]);
+
+  const heroIsGalleryClip = Boolean(
+    heroSource.type === "gallery" &&
+      selectedGalleryRow &&
+      companionGalleryRowIsClip(selectedGalleryRow),
+  );
+
+  const heroIsGalleryMultiStill = Boolean(
+    heroSource.type === "gallery" && galleryStillUrlsForX.length > 1 && !heroIsGalleryClip,
   );
 
   const preferLoopForX = Boolean(
     marketingSocialSettings?.use_looping_video_for_x &&
       selected &&
-      heroSource.type === "portrait" &&
-      portraitTierForX === "selfie" &&
-      loopVideoPublicUrl,
+      effectiveLoopVideoUrl &&
+      isVideoPortraitUrl(effectiveLoopVideoUrl) &&
+      (heroSource.type === "portrait" || heroIsGalleryClip || (heroSource.type === "gallery" && galleryUsePairedLoop)),
   );
 
   const framedModeOn = Boolean(marketingSocialSettings?.use_framed_card_for_x_video);
 
   const framedBakeFingerprint = useMemo(() => {
     if (!selected || !framedModeOn) return null;
-    const interior = preferLoopForX && loopVideoPublicUrl ? loopVideoPublicUrl : (heroVisual?.split("?")[0] ?? "");
+    const interior = preferLoopForX && effectiveLoopVideoUrl ? effectiveLoopVideoUrl : (heroVisual?.split("?")[0] ?? "");
     return framedXBakeFingerprint({
       companionId: selected.id,
       heroVisual: interior,
@@ -726,7 +857,7 @@ export default function XMarketingHub() {
     selected,
     framedModeOn,
     preferLoopForX,
-    loopVideoPublicUrl,
+    effectiveLoopVideoUrl,
     heroVisual,
     portraitTierForX,
     marketingSocialSettings?.use_looping_video_for_x,
@@ -756,12 +887,27 @@ export default function XMarketingHub() {
     const preferLoop =
       Boolean(marketingSocialSettings?.use_looping_video_for_x) &&
       Boolean(selected) &&
-      heroSource.type === "portrait" &&
-      portraitTierForX === "selfie";
+      Boolean(effectiveLoopVideoUrl) &&
+      isVideoPortraitUrl(effectiveLoopVideoUrl) &&
+      (heroSource.type === "portrait" ||
+        heroIsGalleryClip ||
+        (heroSource.type === "gallery" && galleryUsePairedLoop));
+
+    if (heroIsGalleryMultiStill && !framedModeOn && !preferLoop && galleryStillUrlsForX.length > 0) {
+      return { mediaUrlsForZernio: galleryStillUrlsForX, zernioMediaBlockedReason: null as string | null };
+    }
+
+    if (heroIsGalleryMultiStill && framedModeOn) {
+      return {
+        mediaUrlsForZernio: [] as string[],
+        zernioMediaBlockedReason:
+          "Framed card mode supports one hero only — pick a single still or turn off framed card for multi-image tweets.",
+      };
+    }
 
     let naturalUrl: string | null = null;
-    if (preferLoop && loopVideoPublicUrl) {
-      naturalUrl = loopVideoPublicUrl;
+    if (preferLoop && effectiveLoopVideoUrl) {
+      naturalUrl = effectiveLoopVideoUrl;
     }
     if (!naturalUrl && /^https?:\/\//i.test(heroVisual)) {
       naturalUrl = heroVisual.split("?")[0] ?? null;
@@ -788,7 +934,7 @@ export default function XMarketingHub() {
       return { mediaUrlsForZernio: [framedDeliverUrl.split("?")[0]!], zernioMediaBlockedReason: null as string | null };
     }
 
-    const needsVideoBake = preferLoopForX && Boolean(loopVideoPublicUrl);
+    const needsVideoBake = preferLoopForX && Boolean(effectiveLoopVideoUrl);
     if (needsVideoBake) {
       return {
         mediaUrlsForZernio: [] as string[],
@@ -809,14 +955,17 @@ export default function XMarketingHub() {
     marketingSocialSettings?.use_looping_video_for_x,
     selected,
     heroSource.type,
-    portraitTierForX,
+    effectiveLoopVideoUrl,
     framedModeOn,
     framedBakeFingerprint,
     framedDeliverUrl,
     framedDeliverKey,
     preferLoopForX,
-    loopVideoPublicUrl,
     framedStillPrepBusy,
+    heroIsGalleryMultiStill,
+    galleryStillUrlsForX,
+    heroIsGalleryClip,
+    galleryUsePairedLoop,
   ]);
 
   useEffect(() => {
@@ -877,11 +1026,11 @@ export default function XMarketingHub() {
   ]);
 
   const bakeFramedLoopForX = useCallback(async () => {
-    if (!selected || !loopVideoPublicUrl || !framedModeOn) {
-      toast.error("Select a companion with a public looping MP4 and enable framed card for X in Zernio settings.");
+    if (!selected || !effectiveLoopVideoUrl || !framedModeOn) {
+      toast.error("Select a companion clip or profile loop and enable framed card for X in Zernio settings.");
       return;
     }
-    const interior = loopVideoPublicUrl;
+    const interior = effectiveLoopVideoUrl;
     const fp = framedXBakeFingerprint({
       companionId: selected.id,
       heroVisual: interior,
@@ -896,7 +1045,7 @@ export default function XMarketingHub() {
       const blob = await recordFramedCardWebmBlob({
         companion: selected,
         heroStillUrl: null,
-        loopVideoUrl: loopVideoPublicUrl,
+        loopVideoUrl: effectiveLoopVideoUrl,
         pinCount: pinCounts[selected.id] ?? 0,
       });
       const url = await uploadFramedXMedia(supabase, blob, selected.id);
@@ -910,7 +1059,7 @@ export default function XMarketingHub() {
     }
   }, [
     selected,
-    loopVideoPublicUrl,
+    effectiveLoopVideoUrl,
     framedModeOn,
     portraitTierForX,
     marketingSocialSettings?.use_looping_video_for_x,
@@ -931,16 +1080,16 @@ export default function XMarketingHub() {
 
   const composePreviewMedia = useMemo(() => {
     if (selected) {
-      const plainLoopPreview = !framedModeOn && preferLoopForX && loopVideoPublicUrl;
+      const plainLoopPreview = !framedModeOn && preferLoopForX && effectiveLoopVideoUrl;
       if (plainLoopPreview) {
         return (
           <div
-            key={loopVideoPublicUrl}
+            key={effectiveLoopVideoUrl}
             className="w-full max-w-[min(100%,280px)] mx-auto"
           >
             <div className="relative rounded-xl overflow-hidden border border-[#2f3336] bg-black aspect-[2/3] max-h-[min(56vh,520px)]">
               <video
-                src={loopVideoPublicUrl}
+                src={effectiveLoopVideoUrl}
                 className="absolute inset-0 h-full w-full origin-center scale-[1.02] object-cover object-top"
                 autoPlay
                 muted
@@ -955,13 +1104,13 @@ export default function XMarketingHub() {
       if (!heroVisual) return null;
       return (
         <div
-          key={`${selected.id}-${heroVisual}-${preferLoopForX ? loopVideoPublicUrl ?? "" : "still"}`}
+          key={`${selected.id}-${heroVisual}-${preferLoopForX ? effectiveLoopVideoUrl ?? "" : "still"}`}
           className="w-full max-w-[min(100%,280px)] mx-auto"
         >
           <XMarketingHeroCard
             companion={selected}
             mediaUrl={heroVisual}
-            loopVideoUrl={preferLoopForX ? loopVideoPublicUrl : null}
+            loopVideoUrl={preferLoopForX ? effectiveLoopVideoUrl : null}
             pinCount={pinCounts[selected.id] ?? 0}
           />
         </div>
@@ -984,7 +1133,7 @@ export default function XMarketingHub() {
       );
     }
     return null;
-  }, [heroVisual, selected, preferLoopForX, loopVideoPublicUrl, pinCounts, framedModeOn]);
+  }, [heroVisual, selected, preferLoopForX, effectiveLoopVideoUrl, pinCounts, framedModeOn]);
 
   const generateMarketingStill = async () => {
     if (!selected) {
@@ -1553,7 +1702,7 @@ export default function XMarketingHub() {
               >
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-2 px-4 py-3 bg-black/45 hover:bg-black/55">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                    Post hero image · portrait tier · marketing still
+                    Post hero · gallery · portrait · marketing still
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                 </summary>
@@ -1613,7 +1762,7 @@ export default function XMarketingHub() {
                           <XMarketingHeroCard
                             companion={selected}
                             mediaUrl={heroVisual}
-                            loopVideoUrl={preferLoopForX ? loopVideoPublicUrl : null}
+                            loopVideoUrl={preferLoopForX ? effectiveLoopVideoUrl : null}
                             pinCount={pinCounts[selected.id] ?? 0}
                             className="h-full max-h-full"
                             aspectClassName="aspect-[2/3] h-full max-h-full w-auto mx-auto"
@@ -1637,8 +1786,9 @@ export default function XMarketingHub() {
                       <div className="text-center px-4 py-8">
                         <ImageIcon className="h-9 w-9 mx-auto text-muted-foreground mb-2 opacity-60" />
                         <p className="text-xs text-muted-foreground leading-relaxed max-w-md mx-auto">
-                          Use <strong className="text-foreground/85">Use in Tweet</strong> on a card, then choose{" "}
-                          <strong className="text-foreground/85">Profile portrait</strong> or generate a{" "}
+                          Use <strong className="text-foreground/85">Use in Tweet</strong> on a card, then pick from{" "}
+                          <strong className="text-foreground/85">Gallery</strong>,{" "}
+                          <strong className="text-foreground/85">Profile portrait</strong>, or generate a{" "}
                           <strong className="text-foreground/85">marketing still</strong>. Public URLs attach through Zernio.
                         </p>
                         <button
@@ -1688,7 +1838,62 @@ export default function XMarketingHub() {
                           Render {idx + 1}
                         </button>
                       ))}
+                      {selected ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (heroSource.type === "gallery") return;
+                            const canonId = `${CANONICAL_PORTRAIT_GALLERY_ID_PREFIX}${selected.id}`;
+                            const first = adminGalleryRows[0];
+                            setHeroSource({ type: "gallery", ids: [first?.id ?? canonId] });
+                          }}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[10px] font-semibold transition-colors",
+                            heroSource.type === "gallery"
+                              ? "border-emerald-400/45 bg-emerald-500/15 text-emerald-100"
+                              : "border-border/60 bg-black/40 text-muted-foreground hover:border-primary/30",
+                          )}
+                        >
+                          <Images className="h-3.5 w-3.5" />
+                          Companion gallery
+                          {adminGalleryRows.length ? ` (${adminGalleryRows.length})` : ""}
+                        </button>
+                      ) : null}
                     </div>
+
+                    {selected && heroSource.type === "gallery" ? (
+                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/15 px-3 py-3 space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-200/90">
+                          Pick chat stills (up to 4) or one clip
+                        </p>
+                        <XMarketingGalleryPicker
+                          companionId={selected.id}
+                          companionName={selected.name}
+                          canonicalStillUrl={galleryStaticPortraitUrl(selected, selected.id)}
+                          rows={adminGalleryRows}
+                          loading={adminGalleryLoading}
+                          selectedIds={heroSource.ids}
+                          onChangeSelectedIds={(ids) => setHeroSource({ type: "gallery", ids })}
+                          pairedLoopUrl={pairedProfileLoopUrl}
+                          usePairedLoop={galleryUsePairedLoop}
+                          onUsePairedLoopChange={setGalleryUsePairedLoop}
+                        />
+                      </div>
+                    ) : null}
+
+                    {selected && heroSource.type === "gallery" && (heroIsGalleryClip || galleryUsePairedLoop) ? (
+                      <p className="text-[9px] text-emerald-200/85 border border-emerald-500/25 rounded-lg px-2 py-1.5 bg-emerald-500/5">
+                        {heroIsGalleryClip
+                          ? "Gallery clip selected — Zernio posts one video per tweet. Turn on looping video for X in Zernio settings, or framed card to bake the discover rim."
+                          : "Paired profile loop selected — one MP4 per tweet when looping video for X is on."}
+                      </p>
+                    ) : null}
+
+                    {selected && heroSource.type === "gallery" && heroIsGalleryMultiStill ? (
+                      <p className="text-[9px] text-sky-200/85 border border-sky-500/25 rounded-lg px-2 py-1.5 bg-sky-500/5">
+                        {galleryStillUrlsForX.length} images will attach to Zernio (X allows up to 4 per tweet).
+                      </p>
+                    ) : null}
 
                     {selected ? (
                       <div className="space-y-1.5 rounded-xl border border-white/[0.06] bg-black/35 px-3 py-2.5">

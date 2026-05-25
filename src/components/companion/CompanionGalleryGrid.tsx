@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ImageIcon, Loader2, Sparkles, Trash2, Video, X } from "lucide-react";
+import { ImageIcon, Loader2, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { CompanionGalleryRow } from "@/hooks/useCompanionGeneratedImages";
 import { isVideoPortraitUrl, portraitUrlsEquivalent, stablePortraitDisplayUrl } from "@/lib/companionMedia";
@@ -204,7 +204,7 @@ export function CompanionGalleryGrid({
         compact ? "grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2" : "grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4",
       )}
     >
-      {filtered.map((row, i) => {
+      {filtered.map((row) => {
           const display = stablePortraitDisplayUrl(row.image_url) ?? row.image_url;
           const isVideo = companionGalleryRowIsClip(row);
           const isActive =
@@ -214,9 +214,8 @@ export function CompanionGalleryGrid({
           return (
             <motion.div
               key={row.id}
-              initial={{ opacity: 0, y: 8 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(i * 0.03, 0.25) }}
               className={cn(
                 "group relative aspect-[2/3] overflow-hidden rounded-xl border border-white/[0.08] bg-black/50 shadow-lg shadow-black/40 sm:rounded-2xl",
                 compact && "rounded-lg",
@@ -288,12 +287,11 @@ export function CompanionGalleryGrid({
               {isVideo ? (
                 <span
                   className={cn(
-                    "absolute right-1.5 top-1.5 z-[2] inline-flex items-center gap-0.5 rounded-full border border-emerald-400/45 bg-emerald-500/15 font-semibold uppercase tracking-wider text-emerald-100/95",
+                    "absolute right-1.5 top-1.5 z-[2] rounded-full border border-emerald-400/45 bg-emerald-500/15 font-semibold uppercase tracking-wider text-emerald-100/95",
                     compact ? "px-1.5 py-0.5 text-[8px]" : "top-2 right-2 px-2 py-0.5 text-[10px]",
                   )}
                   title="Loop / motion clip"
                 >
-                  <Video className={cn("shrink-0 text-emerald-300", compact ? "h-2.5 w-2.5" : "h-3 w-3")} />
                   Clip
                 </span>
               ) : null}
@@ -334,11 +332,10 @@ export function CompanionGalleryGrid({
                         : "border-violet-500/35 bg-black/55 text-violet-100/95 hover:bg-violet-950/40",
                     )}
                   >
-                    <Video className={cn("shrink-0", compact ? "h-3 w-3" : "h-3.5 w-3.5")} />
                     {compact
                       ? selectedLoopSourceId === row.id
                         ? "Clear"
-                        : "Loop"
+                        : "Clip src"
                       : selectedLoopSourceId === row.id
                         ? "Clear clip source"
                         : "Use for profile clip"}

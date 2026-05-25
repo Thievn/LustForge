@@ -1,7 +1,9 @@
 import type { DbCompanion } from "@/hooks/useCompanions";
 import {
+  galleryStaticPortraitUrl,
   isEligibleLoopPortraitVideoUrl,
   isLoopVideoStorageUrl,
+  portraitUrlsEquivalent,
   profileAnimatedPortraitUrl,
   stablePortraitDisplayUrl,
 } from "@/lib/companionMedia";
@@ -96,10 +98,22 @@ export type GalleryLoopRow = {
 export function enrichCompanionWithGalleryLoop(
   db: DbCompanion | null,
   gallery: GalleryLoopRow[],
+  options?: { canonicalStillUrl?: string | null },
 ): DbCompanion | null {
   if (!db?.id) return db;
   const existing = db.animated_image_url?.trim();
   if (existing && profileLoopPlaybackEligible(existing, true)) return db;
+
+  const profileStill = galleryStaticPortraitUrl(db, db.id);
+  const canon = options?.canonicalStillUrl?.trim();
+  if (
+    canon &&
+    profileStill &&
+    !portraitUrlsEquivalent(canon, profileStill)
+  ) {
+    return db;
+  }
+
   for (const row of gallery) {
     if (!row.is_video) continue;
     const url = row.image_url?.trim();

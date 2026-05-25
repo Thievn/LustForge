@@ -228,8 +228,11 @@ const CompanionProfile = () => {
     [dbCompStripped, displayOverride],
   );
   const dbCompDisplay = useMemo(
-    () => enrichCompanionWithGalleryLoop(dbCompMerged, galleryImages) ?? dbCompMerged,
-    [dbCompMerged, galleryImages],
+    () =>
+      enrichCompanionWithGalleryLoop(dbCompMerged, galleryImages, {
+        canonicalStillUrl: id && dbCompStripped ? profileStillPortraitUrl(dbCompStripped, id) : null,
+      }) ?? dbCompMerged,
+    [dbCompMerged, galleryImages, dbCompStripped, id],
   );
 
   const companion = dbCompDisplay ? dbToCompanion(dbCompDisplay) : null;
@@ -303,9 +306,6 @@ const CompanionProfile = () => {
         if (cancelled || !result.synced) return;
         void queryClient.invalidateQueries({ queryKey: ["companions"] });
         void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
-        void queryClient.invalidateQueries({
-          queryKey: ["companion-generated-images", user.id, id],
-        });
       } catch {
         /* sync is best-effort on profile open */
       }
@@ -382,9 +382,6 @@ const CompanionProfile = () => {
         if (cancelled || !result.synced) return;
         void queryClient.invalidateQueries({ queryKey: ["companions"] });
         void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
-        void queryClient.invalidateQueries({
-          queryKey: ["companion-generated-images", user.id, id],
-        });
       } catch {
         /* best-effort */
       }
@@ -1156,7 +1153,7 @@ const CompanionProfile = () => {
                     portrait from the card — tap it and use <span className="text-foreground/85 font-medium">Set portrait</span>{" "}
                     to switch back. Large libraries scroll inside this panel — use{" "}
                     <span className="text-foreground/85 font-medium">All / Stills / Clips</span> when shown.{" "}
-                    <span className="text-foreground/85 font-medium">Loop</span> picks a still for{" "}
+                    <span className="text-foreground/85 font-medium">Clip src</span> picks a still for{" "}
                     <span className="text-foreground/85 font-medium">Looping portrait video</span> above (FC applies).
                     {" "}
                     <span className="text-emerald-200/85 font-medium">Portrait</span> applies to{" "}
@@ -1183,7 +1180,7 @@ const CompanionProfile = () => {
                   <CompanionGalleryGrid
                     companionName={companion.name}
                     images={galleryImagesForGrid}
-                    loading={galleryImagesLoading}
+                    loading={galleryImagesLoading && galleryImages.length === 0}
                     currentPortraitUrl={stillForProfile}
                     onSetAsPortrait={handlePortraitFromGallery}
                     selectedLoopSourceId={loopFromGeneratedImageId}

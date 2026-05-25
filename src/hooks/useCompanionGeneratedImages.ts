@@ -14,6 +14,8 @@ export function useCompanionGeneratedImages(companionId: string | undefined, use
   return useQuery({
     queryKey: ["companion-generated-images", userId, companionId],
     enabled: Boolean(companionId && userId),
+    placeholderData: (previous) => previous,
+    refetchOnWindowFocus: false,
     queryFn: async (): Promise<CompanionGalleryRow[]> => {
       const { data, error } = await supabase
         .from("generated_images")

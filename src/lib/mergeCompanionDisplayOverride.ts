@@ -1,5 +1,5 @@
 import type { DbCompanion } from "@/hooks/useCompanions";
-import { stablePortraitDisplayUrl } from "@/lib/companionMedia";
+import { portraitUrlsEquivalent, stablePortraitDisplayUrl } from "@/lib/companionMedia";
 import { profileLoopPlaybackEligible } from "@/lib/profileLoopDisplay";
 
 export type CompanionDisplayOverrideRow = {
@@ -34,24 +34,31 @@ export function mergeCompanionDisplayWithUserOverride(
   const baseAnim = baseAnimRaw ? stablePortraitDisplayUrl(baseAnimRaw) ?? baseAnimRaw : null;
   const baseLoopOn = loopActive(baseAnim, db.profile_loop_video_enabled);
 
+  const baseStillRaw = db.static_image_url?.trim() || db.image_url?.trim() || null;
+  const baseStill = baseStillRaw ? stablePortraitDisplayUrl(baseStillRaw) ?? baseStillRaw : null;
+  /** Custom chat still — do not inherit the shared catalog loop over the user’s pick. */
+  const customStill = Boolean(still && baseStill && !portraitUrlsEquivalent(still, baseStill));
+
   /** Toggle off: clip kept on override row but profile_loop_video_enabled = false. */
   const userTurnedOffLoop = Boolean(
     !override.profile_loop_video_enabled && anim && profileLoopPlaybackEligible(anim, true),
   );
 
+  const inheritBaseLoop = !customStill && !anim && baseLoopOn;
+
   const usePrivateLoop = userTurnedOffLoop
     ? false
     : overrideLoopOn ||
-      (override.profile_loop_video_enabled && !anim && baseLoopOn) ||
-      (!anim && baseLoopOn);
+      (override.profile_loop_video_enabled && !anim && baseLoopOn && !customStill) ||
+      inheritBaseLoop;
 
   const resolvedAnim = userTurnedOffLoop
     ? null
     : overrideLoopOn
       ? anim
-      : override.profile_loop_video_enabled && !anim && baseLoopOn
+      : override.profile_loop_video_enabled && !anim && baseLoopOn && !customStill
         ? baseAnim
-        : !anim && baseLoopOn
+        : inheritBaseLoop
           ? baseAnim
           : null;
 
