@@ -62,8 +62,6 @@ export function ProfileLoopingVideoUpsell({
   const toastId = profileLoopToastId(companionId);
   const onSuccessRef = useRef(onSuccess);
   const onBalanceMaybeChangedRef = useRef(onBalanceMaybeChanged);
-  /** Avoid firing parent invalidations on every render when sync returns the same URL. */
-  const lastStartupSyncUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     onSuccessRef.current = onSuccess;
@@ -87,41 +85,7 @@ export function ProfileLoopingVideoUpsell({
 
   useEffect(() => {
     setPendingJob(hasPendingProfileLoopJob(companionId));
-    lastStartupSyncUrlRef.current = null;
   }, [companionId]);
-
-  /** Server may still have an in-flight job even when the client toast/poll stopped. */
-  useEffect(() => {
-    if (!companionId.trim() || disabled) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await syncProfileLoopVideoToProfile(companionId, { repair: true });
-        if (cancelled) return;
-        if (result.synced && result.publicUrl?.trim()) {
-          const url = result.publicUrl.trim();
-          clearProfileLoopJobId(companionId);
-          setPendingJob(false);
-          if (lastStartupSyncUrlRef.current !== url) {
-            lastStartupSyncUrlRef.current = url;
-            onSuccessRef.current?.({ publicUrl: url });
-            onBalanceMaybeChangedRef.current?.();
-          }
-        }
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : "";
-        if (/failed|expired|cancelled/i.test(msg)) {
-          clearProfileLoopJobId(companionId);
-          setPendingJob(false);
-        }
-      } finally {
-        if (!cancelled) setPendingJob(hasPendingProfileLoopJob(companionId));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [companionId, disabled]);
 
   useEffect(() => {
     return () => {
@@ -229,8 +193,8 @@ export function ProfileLoopingVideoUpsell({
         });
         if (result) {
           toast.dismiss(toastId);
-          onSuccess?.({ publicUrl: result.publicUrl });
-          onBalanceMaybeChanged?.();
+          onSuccessRef.current?.({ publicUrl: result.publicUrl });
+          onBalanceMaybeChangedRef.current?.();
         } else {
           toast.dismiss(toastId);
         }
@@ -251,7 +215,7 @@ export function ProfileLoopingVideoUpsell({
       clearProfileLoopResumeStarted(companionId);
       dismissProfileLoopToast(companionId);
     };
-  }, [companionId, disabled, onBalanceMaybeChanged, onSuccess, pollStatusToast, toastId]);
+  }, [companionId, disabled, pollStatusToast, toastId]);
 
   const costSuffix = isAdminUser ? "" : ` — ${PROFILE_LOOP_VIDEO_FC} FC`;
   const primaryCta = hasExistingLoopVideo

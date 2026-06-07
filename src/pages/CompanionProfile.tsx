@@ -47,12 +47,10 @@ import { prependCanonicalPortraitIfMissing } from "@/lib/companionGalleryWithCan
 import { clearUserPortraitOverrideStill } from "@/lib/clearUserPortraitOverrideStill";
 import { setCompanionPortraitFromGalleryUrl } from "@/lib/setCompanionPortraitFromGallery";
 import { deleteCompanionGalleryImage } from "@/lib/deleteCompanionGalleryImage";
-import { syncProfileLoopVideoToProfile } from "@/lib/syncProfileLoopVideoToProfile";
 import {
   enrichCompanionWithGalleryLoop,
   profileLoopLightboxAnimated,
   resolveProfileLoopDisplayState,
-  shouldAttemptProfileLoopHeal,
 } from "@/lib/profileLoopDisplay";
 import { CompanionGalleryGrid } from "@/components/companion/CompanionGalleryGrid";
 import type { CompanionRarity } from "@/lib/companionRarity";
@@ -192,8 +190,6 @@ const CompanionProfile = () => {
   const [loopFromGeneratedImageId, setLoopFromGeneratedImageId] = useState<string | null>(null);
   const [loopPrefBusy, setLoopPrefBusy] = useState(false);
   const [loopPlaybackFailed, setLoopPlaybackFailed] = useState(false);
-  const loopRepairAttemptedRef = useRef(false);
-  const loopHealAttemptedRef = useRef(false);
   const [portraitRevertBusy, setPortraitRevertBusy] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
   const [autoSpendChatImages, setAutoSpendChatImagesState] = useState(false);
@@ -296,25 +292,6 @@ const CompanionProfile = () => {
     };
   }, [user?.id, id, isOwnForge]);
 
-  /** Attach any existing gallery / job MP4 to profile + override (fixes loops that billed but never showed). */
-  useEffect(() => {
-    if (!user?.id || !id || consumeFeatureLocked) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await syncProfileLoopVideoToProfile(id, { repair: true });
-        if (cancelled || !result.synced) return;
-        void queryClient.invalidateQueries({ queryKey: ["companions"] });
-        void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
-      } catch {
-        /* sync is best-effort on profile open */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, id, consumeFeatureLocked, queryClient]);
-
   /** e.g. Chat “Live call” can deep-link here with `state: { profileTab: "live" }`. Legacy `gallery` opens the inline gallery. */
   useEffect(() => {
     const st = location.state as { profileTab?: "profile" | "gallery" | "live"; discoverPreview?: boolean } | null;
@@ -339,15 +316,6 @@ const CompanionProfile = () => {
     if (discoverFreeCommonClaimed !== false) return discoverListFc;
     return 0;
   }, [user?.id, rarity, discoverListFc, discoverFreeCommonClaimed]);
-  const galleryHasLoopVideo = useMemo(
-    () =>
-      galleryImages.some((g) => {
-        if (!g.is_video) return false;
-        const u = g.image_url?.trim() ?? "";
-        return Boolean(u && (isLoopVideoStorageUrl(u) || /\.(mp4|webm|mov)(\?|$)/i.test(u)));
-      }),
-    [galleryImages],
-  );
   const profileLoopState = useMemo(
     () => resolveProfileLoopDisplayState(dbCompDisplay, { playbackFailed: loopPlaybackFailed }),
     [dbCompDisplay, loopPlaybackFailed],
@@ -355,77 +323,11 @@ const CompanionProfile = () => {
   const { animatedPortrait, loopVideoSrc, showLoopVideo } = profileLoopState;
   useEffect(() => {
     setLoopPlaybackFailed(false);
-    loopRepairAttemptedRef.current = false;
   }, [animatedPortrait]);
 
-  /** Loop enabled in DB but no playable URL — heal wiring once per profile visit. */
-  useEffect(() => {
-    if (!user?.id || !id || consumeFeatureLocked) return;
-    if (
-      !shouldAttemptProfileLoopHeal({
-        userId: user.id,
-        companionId: id,
-        dbDisplay: dbCompDisplay,
-        override: displayOverride ?? undefined,
-        baseDb: dbComp,
-        loopVideoSrc,
-        galleryHasLoopVideo,
-      }) ||
-      loopHealAttemptedRef.current
-    )
-      return;
-    loopHealAttemptedRef.current = true;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await syncProfileLoopVideoToProfile(id, { repair: true });
-        if (cancelled || !result.synced) return;
-        void queryClient.invalidateQueries({ queryKey: ["companions"] });
-        void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
-      } catch {
-        /* best-effort */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    user?.id,
-    id,
-    consumeFeatureLocked,
-    dbCompDisplay,
-    displayOverride,
-    dbComp,
-    loopVideoSrc,
-    galleryHasLoopVideo,
-    queryClient,
-  ]);
-
   const handleLoopVideoError = useCallback(() => {
-    if (!id || loopRepairAttemptedRef.current) {
-      setLoopPlaybackFailed(true);
-      return;
-    }
-    loopRepairAttemptedRef.current = true;
-    void (async () => {
-      try {
-        const result = await syncProfileLoopVideoToProfile(id, { repair: true });
-        if (result.synced && user?.id) {
-          void queryClient.invalidateQueries({ queryKey: ["companions"] });
-          void queryClient.invalidateQueries({
-            queryKey: ["companion-display-override", user.id, id],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ["companion-generated-images", user.id, id],
-          });
-          return;
-        }
-      } catch {
-        /* fall through */
-      }
-      setLoopPlaybackFailed(true);
-    })();
-  }, [id, user?.id, queryClient]);
+    setLoopPlaybackFailed(true);
+  }, []);
   const lightboxAnimated = profileLoopLightboxAnimated(dbCompDisplay);
   const stillForProfile = useMemo(() => profileStillPortraitUrl(dbCompDisplay, id), [dbCompDisplay, id]);
   const canonicalCardStillUrl = useMemo(
