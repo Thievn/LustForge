@@ -1084,13 +1084,6 @@ const CompanionProfile = () => {
                     }),
                   );
                 }
-                if (id) {
-                  try {
-                    await syncProfileLoopVideoToProfile(id, { repair: true });
-                  } catch {
-                    /* invalidate below still refreshes UI */
-                  }
-                }
                 void queryClient.invalidateQueries({ queryKey: ["companions"] });
                 void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user?.id, id] });
                 if (user?.id && companion.id) {

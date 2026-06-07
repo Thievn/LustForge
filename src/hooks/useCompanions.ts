@@ -216,7 +216,8 @@ async function attachLatestGeneratedPortraits(
     .select("companion_id, image_url, created_at")
     .eq("user_id", userId)
     .in("companion_id", keys)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(Math.max(keys.length * 3, 24));
   if (error || !data?.length) return;
   const best = new Map<string, string>();
   for (const g of data) {
@@ -391,9 +392,9 @@ export const useCompanions = () => {
       const stock = ((companionsRes.data || []) as Record<string, unknown>[]).map(coerceStockRow);
       return [...stock, ...mineRes, ...publicOthers];
     },
-    staleTime: 15 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: "always",
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 };
 

@@ -22,7 +22,8 @@ export function useCompanionGeneratedImages(companionId: string | undefined, use
         .select("id, image_url, prompt, created_at, saved_to_personal_gallery, is_video")
         .eq("user_id", userId!)
         .eq("companion_id", companionId!)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as CompanionGalleryRow[];
     },

@@ -60,6 +60,15 @@ export function ProfileLoopingVideoUpsell({
   const [pendingJob, setPendingJob] = useState(() => hasPendingProfileLoopJob(companionId));
   const abortRef = useRef<AbortController | null>(null);
   const toastId = profileLoopToastId(companionId);
+  const onSuccessRef = useRef(onSuccess);
+  const onBalanceMaybeChangedRef = useRef(onBalanceMaybeChanged);
+  /** Avoid firing parent invalidations on every render when sync returns the same URL. */
+  const lastStartupSyncUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onBalanceMaybeChangedRef.current = onBalanceMaybeChanged;
+  });
 
   const pollStatusToast = useCallback(
     (status: "starting" | "rendering" | "saving" | "complete") => {
@@ -78,6 +87,7 @@ export function ProfileLoopingVideoUpsell({
 
   useEffect(() => {
     setPendingJob(hasPendingProfileLoopJob(companionId));
+    lastStartupSyncUrlRef.current = null;
   }, [companionId]);
 
   /** Server may still have an in-flight job even when the client toast/poll stopped. */
@@ -89,10 +99,14 @@ export function ProfileLoopingVideoUpsell({
         const result = await syncProfileLoopVideoToProfile(companionId, { repair: true });
         if (cancelled) return;
         if (result.synced && result.publicUrl?.trim()) {
+          const url = result.publicUrl.trim();
           clearProfileLoopJobId(companionId);
           setPendingJob(false);
-          onSuccess?.({ publicUrl: result.publicUrl.trim() });
-          onBalanceMaybeChanged?.();
+          if (lastStartupSyncUrlRef.current !== url) {
+            lastStartupSyncUrlRef.current = url;
+            onSuccessRef.current?.({ publicUrl: url });
+            onBalanceMaybeChangedRef.current?.();
+          }
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "";
@@ -107,7 +121,7 @@ export function ProfileLoopingVideoUpsell({
     return () => {
       cancelled = true;
     };
-  }, [companionId, disabled, onBalanceMaybeChanged, onSuccess, toastId]);
+  }, [companionId, disabled]);
 
   useEffect(() => {
     return () => {
