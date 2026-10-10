@@ -73,7 +73,7 @@ export function LandingPortraitReel() {
     return () => window.clearInterval(timer);
   }, [paused, reduced, deck.length, deckKey]);
 
-  const step = wide ? 196 : 132;
+  const step = wide ? 248 : 164;
   const count = deck.length;
 
   const go = (direction: number) => {
@@ -172,10 +172,16 @@ export function LandingPortraitReel() {
                           })
                         }
                       />
-                      <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-black/20" />
-                      <span className="absolute inset-x-0 bottom-0 p-4">
-                        <span className="block truncate font-gothic text-2xl text-white">{card.name}</span>
-                      </span>
+                      <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/15" />
+                      {distance <= 1 ? (
+                        <span className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                          <span
+                            className={`block truncate font-gothic text-white ${distance === 0 ? "text-2xl" : "text-lg"}`}
+                          >
+                            {card.name}
+                          </span>
+                        </span>
+                      ) : null}
                     </span>
                   </Link>
                 </motion.div>

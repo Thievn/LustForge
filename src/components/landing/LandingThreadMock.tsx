@@ -59,15 +59,17 @@ export function LandingThreadMock() {
 
       <div className="rounded-[2.7rem] border border-zinc-700/90 bg-zinc-950 p-[11px] shadow-[0_30px_70px_rgba(40,10,24,0.28)] ring-1 ring-white/10 dark:shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
         <div className="relative flex h-[560px] flex-col overflow-hidden rounded-[2.15rem] bg-[#100c12] text-white">
-          <div className="relative z-10 flex items-center justify-between px-5 pb-1 pt-3 text-[11px] font-medium tracking-wide text-white/90">
-            <span>9:41</span>
-            <span className="inline-flex items-center gap-1">
-              <Signal className="h-3 w-3" />
-              <Wifi className="h-3 w-3" />
-              <BatteryFull className="h-3.5 w-3.5" />
-            </span>
+          <div className="relative z-10 h-12">
+            <span className="pointer-events-none absolute left-1/2 top-2.5 z-0 h-[22px] w-[84px] -translate-x-1/2 rounded-full bg-black ring-1 ring-white/10" />
+            <div className="relative z-10 flex h-12 items-center justify-between px-5 text-[11px] font-medium tracking-wide text-white/90">
+              <span>9:41</span>
+              <span className="inline-flex items-center gap-1">
+                <Signal className="h-3 w-3" />
+                <Wifi className="h-3 w-3" />
+                <BatteryFull className="h-3.5 w-3.5" />
+              </span>
+            </div>
           </div>
-          <span className="pointer-events-none absolute left-1/2 top-2.5 z-20 h-[22px] w-[92px] -translate-x-1/2 rounded-full bg-black ring-1 ring-white/10" />
 
           <div className="mt-1 flex items-center gap-2.5 border-b border-white/10 px-4 pb-3">
             <img src={IVY} alt="" className="h-9 w-9 rounded-full object-cover object-top ring-1 ring-white/15" />
@@ -98,7 +100,7 @@ export function LandingThreadMock() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.35 }}
-                      className={beat.kind === "you" ? "ml-10 self-end" : "mr-8 self-start"}
+                      className={beat.kind === "you" ? "max-w-[78%] self-end" : "max-w-[84%] self-start"}
                     >
                       {beat.kind === "typing" ? (
                         <span className="inline-flex items-center gap-1 rounded-2xl rounded-bl-md bg-white/10 px-3 py-2.5">
@@ -108,7 +110,7 @@ export function LandingThreadMock() {
                         </span>
                       ) : null}
                       {beat.kind === "them" ? (
-                        <span className="inline-block max-w-[15rem] rounded-2xl rounded-bl-md bg-white/10 px-3 py-2 text-[13px] leading-snug text-white">
+                        <span className="inline-block rounded-2xl rounded-bl-md bg-white/10 px-3 py-2 text-[13px] leading-snug text-white">
                           {beat.text}
                         </span>
                       ) : null}

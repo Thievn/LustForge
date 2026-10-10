@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { isPlatformAdmin } from "@/config/auth";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
@@ -174,6 +174,9 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
             </SheetTrigger>
             <SheetContent side="right" overlayClassName="z-[70] bg-black/60" className={sheetPanelClass}>
               <SheetTitle className="sr-only">Main menu</SheetTitle>
+              <SheetDescription className="sr-only">
+                {user ? "Dashboard, account, preferences, and log out." : "Sign in or join the list."}
+              </SheetDescription>
               <div
                 className="shrink-0 border-b border-border bg-background px-5 pb-4 pr-16"
                 style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
