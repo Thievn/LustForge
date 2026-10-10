@@ -1,76 +1,111 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import ParticleBackground from "@/components/ParticleBackground";
+import { ImageIcon, MessageCircle, PenLine } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
-import CreationSystem from "@/components/CreationSystem";
-import FeaturesGrid from "@/components/FeaturesGrid";
-import Testimonials from "@/components/Testimonials";
-import WaitlistSection from "@/components/WaitlistSection";
+import { LandingPortraitReel } from "@/components/landing/LandingPortraitReel";
+
+const BEATS = [
+  {
+    icon: PenLine,
+    title: "Describe them",
+    body: "Say who you want. A name, a portrait, and a presence come back as their card.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Text them",
+    body: "The conversation stays with that person. Short messages, a real thread, saved on your account.",
+  },
+  {
+    icon: ImageIcon,
+    title: "Get a picture back",
+    body: "They can send a photo that is clothed or nude, in the same thread as the texts.",
+  },
+] as const;
 
 const Index = () => {
-  const [userLoading, setUserLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth
-      .getSession()
-      .catch((error) => {
-        console.error("Failed to get session in Index:", error);
-      })
-      .finally(() => setUserLoading(false));
-  }, []);
-
-  // Temporary: scroll to waitlist instead of going to broken auth
-  const handleGetStarted = () => {
-    document.getElementById("waitlist")?.scrollIntoView({ 
-      behavior: "smooth" 
-    });
-  };
-
-  // Fallback if components fail to load
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading landing page...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background relative overflow-x-hidden">
-      <ParticleBackground />
-      {/* Soft ambient lift — still dark, reads “brighter” without washing out neon */}
+    <div className="relative min-h-screen overflow-x-hidden bg-[#070709] text-foreground">
       <div
-        className="pointer-events-none fixed inset-0 z-[1]"
+        className="pointer-events-none fixed inset-0 z-0"
         aria-hidden
         style={{
           background: `
-            radial-gradient(ellipse 120% 55% at 50% -15%, hsl(330 100% 58% / 0.11), transparent 52%),
-            radial-gradient(ellipse 70% 45% at 100% 35%, hsl(170 100% 50% / 0.06), transparent 50%),
-            radial-gradient(ellipse 55% 40% at 0% 60%, hsl(280 50% 45% / 0.07), transparent 48%),
-            linear-gradient(to bottom, hsl(240 18% 6%) 0%, hsl(240 20% 4.2%) 45%, hsl(240 22% 3.5%) 100%)
+            radial-gradient(ellipse 80% 42% at 50% -10%, rgba(199, 59, 106, 0.16), transparent 55%),
+            linear-gradient(to bottom, #0c0c10 0%, #070709 42%, #050506 100%)
           `,
         }}
       />
 
       <div className="relative z-10">
-        <Navbar />
-        <HeroSection onGetStarted={handleGetStarted} />
-        <CreationSystem />
-        <FeaturesGrid />
-        <Testimonials />
-        <WaitlistSection />
-      </div>
+        <Navbar variant="landing" />
 
-      <footer className="relative z-10 border-t border-white/[0.06] bg-gradient-to-t from-black/20 to-transparent py-12 px-4">
-        <div className="max-w-4xl mx-auto text-center space-y-3 text-xs text-muted-foreground/90">
-          <p><strong className="text-foreground/80">18+ Only.</strong> By using LustForge AI, you confirm you are at least 18 years of age. All characters are AI-generated fiction. No real persons are depicted. All interactions are consensual fantasy simulations.</p>
-          <p>Safe-word support is available in every session. We do not store private chat logs on our servers. Your privacy is paramount. For data deletion requests, contact <a href="mailto:support@lustforge.app" className="text-primary hover:underline">support@lustforge.app</a>.</p>
-          <p>© 2026 LustForge AI · <span className="text-primary">Premium</span> coming soon</p>
-          <p className="tracking-widest uppercase">Powered by <span className="text-primary/80 text-glow-pink font-medium">Grok</span> • <Link to="/toys" className="text-accent/80 text-glow-teal font-medium hover:text-accent transition-colors hover:drop-shadow-[0_0_8px_rgba(0,255,200,0.35)]">Lovense</Link></p>
-        </div>
-      </footer>
+        <header className="px-4 pb-14 pt-[max(7.5rem,calc(5.5rem+env(safe-area-inset-top,0px)))] text-center sm:pb-16 sm:pt-[max(8.5rem,calc(6rem+env(safe-area-inset-top,0px)))]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-[#E7B7C6]/80">Adults 18+</p>
+          <h1 className="mx-auto mt-4 max-w-3xl font-gothic text-4xl leading-[1.05] text-white sm:text-6xl">
+            Describe them. Then talk.
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+            Describe a person, text them, and they can send a picture that is clothed or nude.
+          </p>
+          <Link
+            to="/auth"
+            className="mt-8 inline-flex min-h-12 items-center justify-center rounded-xl bg-[#C73B6A] px-8 text-base font-semibold text-white shadow-[0_10px_30px_rgba(199,59,106,0.28)] transition-colors hover:bg-[#d4527e]"
+          >
+            Create yours
+          </Link>
+        </header>
+
+        <LandingPortraitReel />
+
+        <section className="px-4 py-16 sm:px-6 sm:py-20" aria-labelledby="landing-how-heading">
+          <div className="mx-auto max-w-5xl">
+            <h2 id="landing-how-heading" className="text-center font-gothic text-2xl text-white sm:text-3xl">
+              How it goes
+            </h2>
+            <ol className="mt-10 grid gap-4 sm:grid-cols-3">
+              {BEATS.map((beat, index) => (
+                <li
+                  key={beat.title}
+                  className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-6"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-gothic text-xs tracking-[0.18em] text-[#E7B7C6]">0{index + 1}</span>
+                    <beat.icon className="h-4 w-4 text-[#E7B7C6]" aria-hidden />
+                  </div>
+                  <h3 className="mt-4 font-gothic text-xl text-white">{beat.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/65">{beat.body}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="mx-auto mt-8 max-w-lg text-center text-sm leading-relaxed text-white/55">
+              When you want to hear them, voice is already there.
+            </p>
+          </div>
+        </section>
+
+        <footer className="border-t border-white/[0.06] px-4 py-12">
+          <div className="mx-auto max-w-3xl space-y-3 text-center text-xs leading-relaxed text-white/50">
+            <p>
+              <strong className="font-medium text-white/75">18+ only.</strong> LustForge is for adults. The people here
+              are fictional. You confirm you are at least 18 before you enter.
+            </p>
+            <p>Your conversations are saved for you, on your account.</p>
+            <p>
+              © {new Date().getFullYear()} LustForge ·{" "}
+              <Link to="/terms-of-service" className="text-white/70 underline-offset-2 hover:underline">
+                Terms
+              </Link>
+              {" · "}
+              <Link to="/privacy-policy" className="text-white/70 underline-offset-2 hover:underline">
+                Privacy
+              </Link>
+              {" · "}
+              <a href="mailto:support@lustforge.app" className="text-white/70 underline-offset-2 hover:underline">
+                support@lustforge.app
+              </a>
+            </p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };
