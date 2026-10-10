@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Flame, Shield, LogOut, UserRound, Menu, LayoutDashboard } from "lucide-react";
+import { Flame, Shield, LogOut, UserRound, Menu, LayoutDashboard, LogIn, Mail, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
@@ -15,16 +15,18 @@ const ghostNavPill =
 const accountNavPill =
   "inline-flex items-center gap-1.5 rounded-xl border border-[#FF2D7B]/35 bg-[#FF2D7B]/[0.08] px-3 py-2 min-h-10 text-sm font-medium text-[#FF2D7B] hover:bg-[#FF2D7B]/15 hover:border-[#FF2D7B]/55 transition-all shadow-[0_0_16px_rgba(255,45,123,0.12)]";
 
-function MobileSheetHeader({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <div
-      className="shrink-0 border-b border-white/[0.06] pl-4 pr-14 py-3"
-      style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
-    >
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      {subtitle ? <p className="mt-0.5 text-xs text-muted-foreground truncate">{subtitle}</p> : null}
-    </div>
-  );
+const sheetLinkClass =
+  "flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-base font-medium text-foreground transition-colors hover:bg-muted active:bg-muted/80 touch-manipulation";
+
+const sheetPanelClass =
+  "z-[80] flex h-dvh w-[min(100vw,22rem)] max-w-none flex-col gap-0 border-l border-border bg-background p-0 text-foreground shadow-[-28px_0_70px_rgba(0,0,0,0.45)] sm:max-w-none";
+
+function scrollToWaitlist(): boolean {
+  const target = document.getElementById("waitlist");
+  if (!target) return false;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  return true;
 }
 
 const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) => {
@@ -69,11 +71,13 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
     navigate("/");
   };
 
-  const sheetLinkClass =
-    "flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06] active:bg-white/[0.08] touch-manipulation";
+  const joinList = () => {
+    setMobileOpen(false);
+    if (scrollToWaitlist()) return;
+    navigate("/#waitlist");
+  };
 
-  const sheetPanelClass =
-    "flex w-[min(100vw-1rem,20rem)] flex-col border-l border-border bg-popover/98 p-0";
+  const close = () => setMobileOpen(false);
 
   return (
     <nav
@@ -119,165 +123,114 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
               >
                 Logout
               </button>
-
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild>
+            </>
+          ) : (
+            <div className="hidden md:flex items-center gap-4">
+              {landing ? (
+                <>
+                  <Link
+                    to="/auth"
+                    className="inline-flex min-h-10 items-center py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Sign in
+                  </Link>
                   <button
                     type="button"
-                    className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08] transition-colors touch-manipulation"
-                    aria-label="Open menu"
+                    onClick={joinList}
+                    className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
-                    <Menu className="h-6 w-6 text-primary" />
+                    Join the list
                   </button>
-                </SheetTrigger>
-                <SheetContent side="right" className={sheetPanelClass}>
-                  <SheetTitle className="sr-only">Main menu</SheetTitle>
-                  <MobileSheetHeader title="Menu" subtitle={user?.email} />
-                  <div
-                    className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
-                    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                </>
+              ) : (
+                <>
+                  <Link to="/" className="text-muted-foreground hover:text-[#FF2D7B] transition-colors py-2 min-h-10 inline-flex items-center">
+                    Home
+                  </Link>
+                  <Link
+                    to="/auth"
+                    className="px-4 py-2 sm:px-5 sm:py-2 rounded-xl font-semibold text-white text-xs sm:text-sm transition-transform hover:scale-[1.02] border border-white/10 min-h-10 inline-flex items-center"
+                    style={{
+                      background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
+                      boxShadow: "0 0 20px rgba(255,45,123,0.28)",
+                    }}
                   >
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(sheetLinkClass, "border border-white/10 bg-white/[0.03]")}
-                    >
-                      <LayoutDashboard className="h-4 w-4 shrink-0 text-[#FF2D7B]" />
+                    Sign In
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-muted touch-manipulation"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5 text-primary" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" overlayClassName="z-[70] bg-black/60" className={sheetPanelClass}>
+              <SheetTitle className="sr-only">Main menu</SheetTitle>
+              <div
+                className="shrink-0 border-b border-border bg-background px-5 pb-4 pr-16"
+                style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+              >
+                <p className="font-gothic text-xl leading-none text-foreground">
+                  <span className="gradient-vice-text">LustForge</span>
+                </p>
+                {user?.email ? <p className="mt-2 truncate text-xs text-muted-foreground">{user.email}</p> : null}
+              </div>
+              <div
+                className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto bg-background p-3"
+                style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+              >
+                {user ? (
+                  <>
+                    <Link to="/dashboard" onClick={close} className={sheetLinkClass}>
+                      <LayoutDashboard className="h-5 w-5 shrink-0 text-primary" />
                       Dashboard
                     </Link>
-                    <Link to="/create-companion" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
-                      Companion Forge
-                    </Link>
-                    <Link
-                      to="/account"
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(sheetLinkClass, "text-[#FF2D7B] border border-[#FF2D7B]/25 bg-[#FF2D7B]/[0.06]")}
-                    >
-                      <UserRound className="h-4 w-4 shrink-0" />
+                    <Link to="/account" onClick={close} className={sheetLinkClass}>
+                      <UserRound className="h-5 w-5 shrink-0 text-primary" />
                       Account
                     </Link>
-                    <Link to="/settings" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
+                    <Link to="/settings" onClick={close} className={sheetLinkClass}>
+                      <Settings className="h-5 w-5 shrink-0 text-primary" />
                       Preferences
                     </Link>
                     {isAdmin ? (
-                      <Link
-                        to="/admin"
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          sheetLinkClass,
-                          "bg-gradient-to-r from-[hsl(280_50%_35%)] to-[#FF2D7B] text-white border border-white/10 justify-center font-semibold",
-                        )}
-                      >
-                        <Shield className="h-4 w-4 shrink-0" />
+                      <Link to="/admin" onClick={close} className={sheetLinkClass}>
+                        <Shield className="h-5 w-5 shrink-0 text-primary" />
                         Admin
                       </Link>
                     ) : null}
                     <button
                       type="button"
                       onClick={() => void handleLogout()}
-                      className={cn(sheetLinkClass, "text-muted-foreground hover:text-[hsl(170_100%_45%)] mt-auto")}
+                      className={cn(sheetLinkClass, "mt-auto text-muted-foreground")}
                     >
-                      <LogOut className="h-4 w-4 shrink-0" />
+                      <LogOut className="h-5 w-5 shrink-0" />
                       Log out
                     </button>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </>
-          ) : (
-            <>
-              <div className="hidden md:flex items-center gap-4">
-                {landing ? (
-                  <>
-                    <Link
-                      to="/auth"
-                      className="inline-flex min-h-10 items-center py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      Sign in
-                    </Link>
-                    <Link
-                      to="/auth"
-                      className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                    >
-                      Create
-                    </Link>
                   </>
                 ) : (
                   <>
-                    <Link to="/" className="text-muted-foreground hover:text-[#FF2D7B] transition-colors py-2 min-h-10 inline-flex items-center">
-                      Home
+                    <Link to="/auth" onClick={close} className={sheetLinkClass}>
+                      <LogIn className="h-5 w-5 shrink-0 text-primary" />
+                      Sign in
                     </Link>
-                    <Link
-                      to="/auth"
-                      className="px-4 py-2 sm:px-5 sm:py-2 rounded-xl font-semibold text-white text-xs sm:text-sm transition-transform hover:scale-[1.02] border border-white/10 min-h-10 inline-flex items-center"
-                      style={{
-                        background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
-                        boxShadow: "0 0 20px rgba(255,45,123,0.28)",
-                      }}
-                    >
-                      Sign In
-                    </Link>
+                    <button type="button" onClick={joinList} className={sheetLinkClass}>
+                      <Mail className="h-5 w-5 shrink-0 text-primary" />
+                      Join the list
+                    </button>
                   </>
                 )}
               </div>
-
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild>
-                  <button
-                    type="button"
-                    className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08] transition-colors touch-manipulation"
-                    aria-label="Open menu"
-                  >
-                    <Menu className="h-6 w-6 text-primary" />
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="right" className={sheetPanelClass}>
-                  <SheetTitle className="sr-only">Menu</SheetTitle>
-                  <MobileSheetHeader title="Menu" />
-                  <div
-                    className="flex flex-1 flex-col gap-2 overflow-y-auto p-3"
-                    style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
-                  >
-                    {landing ? (
-                      <>
-                        <Link to="/auth" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
-                          Sign in
-                        </Link>
-                        <Link
-                          to="/auth"
-                          onClick={() => setMobileOpen(false)}
-                          className={cn(sheetLinkClass, "justify-center bg-primary font-semibold text-primary-foreground")}
-                        >
-                          Create
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <ShopSyncableToysButton variant="menu" onClick={() => setMobileOpen(false)} />
-                        <Link to="/" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
-                          Home
-                        </Link>
-                        <Link
-                          to="/auth"
-                          onClick={() => setMobileOpen(false)}
-                          className={cn(
-                            sheetLinkClass,
-                            "justify-center font-semibold text-white border border-white/10",
-                          )}
-                          style={{
-                            background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
-                            boxShadow: "0 0 20px rgba(255,45,123,0.28)",
-                          }}
-                        >
-                          Sign In
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </>
-          )}
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>

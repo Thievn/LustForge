@@ -1,9 +1,27 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import { LandingMoments } from "@/components/landing/LandingMoments";
 import { LandingPortraitReel } from "@/components/landing/LandingPortraitReel";
 import { LandingThreadMock } from "@/components/landing/LandingThreadMock";
+import WaitlistSection from "@/components/WaitlistSection";
+
+function scrollToWaitlist() {
+  const target = document.getElementById("waitlist");
+  if (!target) return;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+}
 
 const Index = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash !== "#waitlist") return;
+    const frame = window.requestAnimationFrame(() => scrollToWaitlist());
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash]);
+
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <div
@@ -27,27 +45,26 @@ const Index = () => {
               Describe them. Then talk.
             </h1>
             <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
-              They text you first. A picture can land in the thread, clothed or nude, and you can hear them when you want to.
+              They start the thread. A picture can find you while you talk, and you can hear them when you want.
             </p>
-            <Link
-              to="/auth"
+            <button
+              type="button"
+              onClick={scrollToWaitlist}
               className="mt-8 inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-8 text-base font-semibold text-primary-foreground shadow-[0_10px_30px_hsl(var(--primary)/0.28)] transition-colors hover:bg-primary/90"
             >
-              Create yours
-            </Link>
+              Join the list
+            </button>
           </div>
           <LandingThreadMock />
         </header>
 
         <LandingPortraitReel />
+        <LandingMoments />
+        <WaitlistSection />
 
-        <footer className="mt-10 border-t border-border px-4 py-12">
+        <footer className="mt-4 border-t border-border px-4 py-12">
           <div className="mx-auto max-w-3xl space-y-3 text-center text-xs leading-relaxed text-muted-foreground">
-            <p>
-              <strong className="font-medium text-foreground">18+ only.</strong> LustForge is for adults. The people here
-              are fictional. You confirm you are at least 18 before you enter.
-            </p>
-            <p>Your conversations are saved for you, on your account.</p>
+            <p>For adults, 18 and over. The people you meet here are fictional.</p>
             <p>
               © {new Date().getFullYear()} LustForge ·{" "}
               <Link to="/terms-of-service" className="text-foreground/80 underline-offset-2 hover:underline">
