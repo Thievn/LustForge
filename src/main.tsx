@@ -7,6 +7,7 @@ import {
   isIncomingCallPushSwMessage,
 } from "@/lib/companionCallNotifications";
 import { registerGlobalPwaInstallListener } from "@/lib/pwaTelemetry";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -42,6 +43,8 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </QueryClientProvider>,
 );

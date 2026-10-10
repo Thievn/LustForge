@@ -266,6 +266,11 @@ async function fetchMyCustomCharacters(userId: string): Promise<DbCompanion[]> {
   return raw.map((row) => mapSupabaseCustomCharacterRow(row));
 }
 
+export function staticCatalogDbById(id: string | null | undefined): DbCompanion | null {
+  if (!id) return null;
+  return staticListToDb().find((row) => row.id === id) ?? null;
+}
+
 function staticListToDb(): DbCompanion[] {
   return staticCompanions.map((c) => ({
     id: c.id,

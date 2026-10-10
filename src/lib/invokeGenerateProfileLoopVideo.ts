@@ -390,6 +390,9 @@ export async function invokeGenerateProfileLoopVideo(
     signal?: AbortSignal;
   },
 ): Promise<ProfileLoopVideoResult> {
+  void body;
+  void options;
+  throw new Error("Looping portraits are retired.");
   const companionId = resolveCompanionIdFromBody(body);
 
   if (companionId) {

@@ -1207,6 +1207,15 @@ const CompanionCreator = forwardRef<CompanionCreatorHandle, CompanionCreatorProp
     return ["identityLook"];
   }, []);
 
+  const creatorSteps = [
+    { value: "identityLook", label: "Who they are" },
+    { value: "portraitScene", label: "How they look" },
+    { value: "soulStory", label: "How they talk" },
+    { value: "bind", label: "Meet them" },
+  ] as const;
+  const [creatorStep, setCreatorStep] = useState(0);
+  const creatorStepValue = creatorSteps[creatorStep]?.value ?? "identityLook";
+
   const combinedAccentSelections = useMemo(
     () => Array.from(new Set<string>([...visualTailoring.specialFeatures, ...traits])),
     [visualTailoring.specialFeatures, traits],
@@ -3270,8 +3279,8 @@ User flavor notes: ${extraNotes || "none"}`;
                     style={{ color: NEON, filter: `drop-shadow(0 0 12px ${NEON})` }}
                   />
                   <span className="inline-flex items-center gap-2.5 min-w-0">
-                    <span className="whitespace-nowrap">Companion Forge</span>
-                    <CompanionForgeRarityOddsButton size="title" forgeMode={isAdmin ? "admin" : "user"} />
+                    <span className="whitespace-nowrap">{isAdmin ? "Companion Forge" : "Describe them"}</span>
+                    {isAdmin ? <CompanionForgeRarityOddsButton size="title" forgeMode="admin" /> : null}
                   </span>
                 </h1>
                 <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
@@ -3341,7 +3350,9 @@ User flavor notes: ${extraNotes || "none"}`;
                 ? isAdmin
                   ? "Inscribing local draft…"
                   : "The veil is spinning…"
-                : "Spin the forge"}
+                : isAdmin
+                  ? "Spin the forge"
+                  : "Surprise me"}
             </motion.button>
             <p className="text-[10px] text-muted-foreground leading-relaxed -mt-2">
               {isAdmin
@@ -3349,7 +3360,7 @@ User flavor notes: ${extraNotes || "none"}`;
                 : "One breath: Personalities, scene, silhouette, name, and starter story — all from the forge’s own whispers, on your device."}
             </p>
 
-            <div className="rounded-2xl border border-white/[0.1] bg-black/35 p-3 sm:p-4 space-y-3">
+            <div className={cn("rounded-2xl border border-white/[0.1] bg-black/35 p-3 sm:p-4 space-y-3", !isAdmin && "hidden")}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Forge focus tabs</p>
@@ -3624,10 +3635,42 @@ User flavor notes: ${extraNotes || "none"}`;
               </div>
             </div>
 
-            <Accordion type="multiple" defaultValue={accordionDefaultOpen} className={cn(panelClass, "px-1")}>
+            {!isAdmin ? (
+              <div className="space-y-3">
+                <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {creatorSteps.map((step, index) => (
+                    <li key={step.value}>
+                      <button
+                        type="button"
+                        onClick={() => setCreatorStep(index)}
+                        className={cn(
+                          "flex min-h-11 w-full items-center justify-center rounded-xl border px-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors",
+                          index === creatorStep
+                            ? "border-primary/40 bg-primary/15 text-primary"
+                            : "border-border bg-card/60 text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {step.label}
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+                <p className="text-xs text-muted-foreground">
+                  One step at a time. Their portrait stays beside you on a wide screen, and under Preview on a phone.
+                </p>
+              </div>
+            ) : null}
+            <Accordion
+              type="multiple"
+              value={isAdmin ? undefined : [creatorStepValue]}
+              defaultValue={isAdmin ? accordionDefaultOpen : undefined}
+              onValueChange={isAdmin ? undefined : () => {}}
+              className={cn(panelClass, "px-1")}
+            >
               <ForgeMegaSection
                 value="identityLook"
-                title="Identity & Look"
+                title="Who they are"
+                className={!isAdmin && creatorStepValue !== "identityLook" ? "hidden" : undefined}
                 subtitle={FORGE_SECTION_IDENTITY_LOOK_SUBCOPY}
                 badge="locks"
               >
@@ -3904,8 +3947,9 @@ User flavor notes: ${extraNotes || "none"}`;
 
               <ForgeMegaSection
                 value="soulStory"
-                title="Soul & Story"
+                title={isAdmin ? "Soul & Story" : "How they talk"}
                 subtitle={FORGE_SECTION_SOUL_STORY_SUBCOPY}
+                className={!isAdmin && creatorStepValue !== "soulStory" ? "hidden" : undefined}
               >
                   <div className="rounded-2xl border border-[#FF2D7B]/20 bg-gradient-to-br from-[#1a0a12]/90 to-black/50 p-4 sm:p-5 space-y-3">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff7eb3]/90">Personality &amp; voice</p>
@@ -4052,9 +4096,10 @@ User flavor notes: ${extraNotes || "none"}`;
 
               <ForgeMegaSection
                 value="portraitScene"
-                title="Portrait Scene"
+                title={isAdmin ? "Portrait Scene" : "How they look"}
                 subtitle={FORGE_SECTION_PORTRAIT_SCENE_SUBCOPY}
                 badge="cardOnly"
+                className={!isAdmin && creatorStepValue !== "portraitScene" ? "hidden" : undefined}
               >
                   <motion.div
                     initial={{ opacity: 0.85, y: 4 }}
@@ -4182,9 +4227,10 @@ User flavor notes: ${extraNotes || "none"}`;
 
               <ForgeMegaSection
                 value="bind"
-                title="Bind to roster"
+                title={isAdmin ? "Bind to roster" : "Meet them"}
                 subtitle={FORGE_SECTION_BIND_SUBCOPY}
                 borderBottom={!isAdmin}
+                className={!isAdmin && creatorStepValue !== "bind" ? "hidden" : undefined}
               >
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
@@ -4411,6 +4457,26 @@ User flavor notes: ${extraNotes || "none"}`;
               </ForgeMegaSection>
 
             </Accordion>
+            {!isAdmin ? (
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCreatorStep((step) => Math.max(0, step - 1))}
+                  disabled={creatorStep === 0}
+                  className="min-h-11 rounded-xl border border-border px-4 text-sm font-semibold text-foreground disabled:opacity-40"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreatorStep((step) => Math.min(creatorSteps.length - 1, step + 1))}
+                  disabled={creatorStep >= creatorSteps.length - 1}
+                  className="min-h-11 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            ) : null}
 
             {isAdmin && (
               <div className="rounded-2xl border border-[#FF2D7B]/25 bg-gradient-to-br from-[#2a0a18]/80 to-black/50 px-4 py-4 space-y-3">

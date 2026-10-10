@@ -4,6 +4,8 @@ import {
   buildLandingExamples,
   initialReelSlots,
   isExcludedFromLanding,
+  isLandingSample,
+  landingDisplayName,
   shuffleLanding,
 } from "@/lib/landingExamples";
 
@@ -46,9 +48,8 @@ describe("landing examples", () => {
       },
     ]);
     expect(examples.map((row) => row.id)).toContain("tyler-kane");
-    expect(examples.find((row) => row.id === "tyler-kane")?.tagline).toBe(
-      "Structure, patience, and follow-through.",
-    );
+    expect(examples.find((row) => row.id === "tyler-kane")?.name).toBe("Evan");
+    expect(examples.find((row) => row.id === "lilith-vesper")?.name).toBe("Ivy");
     expect(examples.map((row) => row.id)).not.toContain("sage-evergreen");
     expect(examples.map((row) => row.id)).not.toContain("priya-sharma");
     expect(examples.map((row) => row.id)).not.toContain("cc-123");

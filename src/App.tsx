@@ -6,6 +6,7 @@ import { IncomingCallPushBanner } from "@/components/calls/IncomingCallPushBanne
 import { supabase } from "@/integrations/supabase/client";
 import { initAnalytics, trackPageView } from "@/lib/analytics";
 import { dismissAllProfileLoopToasts } from "@/lib/invokeGenerateProfileLoopVideo";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import AgeGate from "./components/AgeGate";
 import InstallPrompt from "./components/InstallPrompt";
 import Index from "./pages/Index";
@@ -50,6 +51,26 @@ function AnalyticsTracker() {
   }, [location.pathname, location.search, location.hash]);
 
   return null;
+}
+
+function GlobalThemeToggle() {
+  const { pathname } = useLocation();
+  const chromeHasToggle =
+    pathname === "/" ||
+    pathname.startsWith("/companions/") ||
+    pathname === "/settings" ||
+    pathname === "/toys" ||
+    pathname.startsWith("/chat");
+  if (chromeHasToggle) return null;
+  const dashboard = pathname === "/dashboard";
+  return (
+    <div
+      className={dashboard ? "fixed right-3 z-[80] md:hidden" : "fixed right-3 z-[80]"}
+      style={{ top: "max(0.55rem, env(safe-area-inset-top, 0px))" }}
+    >
+      <ThemeToggle />
+    </div>
+  );
 }
 
 function RouteFallback() {
@@ -195,6 +216,7 @@ function App() {
       <ErrorBoundary>
         <div className="min-h-screen bg-background text-foreground font-sans relative overflow-x-hidden before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-0 before:h-[min(48vh,520px)] before:bg-gradient-to-b before:from-primary/[0.055] before:to-transparent motion-safe:before:animate-lf-vignette-breathe">
           <AnalyticsTracker />
+          <GlobalThemeToggle />
           <ProfileLoopToastRouteGuard />
           <IncomingCallPushBanner />
           {!ageConfirmed && <AgeGate onConfirm={handleAgeConfirm} />}

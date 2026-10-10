@@ -3,8 +3,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCompanionDisplayOverride } from "@/hooks/useCompanionDisplayOverride";
 import { mergeCompanionDisplayWithUserOverride } from "@/lib/mergeCompanionDisplayOverride";
 import { stripDiscoverForgeTemplateCanonicalLoop } from "@/lib/discoverTemplateMedia";
+import { isLandingSample, landingDisplayName } from "@/lib/landingExamples";
 import { useCompanionGeneratedImages } from "@/hooks/useCompanionGeneratedImages";
-import { useCompanions, dbToCompanion } from "@/hooks/useCompanions";
+import { useCompanions, dbToCompanion, staticCatalogDbById } from "@/hooks/useCompanions";
+import { LANDING_LOCAL_PORTRAITS } from "@/components/landing/landingPortraitSources";
 import { useForgeCompanionOverlay } from "@/hooks/useForgeCompanionOverlay";
 import { useProfileWallet, invalidateProfileWallet } from "@/hooks/useProfileWallet";
 import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
@@ -54,10 +56,8 @@ import {
 } from "@/lib/profileLoopDisplay";
 import { CompanionGalleryGrid } from "@/components/companion/CompanionGalleryGrid";
 import type { CompanionRarity } from "@/lib/companionRarity";
-import { RarityTierCaption } from "@/components/rarity/RarityTierCaption";
 import { TierHaloPortraitFrame } from "@/components/rarity/TierHaloPortraitFrame";
 import { profileTierHaloInnerRoundClass } from "@/lib/profilePortraitTierHalo";
-import { RarityBadgeIcon } from "@/components/rarity/RarityBadgeIcon";
 import { AbyssalProfileParticles } from "@/components/rarity/AbyssalProfileParticles";
 import { cn } from "@/lib/utils";
 import { getToys, type LovenseToy } from "@/lib/lovense";
@@ -109,18 +109,31 @@ function PremiumDisabledButton({
   hint,
   className = "",
   icon,
+  presented = false,
+  tone = "chat",
 }: {
   label: string;
   hint: string;
   className?: string;
   icon?: ReactNode;
+  /** Looks like a live action. Hover explains why it stays put. */
+  presented?: boolean;
+  tone?: "chat" | "call";
 }) {
   return (
     <div className={`relative group ${className}`}>
       <button
         type="button"
-        disabled
-        className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-card/40 px-5 py-3.5 text-sm font-semibold text-muted-foreground/70 cursor-not-allowed"
+        aria-disabled="true"
+        title={hint}
+        onClick={(event) => event.preventDefault()}
+        className={
+          presented && tone === "call"
+            ? "inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-card/80 px-5 py-3 text-sm font-bold text-primary touch-manipulation max-md:min-h-[48px]"
+            : presented
+              ? "inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary px-5 py-3 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 touch-manipulation max-md:min-h-[48px]"
+              : "inline-flex items-center gap-2 rounded-xl border border-border bg-card/40 px-5 py-3.5 text-sm font-semibold text-muted-foreground/70"
+        }
       >
         {icon}
         {label}
@@ -215,7 +228,42 @@ const CompanionProfile = () => {
 
   const { data: vibrationPatterns = [], isLoading: vibrationPatternsLoading } = useCompanionVibrationPatterns(id);
 
-  const { dbComp, forgeLookupBusy: forgeRowFetching } = useForgeCompanionOverlay(id, dbCompanions, isLoading);
+  const { dbComp: dbFromSources, forgeLookupBusy: forgeRowFetching } = useForgeCompanionOverlay(
+    id,
+    dbCompanions,
+    isLoading,
+  );
+  const dbComp = useMemo(() => {
+    if (dbFromSources) return dbFromSources;
+    if (isLoading || forgeRowFetching) return null;
+    const localPortrait = id ? LANDING_LOCAL_PORTRAITS[id] : undefined;
+    const fallback = staticCatalogDbById(id);
+    if (!fallback && id && localPortrait && isLandingSample(id)) {
+      const donor = staticCatalogDbById("tyler-kane");
+      if (!donor) return null;
+      return {
+        ...donor,
+        id,
+        name: landingDisplayName(id),
+        tagline: "Golden hour, and nowhere else to be.",
+        role: "Companion",
+        gender: "Man",
+        appearance: "Warm light on his face, easy in the frame, dressed down.",
+        personality: "Steady, close, and in no rush.",
+        bio: "A sample from the front page. The thread with him stays closed.",
+        fantasy_starters: [],
+        kinks: [],
+        tags: ["sample"],
+        image_url: localPortrait,
+        static_image_url: localPortrait,
+        animated_image_url: null,
+        profile_loop_video_enabled: false,
+      };
+    }
+    if (!fallback) return null;
+    if (!localPortrait) return fallback;
+    return { ...fallback, image_url: localPortrait, static_image_url: localPortrait };
+  }, [dbFromSources, forgeRowFetching, id, isLoading]);
   const { data: displayOverride } = useCompanionDisplayOverride(id, user?.id);
   const { data: galleryImages = [], isLoading: galleryImagesLoading } = useCompanionGeneratedImages(id, user?.id);
   const dbCompStripped = useMemo(() => stripDiscoverForgeTemplateCanonicalLoop(dbComp), [dbComp]);
@@ -242,6 +290,7 @@ const CompanionProfile = () => {
   }, [dbCompDisplay?.animated_image_url, dbCompDisplay?.profile_loop_video_enabled]);
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const isDropLanding = searchParams.get("drop") === "1";
+  const sampleLook = isLandingSample(id);
   const weeklyDropId = searchParams.get("wd");
   const discoverPreviewFromState =
     (location.state as { discoverPreview?: boolean } | null)?.discoverPreview === true;
@@ -348,7 +397,7 @@ const CompanionProfile = () => {
     return !portraitUrlsEquivalent(canonicalCardStillUrl, stillForProfile);
   }, [user?.id, canonicalCardStillUrl, stillForProfile]);
 
-  const loopVideoActive = profileLoopState.loopVideoActive;
+  const loopVideoActive = false;
   const portraitAspectClass = loopVideoActive
     ? PROFILE_LOOP_VIDEO_ASPECT_CLASS
     : PORTRAIT_CARD_ASPECT_CLASS;
@@ -372,7 +421,7 @@ const CompanionProfile = () => {
     const prevTitle = document.title;
     const shareCanonical = getPublicCompanionProfileShareUrl(companion.id);
     const absoluteImage = absoluteUrlWithPublicSite(stillForProfile);
-    const title = `${companion.name} · LustForge`;
+    const title = `${sampleLook ? landingDisplayName(companion.id, companion.name) : companion.name} · LustForge`;
     const desc = isSharedProfileLink
       ? `Your friend linked you to ${companion.name} on LustForge — preview the card, then forge your fantasies. (18+)`
       : `${companion.tagline ? `${companion.tagline} ` : ""}Preview on LustForge.`;
@@ -888,238 +937,17 @@ const CompanionProfile = () => {
     }
   };
 
-  const badge = RARITY_BADGE[rarity];
-
-  function ProfileDiscoverRow({
-    className,
-    hideCollectionPin,
-  }: {
-    className?: string;
-    hideCollectionPin?: boolean;
-  }) {
-    return (
-      <div
-        className={cn(
-          "flex flex-col gap-2 rounded-2xl border border-white/[0.08] bg-black/35 px-4 py-3 backdrop-blur-md sm:flex-row sm:flex-wrap sm:items-center",
-          className,
-        )}
-      >
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground shrink-0">
-          Discover
-        </span>
-        <div className="flex flex-wrap gap-2 sm:ml-auto">
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            disabled={voteBusy}
-            onClick={() => void submitVote(1)}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50",
-              myVote === 1
-                ? "border-primary/50 bg-primary/20 text-primary"
-                : "border-stone-400/20 bg-stone-400/[0.12] text-stone-200/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-primary/35 hover:bg-stone-400/[0.16] hover:text-white",
-            )}
-          >
-            {voteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4 shrink-0" />}
-            Like
-          </motion.button>
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            disabled={voteBusy}
-            onClick={() => void submitVote(-1)}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50",
-              myVote === -1
-                ? "border-amber-500/45 bg-amber-500/15 text-amber-100"
-                : "border-stone-400/20 bg-stone-400/[0.12] text-stone-200/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-stone-300/30 hover:bg-stone-500/[0.14] hover:text-white",
-            )}
-          >
-            {voteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsDown className="h-4 w-4 shrink-0" />}
-            Meh
-          </motion.button>
-          {!hideCollectionPin ? (
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={pinBusy}
-              onClick={() => void togglePin()}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50",
-                pinned
-                  ? "border-accent/45 bg-accent/15 text-accent"
-                  : "border-stone-400/20 bg-stone-400/[0.12] text-stone-200/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:border-accent/35 hover:bg-stone-500/[0.14] hover:text-white",
-              )}
-            >
-              {pinBusy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Bookmark className={cn("h-4 w-4 shrink-0", pinned && "fill-current")} />
-              )}
-              {pinned ? "In my collection" : "Save to my collection"}
-            </motion.button>
-          ) : null}
-        </div>
-        {user && companion && !consumeFeatureLocked && !isDropLanding && id ? (
-          <div className="mt-3 w-full min-w-0 border-t border-white/[0.06] pt-3 space-y-2">
-            <ProfileLoopingVideoUpsell
-              companionId={companion.id}
-              hasExistingLoopVideo={Boolean(loopMp4SourceUrl)}
-              disabled={false}
-              tokensBalance={fcBalanceProfile}
-              isAdminUser={isAdminUser}
-              onToggleGallery={() => setGalleryOpen((o) => !o)}
-              sourceGeneratedImageId={loopFromGeneratedImageId}
-              onClearLoopSource={() => setLoopFromGeneratedImageId(null)}
-              onSuccess={async (result) => {
-                const loopUrl = result?.publicUrl?.trim();
-                if (loopUrl && user?.id && id) {
-                  queryClient.setQueryData(
-                    ["companion-display-override", user.id, id],
-                    (old: { portrait_url: string | null; animated_portrait_url: string | null; profile_loop_video_enabled: boolean } | null | undefined) => ({
-                      portrait_url: old?.portrait_url ?? stillForProfile ?? null,
-                      animated_portrait_url: loopUrl,
-                      profile_loop_video_enabled: true,
-                    }),
-                  );
-                }
-                void queryClient.invalidateQueries({ queryKey: ["companions"] });
-                void queryClient.invalidateQueries({ queryKey: ["companion-display-override", user?.id, id] });
-                if (user?.id && companion.id) {
-                  void queryClient.invalidateQueries({
-                    queryKey: ["companion-generated-images", user.id, companion.id],
-                  });
-                }
-                setLoopFromGeneratedImageId(null);
-              }}
-              onBalanceMaybeChanged={() => {
-                if (!user?.id) return;
-                void invalidateProfileWallet(queryClient, user.id);
-              }}
-            />
-            {loopMp4SourceUrl && stillForProfile && user?.id && dbComp ? (
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-950/25 px-3 py-2.5">
-                <div className="min-w-0 space-y-0.5 pr-2">
-                  <p className="text-xs font-semibold text-emerald-100/95">Looping portrait video</p>
-                  <p className="text-[10px] text-muted-foreground leading-snug">
-                    Show the MP4 loop on this profile and in chat, or switch back to the still. Your clip stays in the
-                    gallery.
-                  </p>
-                </div>
-                <Switch
-                  className="shrink-0 data-[state=checked]:bg-emerald-500"
-                  checked={showLoopVideo}
-                  disabled={loopPrefBusy}
-                  onCheckedChange={async (next) => {
-                    if (!user?.id || !id) return;
-                    setLoopPrefBusy(true);
-                    try {
-                      await setProfileLoopVideoEnabledForUser({
-                        userId: user.id,
-                        companionId: id,
-                        enabled: next,
-                        baseDb: dbComp,
-                        overrideRow: displayOverride ?? null,
-                      });
-                      await queryClient.invalidateQueries({ queryKey: ["companions"] });
-                      await queryClient.invalidateQueries({ queryKey: ["companion-display-override", user.id, id] });
-                      toast.success(next ? "Showing loop video on profile" : "Showing still portrait on profile");
-                    } catch (e) {
-                      toast.error(e instanceof Error ? e.message : "Could not update preference");
-                    } finally {
-                      setLoopPrefBusy(false);
-                    }
-                  }}
-                />
-              </div>
-            ) : null}
-            <Collapsible open={galleryOpen} onOpenChange={setGalleryOpen}>
-              <CollapsibleContent className="mt-1 data-[state=closed]:hidden">
-                <section className="rounded-2xl border border-white/[0.1] bg-black/50 p-4 shadow-inner">
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary/90 mb-1">
-                    Saved from chat
-                  </h3>
-                  <p className="text-[11px] text-muted-foreground/90 mb-3 leading-relaxed">
-                    Stills &amp; loop clips (newest first). The first tile labeled{" "}
-                    <span className="text-foreground/85 font-medium">Card art</span> is the companion&apos;s original
-                    portrait from the card — tap it and use <span className="text-foreground/85 font-medium">Set portrait</span>{" "}
-                    to switch back. Large libraries scroll inside this panel — use{" "}
-                    <span className="text-foreground/85 font-medium">All / Stills / Clips</span> when shown.{" "}
-                    <span className="text-foreground/85 font-medium">Clip src</span> picks a still for{" "}
-                    <span className="text-foreground/85 font-medium">Looping portrait video</span> above (FC applies).
-                    {" "}
-                    <span className="text-emerald-200/85 font-medium">Portrait</span> applies to{" "}
-                    <span className="text-foreground/85 font-medium">your account only</span> — Discover and other
-                    collectors still see the public card art. Picking a still also switches to its profile loop clip when
-                    you&apos;ve generated one from that image.
-                  </p>
-                  {portraitDiffersFromCardArt ? (
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={portraitRevertBusy}
-                        onClick={() => void handleRevertPortraitToCardArt()}
-                        className="inline-flex items-center gap-2 rounded-lg border border-sky-500/35 bg-sky-500/15 px-3 py-2 text-xs font-semibold text-sky-100 hover:bg-sky-500/25 transition-colors disabled:opacity-50"
-                      >
-                        {portraitRevertBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                        Revert portrait to card art
-                      </button>
-                      <span className="text-[10px] text-muted-foreground">
-                        Clears your custom portrait override; keeps a saved loop clip if you have one.
-                      </span>
-                    </div>
-                  ) : null}
-                  <CompanionGalleryGrid
-                    companionName={companion.name}
-                    images={galleryImagesForGrid}
-                    loading={galleryImagesLoading && galleryImages.length === 0}
-                    currentPortraitUrl={stillForProfile}
-                    onSetAsPortrait={handlePortraitFromGallery}
-                    selectedLoopSourceId={loopFromGeneratedImageId}
-                    onSelectForLoop={(row) => setLoopFromGeneratedImageId(row?.id ?? null)}
-                    compact
-                    canDelete
-                    onDelete={async (row) => {
-                      if (!user?.id || !id) return;
-                      await deleteCompanionGalleryImage({
-                        userId: user.id,
-                        companionId: id,
-                        imageId: row.id,
-                      });
-                      if (loopFromGeneratedImageId === row.id) {
-                        setLoopFromGeneratedImageId(null);
-                      }
-                      await queryClient.invalidateQueries({
-                        queryKey: ["companion-generated-images", user.id, id],
-                      });
-                    }}
-                  />
-                </section>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        ) : null}
-      </div>
-    );
+  function ProfileDiscoverRow(_props: { className?: string; hideCollectionPin?: boolean }) {
+    return null;
   }
+
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background relative overflow-x-hidden">
       <ParticleBackground />
       <div
-        className="pointer-events-none fixed inset-0 z-[1]"
+        className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.14),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top,hsl(330_100%_58%/0.16),transparent_52%),linear-gradient(to_bottom,hsl(240_18%_6%),hsl(240_22%_3.5%))]"
         aria-hidden
-        style={{
-          background: `
-            radial-gradient(ellipse 120% 55% at 50% -15%, hsl(330 100% 58% / 0.11), transparent 52%),
-            radial-gradient(ellipse 70% 45% at 100% 35%, hsl(170 100% 50% / 0.06), transparent 50%),
-            radial-gradient(ellipse 55% 40% at 0% 60%, hsl(280 50% 45% / 0.07), transparent 48%),
-            linear-gradient(to bottom, hsl(240 18% 6%) 0%, hsl(240 20% 4.2%) 45%, hsl(240 22% 3.5%) 100%)
-          `,
-        }}
       />
       <Navbar />
 
@@ -1197,26 +1025,7 @@ const CompanionProfile = () => {
                           }
                     }
                   />
-                  {loopVideoActive && loopVideoSrc ? (
-                    <video
-                      key={loopVideoSrc}
-                      className="absolute inset-0 z-[2] h-full w-full object-cover object-center ring-0 outline-none"
-                      src={loopVideoSrc}
-                      poster={stillForProfile ?? undefined}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="auto"
-                      onError={handleLoopVideoError}
-                    />
-                  ) : animatedPortrait && !isLoopVideoStorageUrl(animatedPortrait) ? (
-                    <img
-                      src={animatedPortrait}
-                      alt=""
-                      className="absolute inset-0 z-[1] h-full w-full origin-center scale-[1.08] object-cover object-top"
-                    />
-                  ) : stillForProfile ? (
+                  {stillForProfile ? (
                     <img
                       src={stillForProfile}
                       alt=""
@@ -1233,11 +1042,10 @@ const CompanionProfile = () => {
                       loopVideoActive ? "z-[3]" : "z-[1]",
                     )}
                   />
-                  <RarityTierCaption rarity={rarity} />
                 </div>
               </PortraitViewLightbox>
             </TierHaloPortraitFrame>
-            {consumeFeatureLocked ? (
+            {consumeFeatureLocked && !sampleLook ? (
               <div className="mt-4 rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/15 via-black/40 to-fuchsia-950/25 px-4 py-3 space-y-2 shadow-[0_0_28px_rgba(255,45,123,0.12)]">
                 <p className="text-[11px] text-muted-foreground leading-relaxed">{lockedPreviewBannerText}</p>
                 {vaultLocked && !isOwnForge ? (
@@ -1280,7 +1088,9 @@ const CompanionProfile = () => {
           >
             <div>
               <h1 className="font-gothic text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-                <span className="gradient-vice-text">{companion.name}</span>
+                <span className="gradient-vice-text">
+                  {sampleLook ? landingDisplayName(companion.id, companion.name) : companion.name}
+                </span>
               </h1>
               <p className="mt-2 text-lg sm:text-xl text-primary/95 italic">{companion.tagline}</p>
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -1312,21 +1122,6 @@ const CompanionProfile = () => {
                 </span>
               </div>
               <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground/80">
-                <span className="inline-flex items-center gap-2">
-                  <RarityBadgeIcon rarity={rarity} className="shrink-0" />
-                  <span className="font-semibold tracking-wide text-foreground/88">{badge.label}</span>
-                </span>
-                {badge.sub ? (
-                  <>
-                    <span className="text-muted-foreground/35" aria-hidden>
-                      ·
-                    </span>
-                    <span className="text-muted-foreground/70">{badge.sub}</span>
-                  </>
-                ) : null}
-                <span className="text-muted-foreground/35" aria-hidden>
-                  ·
-                </span>
                 <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-muted-foreground/72">
                   {companion.id.startsWith("cc-") ? (
                     <>
@@ -1393,16 +1188,18 @@ const CompanionProfile = () => {
               </button>
               <button
                 type="button"
-                disabled={isDropLanding}
+                disabled={isDropLanding || sampleLook}
                 title={
-                  vaultLocked && !isOwnForge
+                  sampleLook
+                    ? "Hear them, whenever you pick up."
+                    : vaultLocked && !isOwnForge
                     ? "Acquire this card to start a live call"
                     : teaserConsumeLocked && !isAdminUser
                       ? "Live calls unlock at launch"
                       : undefined
                 }
                 onClick={() => {
-                  if (isDropLanding) return;
+                  if (isDropLanding || sampleLook) return;
                   if (!user) {
                     navigate("/auth", { state: { from: `/companions/${companion.id}` } });
                     return;
@@ -1424,7 +1221,23 @@ const CompanionProfile = () => {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              {isDropLanding ? (
+              {sampleLook ? (
+                <>
+                  <PremiumDisabledButton
+                    label="Start chat"
+                    hint="This is where the thread with them lives."
+                    icon={<MessageCircle className="h-5 w-5 shrink-0" />}
+                    presented
+                  />
+                  <PremiumDisabledButton
+                    label="Live call"
+                    hint="Hear them, whenever you pick up."
+                    icon={<Phone className="h-5 w-5 shrink-0" />}
+                    presented
+                    tone="call"
+                  />
+                </>
+              ) : isDropLanding ? (
                 <>
                   <PremiumDisabledButton
                     label="Start chat"
@@ -1454,13 +1267,6 @@ const CompanionProfile = () => {
                     hint="A card must be acquired first to unlock live voice with this companion."
                     icon={<Phone className="h-4 w-4 shrink-0" />}
                   />
-                  <Link
-                    to="/discover"
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-card/60 px-5 py-3.5 text-sm font-semibold text-muted-foreground backdrop-blur-md hover:border-primary/35 hover:text-primary transition-colors"
-                  >
-                    <Flame className="h-4 w-4" />
-                    Discover
-                  </Link>
                 </>
               ) : (
                 <>
@@ -1484,13 +1290,6 @@ const CompanionProfile = () => {
                     <Phone className="h-5 w-5 shrink-0" />
                     Live call
                   </motion.button>
-                  <Link
-                    to="/discover"
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-card/60 px-5 py-3.5 text-sm font-semibold text-muted-foreground backdrop-blur-md hover:border-primary/35 hover:text-primary transition-colors"
-                  >
-                    <Flame className="h-4 w-4" />
-                    Discover
-                  </Link>
                 </>
               )}
             </div>
@@ -1776,7 +1575,7 @@ const CompanionProfile = () => {
                   whileHover={{ scale: 1.015, y: -2 }}
                   whileTap={{ scale: 0.99 }}
                   onClick={() => {
-                    if (isDropLanding) return;
+                    if (isDropLanding || sampleLook) return;
                     if (consumeFeatureLocked) {
                       toast.message("A card must be acquired first", {
                         description: "Acquire this card to begin this fantasy in chat.",
@@ -1841,7 +1640,7 @@ const CompanionProfile = () => {
         </>
         ) : null}
 
-        {user && !consumeFeatureLocked && !isDropLanding && companion ? (
+        {user && !consumeFeatureLocked && !isDropLanding && !sampleLook && companion ? (
           <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden px-3 pt-2 pb-[max(5.75rem,calc(4.75rem+env(safe-area-inset-bottom,0px)))] bg-gradient-to-t from-black via-black/90 to-transparent">
             <div className="pointer-events-auto mx-auto max-w-lg">
               <motion.button

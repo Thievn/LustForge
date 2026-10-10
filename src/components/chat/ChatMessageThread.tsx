@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { motion } from "framer-motion";
 import { Zap, Volume2, Loader2 } from "lucide-react";
 import { ImageMessage } from "@/components/ImageMessage";
@@ -10,6 +10,28 @@ import { cn } from "@/lib/utils";
 import { parseAssistantDisplayContent } from "@/lib/chatSignatureBeat";
 import { getChatTypingVariant } from "@/lib/chatTypingPersonality";
 import type { ChatVisualVariant } from "@/components/chat/chatVisualVariant";
+
+function RevealedText({ text, active }: { text: string; active: boolean }) {
+  const [count, setCount] = useState(active ? 0 : text.length);
+
+  useEffect(() => {
+    if (!active) {
+      setCount(text.length);
+      return;
+    }
+    setCount(0);
+    let shown = 0;
+    const step = Math.max(2, Math.ceil(text.length / 90));
+    const timer = window.setInterval(() => {
+      shown = Math.min(text.length, shown + step);
+      setCount(shown);
+      if (shown >= text.length) window.clearInterval(timer);
+    }, 24);
+    return () => window.clearInterval(timer);
+  }, [active, text]);
+
+  return <>{text.slice(0, count)}{active && count < text.length ? "▍" : ""}</>;
+}
 
 type Props = {
   messages: ChatMessage[];
@@ -73,6 +95,22 @@ export function ChatMessageThread({
 }: Props) {
   const typingVariant = getChatTypingVariant(companion);
   const luxury = visualVariant === "luxury";
+  const seenIds = useRef(new Set<string>());
+  const seeded = useRef(false);
+  const [streamId, setStreamId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!seeded.current) {
+      if (messages.length === 0) return;
+      messages.forEach((message) => seenIds.current.add(message.id));
+      seeded.current = true;
+      return;
+    }
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant" || last.imageUrl || seenIds.current.has(last.id)) return;
+    seenIds.current.add(last.id);
+    setStreamId(last.id);
+  }, [messages]);
 
   return (
     <div
@@ -90,17 +128,16 @@ export function ChatMessageThread({
     >
       {/* Phase 4: toy session — persistent strip so “toy active” is obvious without breaking chat layout */}
       {toyDriveActive ? (
-        <div className="sticky top-0 z-10 -mx-0.5 mb-1 flex items-center justify-center rounded-xl border border-fuchsia-500/30 bg-gradient-to-r from-fuchsia-950/90 via-primary/20 to-fuchsia-950/90 px-2 py-1.5 text-center text-[10px] font-semibold uppercase tracking-widest text-fuchsia-100/95 shadow-lg shadow-black/30">
-          Toy session active
-          {onStopToyDrive ? (
-            <button
-              type="button"
-              onClick={() => onStopToyDrive()}
-              className="ml-2 rounded-md border border-white/20 bg-black/30 px-2 py-0.5 text-[9px] font-bold normal-case tracking-normal text-white/95 hover:bg-black/50"
-            >
-              Stop
-            </button>
-          ) : null}
+        <div className="sticky top-1 z-10 mb-1 flex justify-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card/90 px-3 py-1 text-[10px] font-medium text-foreground shadow-sm">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+            Pattern active
+            {onStopToyDrive ? (
+              <button type="button" onClick={() => onStopToyDrive()} className="text-primary underline-offset-2 hover:underline">
+                Stop
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : null}
       {messages.map((msg) => {
@@ -222,6 +259,8 @@ export function ChatMessageThread({
                           </span>
                         ))}
                       </>
+                    ) : msg.role === "assistant" ? (
+                      <RevealedText text={bodyText} active={msg.id === streamId} />
                     ) : (
                       bodyText
                     )}

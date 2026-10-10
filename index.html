@@ -1,9 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("lustforge-theme");
+          if (theme === "dark") document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#050508" />
+    <meta name="theme-color" content="#f7f1ea" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -11,12 +19,12 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-icon-192.png" />
     <link rel="apple-touch-icon" href="/pwa-icon-192.png" />
     <title>LustForge — Forge Your Fantasies</title>
-    <meta name="description" content="AI companions with real-time smart device integration. Immersive roleplay with unique personalities. 18+ only." />
+    <meta name="description" content="Describe a person, then talk. Texts, voice, and pictures. 18+ only." />
     <meta name="author" content="LustForge" />
 
     <!-- Absolute URL required for X/Facebook/Discord link previews; replace domain if you deploy elsewhere -->
     <meta property="og:title" content="LustForge — Forge Your Fantasies" />
-    <meta property="og:description" content="Cyber-goth AI companions, custom forging, and real-time toy integration. Strictly 18+." />
+    <meta property="og:description" content="Describe a person, then talk. Texts, voice, and pictures. Strictly 18+." />
     <meta property="og:image" content="__OG_SITE_ORIGIN__/og-image.png?v=3" />
     <meta property="og:image:secure_url" content="__OG_SITE_ORIGIN__/og-image.png?v=3" />
     <meta property="og:image:type" content="image/png" />
@@ -29,7 +37,7 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="LustForge — Forge Your Fantasies" />
-    <meta name="twitter:description" content="Cyber-goth AI companions, custom forging, and real-time toy integration. Strictly 18+." />
+    <meta name="twitter:description" content="Describe a person, then talk. Texts, voice, and pictures. Strictly 18+." />
     <meta name="twitter:image" content="__OG_SITE_ORIGIN__/og-image.png?v=3" />
     <meta name="twitter:site" content="@LustForgeApp" />
 
