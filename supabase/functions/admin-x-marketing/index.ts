@@ -451,7 +451,7 @@ Deno.serve(async (req) => {
       }
       const contextBlock = typeof body.contextBlock === "string" ? body.contextBlock.slice(0, 14_000) : "";
       const system =
-        `You are the LustForge AI **X Marketing Hub** assistant (Grok) for an adult (18+) AI companion product.\n` +
+        `You are the LustForge **X Marketing Hub** assistant (Grok) for an adult (18+) AI companion product.\n` +
         `Help the operator refine tweets, threads, CTAs, hooks, tone shifts, and platform-safe innuendo.\n` +
         `Reply in **plain text** (no JSON) unless they explicitly ask for JSON.\n` +
         `Be concise but sharp. Never sexualize minors or non-consent. No slurs.\n` +
@@ -521,7 +521,7 @@ Deno.serve(async (req) => {
             : "Post format: product-focused Lovense shop promo for LustForge /toys.";
 
       const system =
-        `You are the lead social strategist for LustForge AI promoting the Lovense affiliate shop (/toys). ` +
+        `You are the lead social strategist for LustForge promoting the Lovense affiliate shop (/toys). ` +
         `Return ONLY valid JSON (no markdown fences):\n` +
         `{"variations":[{"text":"tweet body WITHOUT hashtags, max 220 chars","hashtags":["TagOne"]}]}\n` +
         `Rules: exactly 3 objects in "variations". Each text ≤ 220 chars. Platform-safe adult brand voice — no explicit acts, no minors. ` +
@@ -655,7 +655,7 @@ Deno.serve(async (req) => {
     }
 
     const system =
-      `You are the lead social strategist for LustForge AI, an adults-only AI companion product. ` +
+      `You are the lead social strategist for LustForge, an adults-only AI companion product. ` +
       `Return ONLY valid JSON (no markdown fences) with this exact shape:\n` +
       `{"variations":[` +
       `{"text":"tweet body without hashtags, max 240 chars each","hashtags":["TagOne","TagTwo"]}` +
@@ -667,7 +667,7 @@ Deno.serve(async (req) => {
       `Critical style lock: never default every companion to gothic/noir language. Match each selected companion profile precisely.`;
 
     const userBlock =
-      `Product: LustForge AI — premium AI companions with chat, forge, Nexus hybrid merges, Lovense haptics, Discover gallery, and TCG-style stat flavor.\n` +
+      `Product: LustForge — premium AI companions with chat, forge, Nexus hybrid merges, Lovense haptics, Discover gallery, and TCG-style stat flavor.\n` +
       (productAtlas ? `\nProduct module atlas (stay fact-consistent):\n${productAtlas}\n` : "") +
       surfaceBlock +
       (companion

@@ -248,7 +248,7 @@ export default function Auth() {
             <Flame className="h-6 w-6 text-white" />
           </div>
           <h1 className="font-gothic text-2xl md:text-3xl tracking-wide text-white mb-1">
-            <span style={{ color: NEON }}>LustForge</span> <span className="text-white/90">AI</span>
+            <span style={{ color: NEON }}>LustForge</span>
           </h1>
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Access your empire</p>
         </div>

@@ -65,7 +65,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "og-image.png", "pwa-icon-192.png", "pwa-icon-512.png", "robots.txt"],
       manifest: {
-        name: "LustForge AI",
+        name: "LustForge",
         short_name: "LustForge",
         description: "Cyber-goth AI companions — immersive roleplay. 18+ only.",
         theme_color: "#050508",

@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Flame, Shield, LogOut, UserRound, Menu, LayoutDashboard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 import { isPlatformAdmin } from "@/config/auth";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
@@ -26,9 +26,10 @@ function MobileSheetHeader({ title, subtitle }: { title: string; subtitle?: stri
   );
 }
 
-const Navbar = () => {
+const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) => {
+  const landing = variant === "landing";
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -80,15 +81,20 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex items-center justify-between gap-2 min-h-[2.75rem]">
         <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0 touch-manipulation py-1">
-          <Flame className="h-6 w-6 sm:h-7 sm:w-7 text-[#FF2D7B] shrink-0 drop-shadow-[0_0_10px_rgba(255,45,123,0.45)]" />
-          <span className="font-gothic text-xl sm:text-2xl font-bold leading-none tracking-tight flex items-baseline gap-1 sm:gap-1.5 truncate">
-            <span className="gradient-vice-text">LustForge</span>
-            <span className="text-foreground/90 text-lg sm:text-xl font-bold">AI</span>
+          <Flame
+            className={
+              landing
+                ? "h-6 w-6 sm:h-7 sm:w-7 shrink-0 text-[#C73B6A]"
+                : "h-6 w-6 sm:h-7 sm:w-7 text-[#FF2D7B] shrink-0 drop-shadow-[0_0_10px_rgba(255,45,123,0.45)]"
+            }
+          />
+          <span className="font-gothic text-xl sm:text-2xl font-bold leading-none tracking-tight truncate">
+            <span className={landing ? "text-white" : "gradient-vice-text"}>LustForge</span>
           </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm shrink-0">
-          {!user ? <ShopSyncableToysButton /> : null}
+          {!user && !landing ? <ShopSyncableToysButton /> : null}
           {user ? (
             <>
               <div className="hidden md:flex items-center gap-1 rounded-2xl border border-white/[0.08] bg-zinc-950/50 p-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
@@ -125,7 +131,7 @@ const Navbar = () => {
                     className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08] transition-colors touch-manipulation"
                     aria-label="Open menu"
                   >
-                    <Menu className="h-6 w-6 text-[#FF2D7B]" />
+                    <Menu className={landing ? "h-6 w-6 text-[#C73B6A]" : "h-6 w-6 text-[#FF2D7B]"} />
                   </button>
                 </SheetTrigger>
                 <SheetContent side="right" className={sheetPanelClass}>
@@ -185,19 +191,38 @@ const Navbar = () => {
           ) : (
             <>
               <div className="hidden md:flex items-center gap-4">
-                <Link to="/" className="text-muted-foreground hover:text-[#FF2D7B] transition-colors py-2 min-h-10 inline-flex items-center">
-                  Home
-                </Link>
-                <Link
-                  to="/auth"
-                  className="px-4 py-2 sm:px-5 sm:py-2 rounded-xl font-semibold text-white text-xs sm:text-sm transition-transform hover:scale-[1.02] border border-white/10 min-h-10 inline-flex items-center"
-                  style={{
-                    background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
-                    boxShadow: "0 0 20px rgba(255,45,123,0.28)",
-                  }}
-                >
-                  Sign In
-                </Link>
+                {landing ? (
+                  <>
+                    <Link
+                      to="/auth"
+                      className="inline-flex min-h-10 items-center py-2 text-sm text-white/70 transition-colors hover:text-white"
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      to="/auth"
+                      className="inline-flex min-h-10 items-center rounded-xl bg-[#C73B6A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#d4527e]"
+                    >
+                      Create
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/" className="text-muted-foreground hover:text-[#FF2D7B] transition-colors py-2 min-h-10 inline-flex items-center">
+                      Home
+                    </Link>
+                    <Link
+                      to="/auth"
+                      className="px-4 py-2 sm:px-5 sm:py-2 rounded-xl font-semibold text-white text-xs sm:text-sm transition-transform hover:scale-[1.02] border border-white/10 min-h-10 inline-flex items-center"
+                      style={{
+                        background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
+                        boxShadow: "0 0 20px rgba(255,45,123,0.28)",
+                      }}
+                    >
+                      Sign In
+                    </Link>
+                  </>
+                )}
               </div>
 
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -207,7 +232,7 @@ const Navbar = () => {
                     className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08] transition-colors touch-manipulation"
                     aria-label="Open menu"
                   >
-                    <Menu className="h-6 w-6 text-[#FF2D7B]" />
+                    <Menu className={landing ? "h-6 w-6 text-[#C73B6A]" : "h-6 w-6 text-[#FF2D7B]"} />
                   </button>
                 </SheetTrigger>
                 <SheetContent side="right" className={sheetPanelClass}>
@@ -217,24 +242,41 @@ const Navbar = () => {
                     className="flex flex-1 flex-col gap-2 overflow-y-auto p-3"
                     style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
                   >
-                    <ShopSyncableToysButton variant="menu" onClick={() => setMobileOpen(false)} />
-                    <Link to="/" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
-                      Home
-                    </Link>
-                    <Link
-                      to="/auth"
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        sheetLinkClass,
-                        "justify-center font-semibold text-white border border-white/10",
-                      )}
-                      style={{
-                        background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
-                        boxShadow: "0 0 20px rgba(255,45,123,0.28)",
-                      }}
-                    >
-                      Sign In
-                    </Link>
+                    {landing ? (
+                      <>
+                        <Link to="/auth" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
+                          Sign in
+                        </Link>
+                        <Link
+                          to="/auth"
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(sheetLinkClass, "justify-center bg-[#C73B6A] font-semibold text-white")}
+                        >
+                          Create
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <ShopSyncableToysButton variant="menu" onClick={() => setMobileOpen(false)} />
+                        <Link to="/" onClick={() => setMobileOpen(false)} className={sheetLinkClass}>
+                          Home
+                        </Link>
+                        <Link
+                          to="/auth"
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(
+                            sheetLinkClass,
+                            "justify-center font-semibold text-white border border-white/10",
+                          )}
+                          style={{
+                            background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
+                            boxShadow: "0 0 20px rgba(255,45,123,0.28)",
+                          }}
+                        >
+                          Sign In
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>

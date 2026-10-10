@@ -165,4 +165,4 @@ export const EMAIL_ADDRESSES = {
   admin: platformAdminEmailDisplay(),
 };
 
-export const AUTH_SENDER_NAME = "LustForge AI";
+export const AUTH_SENDER_NAME = "LustForge";
