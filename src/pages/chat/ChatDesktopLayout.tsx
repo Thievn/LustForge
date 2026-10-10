@@ -147,7 +147,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
   } = props;
 
   return (
-    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#030208] text-foreground [color-scheme:dark]">
+    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <FloatingHeartsLayer bursts={heartBursts} />
 
       <ChatPremiumHeader
@@ -159,6 +159,13 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
         tokensBalance={tokensBalance}
         isAdminUser={isAdminUser}
         safeWord={safeWord}
+        variant="luxurySlim"
+        companionImageUrl={portraitStillUrl}
+        patternActiveLabel={
+          vibrationPatterns.find((row) => row.id === (sendingVibrationId || livePatternId))?.display_name
+            ? `Pattern · ${vibrationPatterns.find((row) => row.id === (sendingVibrationId || livePatternId))?.display_name}`
+            : null
+        }
         onBack={() => {
           void handleEmergencyStop();
           const st = location.state as { from?: string; profileBackTarget?: string } | undefined;
@@ -167,7 +174,6 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
           });
         }}
         onEmergencyStop={() => void handleEmergencyStopFromUi()}
-        onOpenGallery={user ? () => setGalleryOpen(true) : undefined}
         showHeroInLeftColumn
         sessionControls={
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-end">
@@ -176,7 +182,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
               patterns={vibrationPatterns}
               patternsLoading={vibrationPatternsLoading}
               hasDevice={hasDevice}
-              disabled={!user || loading}
+              disabled={!user}
               activePatternId={livePatternId}
               onTriggerPattern={(row) => void triggerCompanionVibration(row)}
             />
@@ -226,6 +232,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="mx-auto flex min-h-0 w-full max-w-[1920px] flex-1">
+          <div className="hidden">
           <ChatLeftHeroPanel
             companion={companion}
             imageUrl={portraitStillUrl}
@@ -242,10 +249,11 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
             onRequestSimilarStill={user ? requestSimilarStillFromGallery : undefined}
             hasGalleryUser={Boolean(user)}
           />
+          </div>
 
-          <div className="relative z-[1] mx-auto flex min-h-0 min-w-0 w-full max-w-lg flex-1 flex-col sm:max-w-xl xl:my-3 xl:max-w-2xl xl:rounded-2xl xl:border xl:border-fuchsia-500/[0.12] xl:bg-[#050308]/40 xl:shadow-[0_0_80px_rgba(0,0,0,0.55)] xl:backdrop-blur-sm 2xl:max-w-[44rem]">
+          <div className="relative z-[1] mx-auto flex min-h-0 min-w-0 w-full max-w-3xl flex-1 flex-col xl:my-3 xl:max-w-3xl xl:rounded-2xl xl:border xl:border-border xl:bg-card/40">
             <ChatDevicesCollapsible
-              className="border-b border-fuchsia-500/[0.08] bg-[#050308]/55 backdrop-blur-xl"
+              className="hidden"
               companionName={companion.name}
               connectedCount={connectedToys.length}
               activeCount={activeToys.length}
@@ -305,7 +313,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
                 toyDriveActive={toyDriveActive}
                 onStopToyDrive={() => void stopSustainedToy()}
                 compactThread={sessionMode === "live_voice"}
-                visualVariant="luxury"
+                visualVariant="default"
               />
             </div>
 
@@ -320,7 +328,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
                 disabled={false}
                 loading={loading}
                 compact={sessionMode === "live_voice"}
-                visualVariant="luxury"
+                visualVariant="default"
                 onPick={(s) => {
                   setInput(s);
                   void sendMessage(s);
@@ -420,7 +428,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
                 userLoggedIn={Boolean(user)}
                 photoDockLayout={sessionMode === "live_voice" ? "live_voice" : "full"}
                 onGalleryClipRequest={(p) => void generateChatVideoClip({ mood: p.mood, motionHint: p.motionHint })}
-                visualVariant="luxury"
+                visualVariant="default"
               />
             </div>
           </div>

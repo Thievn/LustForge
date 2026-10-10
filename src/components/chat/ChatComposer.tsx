@@ -359,7 +359,7 @@ export function ChatComposer({
           <motion.button
             type="submit"
             whileTap={{ scale: 0.99 }}
-            disabled={loading || !input.trim() || disabled}
+            disabled={!input.trim() || disabled}
             className={cn(
               "inline-flex items-center justify-center text-primary-foreground transition-opacity disabled:opacity-30",
               luxury

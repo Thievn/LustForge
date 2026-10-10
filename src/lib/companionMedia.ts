@@ -173,12 +173,10 @@ export function isEligibleLoopPortraitVideoUrl(url: string | null | undefined, p
   return Boolean(profileLoopVideoEnabled && /^https?:\/\//i.test(u));
 }
 
-/** Companion profile / chat: show looping MP4 only when enabled and URL is video */
+/** Looping portrait videos are retired. Stills stay; stored clips are not shown. */
 export function shouldShowProfileLoopVideo(
-  db: PortraitDbFields | undefined,
-  profileLoopVideoEnabled: boolean | undefined,
+  _db: PortraitDbFields | undefined,
+  _profileLoopVideoEnabled: boolean | undefined,
 ): boolean {
-  if (!profileLoopVideoEnabled) return false;
-  const u = profileAnimatedPortraitUrl(db);
-  return Boolean(u && isEligibleLoopPortraitVideoUrl(u, true));
+  return false;
 }

@@ -167,7 +167,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
   );
 
   return (
-    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#030208] text-foreground [color-scheme:dark]">
+    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <div
         className="pointer-events-none absolute inset-0 z-[5] opacity-[0.5]"
         aria-hidden
@@ -189,6 +189,11 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
         safeWord={safeWord}
         variant="luxurySlim"
         companionImageUrl={portraitStillUrl}
+        patternActiveLabel={
+          vibrationPatterns.find((row) => row.id === (sendingVibrationId || livePatternId))?.display_name
+            ? `Pattern · ${vibrationPatterns.find((row) => row.id === (sendingVibrationId || livePatternId))?.display_name}`
+            : null
+        }
         onBack={() => {
           void handleEmergencyStop();
           const st = location.state as { from?: string; profileBackTarget?: string } | undefined;
@@ -206,7 +211,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
               patterns={vibrationPatterns}
               patternsLoading={vibrationPatternsLoading}
               hasDevice={hasDevice}
-              disabled={!user || loading}
+              disabled={!user}
               activePatternId={livePatternId}
               onTriggerPattern={(row) => void triggerCompanionVibration(row)}
             />
@@ -324,7 +329,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
             toyDriveActive={toyDriveActive}
             compactThread={sessionMode === "live_voice"}
             onStopToyDrive={() => void stopSustainedToy()}
-            visualVariant="luxury"
+            visualVariant="default"
           />
         </div>
 
@@ -339,7 +344,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
             disabled={false}
             loading={loading}
             compact={sessionMode === "live_voice"}
-            visualVariant="luxury"
+            visualVariant="default"
             onPick={(s) => {
               setInput(s);
               void sendMessage(s);
@@ -438,7 +443,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
             userLoggedIn={Boolean(user)}
             photoDockLayout={sessionMode === "live_voice" ? "live_voice" : "full"}
             onGalleryClipRequest={(p) => void generateChatVideoClip({ mood: p.mood, motionHint: p.motionHint })}
-            visualVariant="luxury"
+            visualVariant="default"
           />
         </div>
       </div>

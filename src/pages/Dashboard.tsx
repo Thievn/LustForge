@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getToys } from "@/lib/lovense";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import ParticleBackground from "@/components/ParticleBackground";
 import DiscoverCompanionsGallery from "@/components/DiscoverCompanionsGallery";
 import TheNexus from "@/components/TheNexus";
@@ -422,9 +423,12 @@ export default function Dashboard() {
 
       <div className="relative z-10 flex min-h-screen">
         {/* Sidebar */}
-        <aside className="hidden md:flex w-[260px] shrink-0 flex-col border-r border-border/80 bg-black/50 backdrop-blur-xl py-8 px-5">
+        <aside className="hidden md:flex w-[260px] shrink-0 flex-col border-r border-border/80 bg-card/80 backdrop-blur-xl py-8 px-5">
           <div className="mb-10 w-full flex justify-center px-1">
             <div className="flex w-full max-w-[14rem] flex-col items-center gap-3 text-center">
+              <div className="flex w-full items-center justify-end">
+                <ThemeToggle />
+              </div>
               <Link to="/" className="group flex flex-col items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/35 rounded-xl px-2 py-1">
                 <Flame
                   className="h-8 w-8 shrink-0 drop-shadow-[0_0_12px_rgba(255,45,123,0.5)] transition-transform group-hover:scale-[1.05]"

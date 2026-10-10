@@ -6,6 +6,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { isPlatformAdmin } from "@/config/auth";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const ghostNavPill =
@@ -72,28 +73,23 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
     "flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06] active:bg-white/[0.08] touch-manipulation";
 
   const sheetPanelClass =
-    "flex w-[min(100vw-1rem,20rem)] flex-col border-l border-white/10 bg-[#050508]/98 p-0";
+    "flex w-[min(100vw-1rem,20rem)] flex-col border-l border-border bg-popover/98 p-0";
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 bg-[#050508]/94 backdrop-blur-xl border-b border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+      className="fixed top-0 left-0 right-0 z-50 border-b border-border/80 bg-background/90 shadow-[0_8px_32px_rgba(80,30,50,0.06)] backdrop-blur-xl dark:bg-background/94 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
       style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex items-center justify-between gap-2 min-h-[2.75rem]">
         <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0 touch-manipulation py-1">
-          <Flame
-            className={
-              landing
-                ? "h-6 w-6 sm:h-7 sm:w-7 shrink-0 text-[#C73B6A]"
-                : "h-6 w-6 sm:h-7 sm:w-7 text-[#FF2D7B] shrink-0 drop-shadow-[0_0_10px_rgba(255,45,123,0.45)]"
-            }
-          />
+          <Flame className="h-6 w-6 sm:h-7 sm:w-7 shrink-0 text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.45)]" />
           <span className="font-gothic text-xl sm:text-2xl font-bold leading-none tracking-tight truncate">
-            <span className={landing ? "text-white" : "gradient-vice-text"}>LustForge</span>
+            <span className="gradient-vice-text">LustForge</span>
           </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm shrink-0">
+          <ThemeToggle />
           {!user && !landing ? <ShopSyncableToysButton /> : null}
           {user ? (
             <>
@@ -131,7 +127,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                     className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08] transition-colors touch-manipulation"
                     aria-label="Open menu"
                   >
-                    <Menu className={landing ? "h-6 w-6 text-[#C73B6A]" : "h-6 w-6 text-[#FF2D7B]"} />
+                    <Menu className="h-6 w-6 text-primary" />
                   </button>
                 </SheetTrigger>
                 <SheetContent side="right" className={sheetPanelClass}>
@@ -195,13 +191,13 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                   <>
                     <Link
                       to="/auth"
-                      className="inline-flex min-h-10 items-center py-2 text-sm text-white/70 transition-colors hover:text-white"
+                      className="inline-flex min-h-10 items-center py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       Sign in
                     </Link>
                     <Link
                       to="/auth"
-                      className="inline-flex min-h-10 items-center rounded-xl bg-[#C73B6A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#d4527e]"
+                      className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                       Create
                     </Link>
@@ -232,7 +228,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                     className="md:hidden inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-foreground hover:bg-white/[0.08] transition-colors touch-manipulation"
                     aria-label="Open menu"
                   >
-                    <Menu className={landing ? "h-6 w-6 text-[#C73B6A]" : "h-6 w-6 text-[#FF2D7B]"} />
+                    <Menu className="h-6 w-6 text-primary" />
                   </button>
                 </SheetTrigger>
                 <SheetContent side="right" className={sheetPanelClass}>
@@ -250,7 +246,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                         <Link
                           to="/auth"
                           onClick={() => setMobileOpen(false)}
-                          className={cn(sheetLinkClass, "justify-center bg-[#C73B6A] font-semibold text-white")}
+                          className={cn(sheetLinkClass, "justify-center bg-primary font-semibold text-primary-foreground")}
                         >
                           Create
                         </Link>

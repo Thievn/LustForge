@@ -248,6 +248,7 @@ export function useChatSessionController() {
   const tokensBalanceRef = useRef(0);
   const messagesRef = useRef<ChatMessage[]>([]);
   const sendMessageRef = useRef<(text?: string, opts?: SendMessageOptions) => Promise<void>>(async () => {});
+  const queuedSendRef = useRef<string | null>(null);
   const connectedToysRef = useRef(connectedToys);
   const userIdRef = useRef(user?.id);
   useEffect(() => {
@@ -2097,9 +2098,11 @@ export function useChatSessionController() {
       const menuForcesImageConcurrent = Boolean(options?.imageGenerationPrompt?.trim());
       const routeConcurrent = inferChatMediaRoute(messageText, menuForcesImageConcurrent);
       if (routeConcurrent === "image" || routeConcurrent === "video") {
-        toast.info("Still generating — wait for this one to finish, then start another still or clip.");
-        return;
+        toast.info("That picture is still on its way. You can keep talking.");
       }
+      queuedSendRef.current = messageText;
+      if (!overrideText) setInput("");
+      return;
     }
 
     if (overrideText) {
@@ -2415,6 +2418,14 @@ export function useChatSessionController() {
   };
 
   sendMessageRef.current = sendMessage;
+
+  useEffect(() => {
+    if (loading) return;
+    const next = queuedSendRef.current;
+    if (!next) return;
+    queuedSendRef.current = null;
+    void sendMessageRef.current(next);
+  }, [loading]);
 
   const requestSimilarStillFromGallery = useCallback(
     (row: CompanionGalleryRow) => {

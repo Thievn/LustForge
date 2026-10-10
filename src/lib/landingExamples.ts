@@ -59,14 +59,33 @@ type LocalMeta = {
 };
 
 /** Calm public lines. Catalog taglines stay in the app data and are not shown on the landing page. */
+/** Public first names for the seven landing samples. Catalog names stay in companion data. */
+export const LANDING_DISPLAY_NAMES: Record<string, string> = {
+  "kaelen-veyra": "Cole",
+  "lena-frost": "Sloane",
+  "kira-lux": "Mira",
+  "zara-eclipse": "Noor",
+  "lilith-vesper": "Ivy",
+  "tyler-kane": "Evan",
+  "jaxson-voss": "Ren",
+};
+
+export function isLandingSample(id: string | null | undefined): boolean {
+  return Boolean(id && PHOTOGRAPHIC_LANDING_IDS.has(id));
+}
+
+export function landingDisplayName(id: string, fallback = "Companion"): string {
+  return LANDING_DISPLAY_NAMES[id] ?? fallback;
+}
+
 const LOCAL_META: LocalMeta[] = [
-  { id: "lilith-vesper", name: "Lilith Vesper", tagline: "After midnight, still wide awake." },
-  { id: "kira-lux", name: "Kira Lux", tagline: "Bright, quick, and hard to look away from." },
-  { id: "zara-eclipse", name: "Zara Eclipse", tagline: "She means what she says." },
-  { id: "lena-frost", name: "Lena Frost", tagline: "Cool on the surface." },
-  { id: "jaxson-voss", name: "Jaxson Voss", tagline: "Neon nights and a steady grin." },
-  { id: "tyler-kane", name: "Tyler Kane", tagline: "Structure, patience, and follow-through." },
-  { id: "kaelen-veyra", name: "Kaelen Veyra", tagline: "Golden hour, and nowhere else to be.", rarity: "rare" },
+  { id: "lilith-vesper", name: "Ivy", tagline: "After midnight, still wide awake." },
+  { id: "kira-lux", name: "Mira", tagline: "Bright, quick, and hard to look away from." },
+  { id: "zara-eclipse", name: "Noor", tagline: "She means what she says." },
+  { id: "lena-frost", name: "Sloane", tagline: "Cool on the surface." },
+  { id: "jaxson-voss", name: "Ren", tagline: "Neon nights and a steady grin." },
+  { id: "tyler-kane", name: "Evan", tagline: "Structure, patience, and follow-through." },
+  { id: "kaelen-veyra", name: "Cole", tagline: "Golden hour, and nowhere else to be.", rarity: "rare" },
 ];
 
 const LOCAL_BY_ID = new Map(LOCAL_META.map((row) => [row.id, row]));
@@ -112,7 +131,7 @@ export function buildLandingExamples(
     const local = LOCAL_BY_ID.get(row.id);
     byId.set(row.id, {
       id: row.id,
-      name: (local?.name || row.name || "Companion").trim(),
+      name: landingDisplayName(row.id, (local?.name || row.name || "Companion").trim()),
       tagline: local?.tagline || FALLBACK_TAGLINE,
       rarity: local?.rarity ?? normalizeCompanionRarity(row.rarity),
       src,
