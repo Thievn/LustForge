@@ -29,7 +29,7 @@ const PrivacyPolicy: React.FC = () => {
         <strong>Effective Date: [Insert Date]</strong>
       </p>
       <p>
-        At LustForge AI ("we," "us," or "our"), we respect your privacy. This Privacy Policy explains how we collect, use, and protect information when you use our website (the "Site"), services, AI companions, and Lovense integrations (collectively, the "Services"). By using the Services, you consent to this policy.
+        At LustForge ("we," "us," or "our"), we respect your privacy. This Privacy Policy explains how we collect, use, and protect information when you use our website (the "Site"), services, AI companions, and Lovense integrations (collectively, the "Services"). By using the Services, you consent to this policy.
       </p>
 
       <h2

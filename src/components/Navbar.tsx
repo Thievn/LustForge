@@ -88,15 +88,8 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                 : "h-6 w-6 sm:h-7 sm:w-7 text-[#FF2D7B] shrink-0 drop-shadow-[0_0_10px_rgba(255,45,123,0.45)]"
             }
           />
-          <span className="font-gothic text-xl sm:text-2xl font-bold leading-none tracking-tight flex items-baseline gap-1 sm:gap-1.5 truncate">
-            {landing ? (
-              <span className="text-white">LustForge</span>
-            ) : (
-              <>
-                <span className="gradient-vice-text">LustForge</span>
-                <span className="text-foreground/90 text-lg sm:text-xl font-bold">AI</span>
-              </>
-            )}
+          <span className="font-gothic text-xl sm:text-2xl font-bold leading-none tracking-tight truncate">
+            <span className={landing ? "text-white" : "gradient-vice-text"}>LustForge</span>
           </span>
         </Link>
 

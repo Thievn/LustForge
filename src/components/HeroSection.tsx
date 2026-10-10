@@ -155,7 +155,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
           transition={{ type: "spring", stiffness: 280, damping: 22 }}
           className="font-gothic text-3xl sm:text-5xl md:text-6xl font-bold mb-3 sm:mb-4 leading-tight px-1"
         >
-          <span className="gradient-vice-text">LustForge</span> <span className="text-foreground">AI</span>
+          <span className="gradient-vice-text">LustForge</span>
         </motion.h1>
 
         <motion.p

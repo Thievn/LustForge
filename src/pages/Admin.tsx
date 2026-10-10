@@ -837,7 +837,7 @@ function AdminShell() {
           ))}
         </nav>
         <div className="p-4 border-t border-border/60 text-[10px] text-muted-foreground uppercase tracking-widest">
-          LustForge AI · {platformAdminEmailDisplay()}
+          LustForge · {platformAdminEmailDisplay()}
         </div>
       </aside>
 

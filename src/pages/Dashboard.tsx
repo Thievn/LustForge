@@ -432,8 +432,7 @@ export default function Dashboard() {
                   aria-hidden
                 />
                 <span className="font-gothic text-xl font-bold leading-tight tracking-tight">
-                  <span className="gradient-vice-text">LustForge</span>{" "}
-                  <span className="text-foreground/90 text-lg font-bold">AI</span>
+                  <span className="gradient-vice-text">LustForge</span>
                 </span>
               </Link>
               <div className="w-full border-t border-border/50 pt-3">
