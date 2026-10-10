@@ -14,23 +14,26 @@ const local = {
 };
 
 describe("landing examples", () => {
-  it("keeps bundled realistic portraits and drops creature art", () => {
+  it("keeps photographic portraits and drops illustration and creature art", () => {
     const examples = buildLandingExamples({
       ...local,
       "nova-quinn": "/nova.jpg",
+      "jax-harlan": "/bear.jpg",
     });
     const ids = examples.map((row) => row.id);
     expect(ids).toContain("lilith-vesper");
-    expect(ids).toContain("marcus-vale");
+    expect(ids).not.toContain("marcus-vale");
+    expect(ids).not.toContain("jax-harlan");
     expect(ids).not.toContain("flicker-spark");
     expect(ids).not.toContain("nova-quinn");
     expect(examples.find((row) => row.id === "lilith-vesper")?.rarity).toBe("abyssal");
     expect(examples.find((row) => row.id === "lilith-vesper")?.tagline).not.toMatch(/mommy/i);
   });
 
-  it("adds a stock portrait from the catalog and skips hybrids, mascots, and forged rows", () => {
+  it("refuses unknown catalog rows, hybrids, mascots, and forged rows", () => {
     const examples = buildLandingExamples(local, [
       { id: "sage-evergreen", name: "Sage Evergreen", src: "https://cdn.example/sage.jpg", rarity: "epic" },
+      { id: "tyler-kane", name: "Tyler Kane", src: "https://cdn.example/tyler.jpg", rarity: "epic" },
       { id: "priya-sharma", name: "Priya Sharma", src: "https://cdn.example/priya.jpg", rarity: "rare" },
       { id: "flicker-spark", name: "Flicker", src: "https://cdn.example/fairy.jpg", rarity: "mythic" },
       { id: "cc-123", name: "Private", src: "https://cdn.example/private.jpg", rarity: "rare" },
@@ -42,12 +45,16 @@ describe("landing examples", () => {
         isNexusHybrid: true,
       },
     ]);
-    expect(examples.map((row) => row.id)).toContain("sage-evergreen");
-    expect(examples.find((row) => row.id === "sage-evergreen")?.tagline).toBe("Soft voice, surprising depth.");
-    expect(examples.find((row) => row.id === "priya-sharma")?.tagline).toBe("A companion someone made.");
+    expect(examples.map((row) => row.id)).toContain("tyler-kane");
+    expect(examples.find((row) => row.id === "tyler-kane")?.tagline).toBe(
+      "Structure, patience, and follow-through.",
+    );
+    expect(examples.map((row) => row.id)).not.toContain("sage-evergreen");
+    expect(examples.map((row) => row.id)).not.toContain("priya-sharma");
     expect(examples.map((row) => row.id)).not.toContain("cc-123");
     expect(examples.map((row) => row.id)).not.toContain("lena-frost");
     expect(isExcludedFromLanding("cc-9")).toBe(true);
+    expect(isExcludedFromLanding("sage-evergreen")).toBe(true);
   });
 
   it("shuffles without dropping or duplicating cards", () => {

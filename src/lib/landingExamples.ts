@@ -1,6 +1,21 @@
 import type { CompanionRarity } from "@/lib/companionRarity";
 import { getStaticRarityForCatalog, normalizeCompanionRarity } from "@/lib/companionRarity";
 
+/**
+ * Portraits checked by hand as photographic people.
+ * The rest of the catalog is illustration, anime, or creature art, and the live
+ * database mixes those in, so the public reel does not accept unknown rows.
+ */
+const PHOTOGRAPHIC_LANDING_IDS = new Set([
+  "lilith-vesper",
+  "kira-lux",
+  "zara-eclipse",
+  "lena-frost",
+  "tyler-kane",
+  "kaelen-veyra",
+  "jaxson-voss",
+]);
+
 /** Catalog ids whose art is a creature, mascot, or heavy illustration — kept off the public reel. */
 const EXCLUDED_FROM_LANDING = new Set([
   "flicker-spark",
@@ -46,20 +61,11 @@ type LocalMeta = {
 /** Calm public lines. Catalog taglines stay in the app data and are not shown on the landing page. */
 const LOCAL_META: LocalMeta[] = [
   { id: "lilith-vesper", name: "Lilith Vesper", tagline: "After midnight, still wide awake." },
-  { id: "jax-harlan", name: "Jax Harlan", tagline: "Rough hands, warm heart." },
   { id: "kira-lux", name: "Kira Lux", tagline: "Bright, quick, and hard to look away from." },
-  { id: "marcus-vale", name: "Marcus Vale", tagline: "A poet who remembers the small things." },
-  { id: "sable-rook", name: "Sable Rook", tagline: "A long game, played softly." },
-  { id: "finn-blaze", name: "Finn Blaze", tagline: "Easy laugh, open door." },
   { id: "zara-eclipse", name: "Zara Eclipse", tagline: "She means what she says." },
-  { id: "raven-nox", name: "Raven Nox", tagline: "Chaos, affection, and a sharp joke." },
-  { id: "diego-cortez", name: "Diego Cortez", tagline: "Salt air and a story for the road." },
   { id: "lena-frost", name: "Lena Frost", tagline: "Cool on the surface." },
-  { id: "bianca-rose", name: "Bianca Rose", tagline: "Sweet, clumsy, and completely sincere." },
   { id: "jaxson-voss", name: "Jaxson Voss", tagline: "Neon nights and a steady grin." },
-  { id: "elara-moon", name: "Elara Moon", tagline: "Moonlight and a quiet kind of magic." },
   { id: "tyler-kane", name: "Tyler Kane", tagline: "Structure, patience, and follow-through." },
-  { id: "sage-evergreen", name: "Sage Evergreen", tagline: "Soft voice, surprising depth." },
   { id: "kaelen-veyra", name: "Kaelen Veyra", tagline: "Golden hour, and nowhere else to be.", rarity: "rare" },
 ];
 
@@ -76,7 +82,7 @@ export type LandingRemoteRow = {
 const FALLBACK_TAGLINE = "A companion someone made.";
 
 export function isExcludedFromLanding(id: string): boolean {
-  return EXCLUDED_FROM_LANDING.has(id) || id.startsWith("cc-");
+  return !PHOTOGRAPHIC_LANDING_IDS.has(id) || EXCLUDED_FROM_LANDING.has(id) || id.startsWith("cc-");
 }
 
 export function buildLandingExamples(
@@ -86,6 +92,7 @@ export function buildLandingExamples(
   const byId = new Map<string, LandingExample>();
 
   for (const meta of LOCAL_META) {
+    if (!PHOTOGRAPHIC_LANDING_IDS.has(meta.id)) continue;
     const src = localSrc[meta.id]?.trim();
     if (!src) continue;
     byId.set(meta.id, {
@@ -98,7 +105,7 @@ export function buildLandingExamples(
   }
 
   for (const row of remote) {
-    if (!row?.id || isExcludedFromLanding(row.id) || row.isNexusHybrid) continue;
+    if (!row?.id || !PHOTOGRAPHIC_LANDING_IDS.has(row.id) || row.isNexusHybrid) continue;
     const src = row.src?.trim();
     if (!src) continue;
     if (byId.has(row.id)) continue;

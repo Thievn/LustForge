@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-const VISIBLE = 6;
+const VISIBLE = 4;
 const ROTATE_MS = 4200;
 
 function sealColor(rarity: CompanionRarity): string {
@@ -95,7 +95,7 @@ export function LandingPortraitReel() {
           </p>
         </div>
 
-        <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+        <ul className="mx-auto grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           {slots.map((card, index) =>
             broken.has(card.id) ? null : (
               <li key={index} className="min-w-0">
