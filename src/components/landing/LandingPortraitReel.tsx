@@ -82,14 +82,18 @@ export function LandingPortraitReel() {
   };
 
   return (
-    <section className="px-4 pb-4 pt-8 sm:px-6 sm:pt-12" aria-labelledby="landing-examples-heading">
+    <section id="companions" className="scroll-mt-28 px-4 pb-4 pt-14 sm:px-6 sm:pt-20" aria-labelledby="landing-examples-heading">
       <div className="mx-auto max-w-6xl">
-        <h2 id="landing-examples-heading" className="text-center font-gothic text-2xl text-foreground sm:text-3xl">
+        <p className="text-center text-[11px] font-medium uppercase tracking-[0.28em] text-primary/80">Sample faces</p>
+        <h2 id="landing-examples-heading" className="mt-3 text-center font-gothic text-3xl text-foreground sm:text-4xl">
           People you can create
         </h2>
+        <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Photographic examples, so you can see the kind of companion a card can hold. Yours starts in Companion Forge.
+        </p>
 
         <div
-          className="relative mx-auto mt-8 h-[300px] max-w-5xl sm:h-[420px]"
+          className="relative mx-auto mt-8 h-[300px] max-w-5xl sm:mt-10 sm:h-[420px]"
           onMouseEnter={() => {
             hovering.current = true;
             setPaused(true);
@@ -128,6 +132,10 @@ export function LandingPortraitReel() {
             if (!hovering.current) setPaused(false);
           }}
         >
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-2xl md:h-72 md:w-72 md:blur-3xl"
+            aria-hidden
+          />
           <div className="absolute inset-0 overflow-hidden">
             {deck.map((card, index) => {
               const offset = wrapOffset(index, active, count);
@@ -157,13 +165,15 @@ export function LandingPortraitReel() {
                         suppressClick.current = false;
                       }
                     }}
-                    className="group relative block overflow-hidden rounded-[1.4rem] bg-card text-left shadow-[0_18px_40px_rgba(40,10,24,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 dark:shadow-[0_22px_50px_rgba(0,0,0,0.45)]"
+                    className={`group relative block overflow-hidden rounded-[1.4rem] bg-card text-left shadow-[0_18px_40px_rgba(40,10,24,0.18)] transition-[box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 dark:shadow-[0_22px_50px_rgba(0,0,0,0.45)] ${
+                      distance === 0 ? "ring-2 ring-primary/55 shadow-[0_22px_50px_hsl(var(--primary)/0.22)]" : ""
+                    }`}
                   >
                     <span className="relative block aspect-[3/4] bg-muted">
                       <img
                         src={card.src}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                        className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                         onError={() =>
                           setBroken((prev) => {
                             const next = new Set(prev);
@@ -180,6 +190,9 @@ export function LandingPortraitReel() {
                           >
                             {card.name}
                           </span>
+                          {distance === 0 ? (
+                            <span className="mt-1 block truncate text-xs text-white/75">{card.tagline}</span>
+                          ) : null}
                         </span>
                       ) : null}
                     </span>

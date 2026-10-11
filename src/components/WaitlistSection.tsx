@@ -78,7 +78,7 @@ export default function WaitlistSection() {
           </h2>
 
           <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-            Leave an email. We'll write when you can create them.
+            LustForge is an adults-only AI companion app. Leave your email — we'll write when you can create them.
           </p>
 
           {isSuccess ? (
@@ -112,7 +112,7 @@ export default function WaitlistSection() {
                     Joining
                   </>
                 ) : (
-                  "Count me in"
+                  "Join the waitlist"
                 )}
               </button>
             </form>

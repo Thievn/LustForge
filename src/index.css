@@ -170,6 +170,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .animate-profile-frame-bloom-breathe {
     animation: none;
   }
@@ -177,7 +180,9 @@
   .animate-rarity-neon-inner-breathe {
     animation: none;
   }
-  .animate-toys-cta-glow {
+  .animate-toys-cta-glow,
+  .animate-accordion-down,
+  .animate-accordion-up {
     animation: none;
   }
 }
