@@ -169,7 +169,26 @@
   }
 }
 
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .landing-phone-float {
+    animation: landing-phone-float 7.5s ease-in-out infinite;
+  }
+}
+
+@keyframes landing-phone-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .animate-profile-frame-bloom-breathe {
     animation: none;
   }
@@ -177,7 +196,10 @@
   .animate-rarity-neon-inner-breathe {
     animation: none;
   }
-  .animate-toys-cta-glow {
+  .animate-toys-cta-glow,
+  .animate-accordion-down,
+  .animate-accordion-up,
+  .landing-phone-float {
     animation: none;
   }
 }

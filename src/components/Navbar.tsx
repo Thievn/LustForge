@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from 
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { scrollToLandingId, trackLandingCta } from "@/lib/landingScroll";
 
 const ghostNavPill =
   "inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 min-h-10 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.07] hover:border-white/15 transition-all";
@@ -22,11 +23,7 @@ const sheetPanelClass =
   "z-[80] flex h-dvh w-[min(100vw,22rem)] max-w-none flex-col gap-0 border-l border-border bg-background p-0 text-foreground shadow-[-28px_0_70px_rgba(0,0,0,0.45)] sm:max-w-none";
 
 function scrollToWaitlist(): boolean {
-  const target = document.getElementById("waitlist");
-  if (!target) return false;
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-  return true;
+  return scrollToLandingId("waitlist");
 }
 
 const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) => {
@@ -71,8 +68,9 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
     navigate("/");
   };
 
-  const joinList = () => {
+  const joinList = (location: string) => {
     setMobileOpen(false);
+    trackLandingCta(location);
     if (scrollToWaitlist()) return;
     navigate("/#waitlist");
   };
@@ -136,10 +134,10 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                   </Link>
                   <button
                     type="button"
-                    onClick={joinList}
+                    onClick={() => joinList("nav")}
                     className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
-                    Count me in
+                    Join the waitlist
                   </button>
                 </>
               ) : (
@@ -175,7 +173,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
             <SheetContent side="right" overlayClassName="z-[70] bg-black/60" className={sheetPanelClass}>
               <SheetTitle className="sr-only">Main menu</SheetTitle>
               <SheetDescription className="sr-only">
-                {user ? "Dashboard, account, preferences, and log out." : "Sign in or count me in."}
+                {user ? "Dashboard, account, preferences, and log out." : "Sign in or join the waitlist."}
               </SheetDescription>
               <div
                 className="shrink-0 border-b border-border bg-background px-5 pb-4 pr-16"
@@ -225,9 +223,9 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                       <LogIn className="h-5 w-5 shrink-0 text-primary" />
                       Sign in
                     </Link>
-                    <button type="button" onClick={joinList} className={sheetLinkClass}>
+                    <button type="button" onClick={() => joinList("nav_mobile")} className={sheetLinkClass}>
                       <Mail className="h-5 w-5 shrink-0 text-primary" />
-                      Count me in
+                      Join the waitlist
                     </button>
                   </>
                 )}
