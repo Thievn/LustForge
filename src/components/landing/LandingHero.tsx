@@ -19,7 +19,7 @@ export function LandingHero() {
   };
 
   return (
-    <header className="relative mx-auto grid max-w-6xl items-center gap-4 px-4 pb-2 pt-[max(4.6rem,calc(3.7rem+env(safe-area-inset-top)))] sm:gap-8 sm:px-6 sm:pb-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-14 lg:pb-16 lg:pt-[max(6.75rem,calc(5.4rem+env(safe-area-inset-top)))]">
+    <header className="relative mx-auto grid max-w-6xl items-center gap-3 px-4 pb-2 pt-[max(4.35rem,calc(3.45rem+env(safe-area-inset-top)))] sm:gap-8 sm:px-6 sm:pb-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-14 lg:pb-16 lg:pt-[max(6.75rem,calc(5.4rem+env(safe-area-inset-top)))]">
       <div className="mx-auto max-w-xl text-center lg:mx-0 lg:max-w-none lg:text-left">
         <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-primary">AI companion app · Adults 18+</p>
         <h1 className="mt-2.5 font-gothic text-[1.65rem] leading-[1.08] text-foreground min-[390px]:text-[1.85rem] sm:mt-4 sm:text-5xl lg:text-[3.4rem]">
@@ -36,7 +36,7 @@ export function LandingHero() {
             See how it works
           </button>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground/80 sm:text-xs">
+        <p className="mt-3 hidden text-[11px] leading-relaxed text-muted-foreground/80 sm:block sm:text-xs">
           Fictional characters. No account needed to join the list.
         </p>
       </div>

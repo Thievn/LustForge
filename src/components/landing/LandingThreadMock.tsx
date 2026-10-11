@@ -85,7 +85,7 @@ export function LandingThreadMock() {
   };
 
   return (
-    <div className="landing-phone-float relative mx-auto w-full">
+    <div className="relative mx-auto w-full">
       <span className="absolute -left-[3px] top-[5.6rem] h-7 w-[3px] rounded-l-sm bg-zinc-700 sm:top-[6.5rem]" />
       <span className="absolute -left-[3px] top-[7.6rem] h-11 w-[3px] rounded-l-sm bg-zinc-700 sm:top-[8.7rem]" />
       <span className="absolute -right-[3px] top-[6.4rem] h-14 w-[3px] rounded-r-sm bg-zinc-600 sm:top-[7.4rem] sm:h-16" />
