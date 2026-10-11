@@ -35,13 +35,13 @@ export default function WaitlistSection() {
       setEmail("");
 
       if (res.status === "duplicate") {
-        toast.success("You're already on the waitlist! 🎉", {
-          description: "You're still on the list. We will keep you posted.",
+        toast.success("You're already in.", {
+          description: "We'll write when you can create them.",
           duration: 5000,
         });
       } else {
-        toast.success("You're officially on the waitlist! 🎉", {
-          description: "We emailed you a confirmation.",
+        toast.success("You're in.", {
+          description: "We'll write when you can create them.",
           duration: 5000,
         });
       }
@@ -60,58 +60,59 @@ export default function WaitlistSection() {
 
     } catch (err: unknown) {
       console.error("Waitlist error:", err);
-      toast.error("Failed to join waitlist. Please try again.");
+      toast.error("That didn't go through. Try again in a moment.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <section id="waitlist" className="py-20 sm:py-24 px-4 relative">
-      <div className="absolute inset-x-0 bottom-0 h-32 pointer-events-none bg-gradient-to-t from-primary/[0.06] to-transparent" aria-hidden />
-      <div className="max-w-xl mx-auto relative z-10">
-        <div className="rounded-[1.75rem] border border-primary/35 bg-card/85 backdrop-blur-xl p-8 md:p-12 text-center glow-pink shadow-[0_0_60px_rgba(255,45,123,0.12)] ring-1 ring-white/[0.06]">
-          <Mail className="mx-auto h-10 w-10 text-primary mb-4" />
-          
-          <h2 className="font-gothic text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Join the <span className="gradient-vice-text">Waitlist</span>
+    <section id="waitlist" className="relative scroll-mt-28 px-4 py-16 sm:py-20">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-primary/[0.06] to-transparent" aria-hidden />
+      <div className="relative z-10 mx-auto max-w-xl">
+        <div className="rounded-[1.75rem] border border-border bg-card px-6 py-10 text-center shadow-[0_24px_60px_rgba(80,30,50,0.08)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.35)] md:px-12">
+          <Mail className="mx-auto mb-4 h-8 w-8 text-primary" />
+
+          <h2 className="mb-2 font-gothic text-2xl font-bold text-foreground md:text-3xl">
+            Be first to <span className="gradient-vice-text">make yours</span>
           </h2>
-          
-          <p className="text-muted-foreground/90 text-sm mb-6 leading-relaxed">
-            Get early access when we launch. No spam, ever.
+
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
+            Leave an email. We'll write when you can create them.
           </p>
 
           {isSuccess ? (
-            <div className="py-10 flex flex-col items-center gap-4">
-              <CheckCircle className="h-16 w-16 text-primary" />
-              <p className="text-2xl font-bold text-foreground">You're In! 🎉</p>
-              <p className="text-muted-foreground">We'll email you as soon as we open the gates.</p>
+            <div className="flex flex-col items-center gap-3 py-8">
+              <CheckCircle className="h-12 w-12 text-primary" />
+              <p className="font-gothic text-2xl text-foreground">You're in.</p>
+              <p className="text-sm text-muted-foreground">We'll write when you can create them.</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="Email"
+                  aria-label="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-black/25 border border-white/10 text-foreground text-sm placeholder:text-muted-foreground/80 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/25 transition-colors"
+                  className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground/80 transition-colors focus:border-primary/60 focus:outline-none focus:ring-1 focus:ring-primary/25"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-8 py-3 rounded-xl bg-primary text-primary-foreground font-bold glow-pink border border-white/10 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.99] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 min-w-[140px]"
+                className="flex min-h-12 min-w-[140px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:scale-[1.02] active:scale-[0.99] disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Joining...
+                    Joining
                   </>
                 ) : (
-                  "Join Waitlist"
+                  "Count me in"
                 )}
               </button>
             </form>

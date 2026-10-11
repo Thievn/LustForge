@@ -49,15 +49,17 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  overlayClassName?: string;
+}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
+  ({ side = "right", className, children, overlayClassName, ...props }, ref) => (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
         {children}
-        <SheetPrimitive.Close className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-zinc-900/90 opacity-95 ring-offset-background transition-opacity hover:bg-zinc-800 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none touch-manipulation shadow-lg">
+        <SheetPrimitive.Close className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-zinc-900/90 text-white opacity-95 ring-offset-background transition-opacity hover:bg-zinc-800 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none touch-manipulation shadow-lg">
           <X className="h-5 w-5" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>
