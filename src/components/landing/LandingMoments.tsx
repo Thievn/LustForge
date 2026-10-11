@@ -1,26 +1,26 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { Heart, Image as ImageIcon, MessageCircle, Phone } from "lucide-react";
+import { Image as ImageIcon, MessageCircle, Phone, Sparkles } from "lucide-react";
 
 const MOMENTS = [
   {
+    icon: Sparkles,
+    title: "Yours to create",
+    body: "The face, the personality, and the way they come on to you.",
+  },
+  {
     icon: MessageCircle,
-    title: "They text first",
-    body: "The thread opens with them. You only have to answer.",
+    title: "Talk that goes somewhere",
+    body: "Long conversations that stay with them, and don't go cold when you come back.",
   },
   {
     icon: ImageIcon,
-    title: "A picture, mid-thread",
-    body: "While you are still talking, a picture can land between the lines.",
+    title: "Pictures while it's hot",
+    body: "They send you something to look at while you're still in it.",
   },
   {
     icon: Phone,
-    title: "Hear them",
-    body: "Pick up when you want their voice, not only the words.",
-  },
-  {
-    icon: Heart,
-    title: "Make it physical",
-    body: "When you want them closer than the screen, the moment can follow.",
+    title: "Hear them. Feel them.",
+    body: "Their voice when you want it. And physical, when words aren't enough.",
   },
 ] as const;
 
@@ -31,7 +31,7 @@ export function LandingMoments() {
     <section className="px-4 pb-4 pt-16 sm:px-6 sm:pt-20" aria-labelledby="landing-moments-heading">
       <div className="mx-auto max-w-6xl">
         <h2 id="landing-moments-heading" className="text-center font-gothic text-2xl text-foreground sm:text-3xl">
-          Once the thread starts
+          What it's like with them
         </h2>
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {MOMENTS.map((moment, index) => {

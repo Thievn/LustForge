@@ -139,7 +139,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                     onClick={joinList}
                     className="inline-flex min-h-10 items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
-                    Join the list
+                    Count me in
                   </button>
                 </>
               ) : (
@@ -175,7 +175,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
             <SheetContent side="right" overlayClassName="z-[70] bg-black/60" className={sheetPanelClass}>
               <SheetTitle className="sr-only">Main menu</SheetTitle>
               <SheetDescription className="sr-only">
-                {user ? "Dashboard, account, preferences, and log out." : "Sign in or join the list."}
+                {user ? "Dashboard, account, preferences, and log out." : "Sign in or count me in."}
               </SheetDescription>
               <div
                 className="shrink-0 border-b border-border bg-background px-5 pb-4 pr-16"
@@ -227,7 +227,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                     </Link>
                     <button type="button" onClick={joinList} className={sheetLinkClass}>
                       <Mail className="h-5 w-5 shrink-0 text-primary" />
-                      Join the list
+                      Count me in
                     </button>
                   </>
                 )}

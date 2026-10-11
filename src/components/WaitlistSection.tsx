@@ -35,13 +35,13 @@ export default function WaitlistSection() {
       setEmail("");
 
       if (res.status === "duplicate") {
-        toast.success("You're already on the list.", {
-          description: "We'll write when it's time.",
+        toast.success("You're already in.", {
+          description: "We'll write when you can create them.",
           duration: 5000,
         });
       } else {
-        toast.success("You're on the list.", {
-          description: "We'll write when it's time.",
+        toast.success("You're in.", {
+          description: "We'll write when you can create them.",
           duration: 5000,
         });
       }
@@ -74,18 +74,18 @@ export default function WaitlistSection() {
           <Mail className="mx-auto mb-4 h-8 w-8 text-primary" />
 
           <h2 className="mb-2 font-gothic text-2xl font-bold text-foreground md:text-3xl">
-            Leave your name <span className="gradient-vice-text">on the list</span>
+            Be first to <span className="gradient-vice-text">make yours</span>
           </h2>
 
           <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-            An email is enough. We'll write when there's a place for you.
+            Leave an email. We'll write when you can create them.
           </p>
 
           {isSuccess ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle className="h-12 w-12 text-primary" />
-              <p className="font-gothic text-2xl text-foreground">You're on the list.</p>
-              <p className="text-sm text-muted-foreground">We'll write when it's time.</p>
+              <p className="font-gothic text-2xl text-foreground">You're in.</p>
+              <p className="text-sm text-muted-foreground">We'll write when you can create them.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
@@ -112,7 +112,7 @@ export default function WaitlistSection() {
                     Joining
                   </>
                 ) : (
-                  "Join the list"
+                  "Count me in"
                 )}
               </button>
             </form>

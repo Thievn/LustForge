@@ -85,7 +85,7 @@ export function LandingPortraitReel() {
     <section className="px-4 pb-4 pt-8 sm:px-6 sm:pt-12" aria-labelledby="landing-examples-heading">
       <div className="mx-auto max-w-6xl">
         <h2 id="landing-examples-heading" className="text-center font-gothic text-2xl text-foreground sm:text-3xl">
-          People you can meet
+          A few already waiting
         </h2>
 
         <div
