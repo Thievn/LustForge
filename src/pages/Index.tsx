@@ -3,14 +3,12 @@ import { useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { LandingAtmosphere } from "@/components/landing/LandingAtmosphere";
 import { LandingFaq } from "@/components/landing/LandingFaq";
-import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
-import { LandingPortraitReel } from "@/components/landing/LandingPortraitReel";
 import { LandingPricing } from "@/components/landing/LandingPricing";
+import { LandingStory } from "@/components/landing/LandingStory";
+import { LandingExampleTexts } from "@/components/landing/LandingExampleTexts";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
-import { LandingTrust } from "@/components/landing/LandingTrust";
 import WaitlistSection from "@/components/WaitlistSection";
 import { scrollToLandingId } from "@/lib/landingScroll";
 
@@ -30,11 +28,9 @@ const Index = () => {
         <Navbar variant="landing" />
         <main>
           <LandingHero />
-          <LandingPortraitReel />
-          <LandingHowItWorks />
-          <LandingFeatures />
+          <LandingStory />
+          <LandingExampleTexts />
           <LandingTestimonials />
-          <LandingTrust />
           <LandingPricing />
           <LandingFaq />
           <WaitlistSection />

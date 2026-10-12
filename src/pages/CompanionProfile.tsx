@@ -1284,6 +1284,16 @@ const CompanionProfile = () => {
                     type="button"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(`/messages/${companion.id}`)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-card/70 px-5 py-3 text-sm font-bold text-foreground backdrop-blur-md touch-manipulation max-md:min-h-[48px]"
+                  >
+                    <MessageCircle className="h-5 w-5 shrink-0 text-primary" />
+                    Phone thread
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleQuickLiveCall()}
                     className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-card/70 px-5 py-3 text-sm font-bold text-primary backdrop-blur-md touch-manipulation max-md:min-h-[48px]"
                   >

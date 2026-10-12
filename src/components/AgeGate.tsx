@@ -80,9 +80,9 @@ export default function AgeGate({ onConfirm }: AgeGateProps) {
         >
           18+
         </h1>
-        <p id="age-gate-desc" className="mx-auto mb-8 max-w-sm text-pretty text-sm leading-relaxed text-muted-foreground">
+        <p id="age-gate-desc" className="mx-auto mb-8 max-w-sm text-pretty text-sm leading-relaxed text-white/85">
           This experience contains mature themes, AI companions, and optional intimate hardware integration. You must be{" "}
-          <span className="text-foreground/90">18 or older</span> to continue.
+          <span className="font-semibold text-white">18 or older</span> to continue. Every companion is a fictional consenting adult, 21 or older.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
@@ -100,13 +100,13 @@ export default function AgeGate({ onConfirm }: AgeGateProps) {
           <button
             type="button"
             onClick={handleDeny}
-            className="min-h-[48px] flex-1 rounded-2xl border border-white/15 bg-white/[0.05] px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-[hsl(170_80%_45%)]/45 hover:bg-[hsl(170_80%_45%)]/10 hover:text-foreground sm:flex-none sm:min-w-[168px] touch-manipulation"
+            className="min-h-[48px] flex-1 rounded-2xl border border-white/30 bg-white/[0.08] px-6 py-3 text-sm font-medium text-white transition-colors hover:border-[hsl(170_80%_45%)]/45 hover:bg-[hsl(170_80%_45%)]/10 sm:flex-none sm:min-w-[168px] touch-manipulation"
           >
             Leave — under 18
           </button>
         </div>
 
-        <p className="mt-8 text-[11px] leading-relaxed text-muted-foreground/90">
+        <p className="mt-8 text-[11px] leading-relaxed text-white/80">
           By entering you acknowledge our{" "}
           <Link to="/terms-of-service" className="text-[#FF2D7B] underline-offset-2 hover:underline">
             Terms

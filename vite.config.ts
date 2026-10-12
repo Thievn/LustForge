@@ -67,7 +67,7 @@ export default defineConfig({
       manifest: {
         name: "LustForge",
         short_name: "LustForge",
-        description: "Cyber-goth AI companions — immersive roleplay. 18+ only.",
+        description: "LustForge — fictional adult companions, 21+. Users must be 18+.",
         theme_color: "#050508",
         background_color: "#050508",
         display: "standalone",

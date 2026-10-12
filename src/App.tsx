@@ -21,6 +21,13 @@ import { isPlatformAdmin } from "@/config/auth";
 import type { Session } from "@supabase/supabase-js";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PhoneHome = lazy(() => import("./components/phone/PhoneHome"));
+const MessagesList = lazy(() => import("./components/phone/MessagesList"));
+const PhoneThread = lazy(() => import("./components/phone/PhoneThread"));
+const LabFlow = lazy(() => import("./components/phone/LabFlow"));
+const GalleryView = lazy(() => import("./components/phone/GalleryView"));
+const PlansView = lazy(() => import("./components/phone/PlansView"));
+const CallsView = lazy(() => import("./components/phone/CallsView"));
 const Chat = lazy(() => import("./pages/Chat"));
 const CompanionProfile = lazy(() => import("./pages/CompanionProfile"));
 const CompanionCreator = lazy(() => import("./pages/CompanionCreator"));
@@ -60,12 +67,19 @@ function GlobalThemeToggle() {
     pathname.startsWith("/companions/") ||
     pathname === "/settings" ||
     pathname === "/toys" ||
-    pathname.startsWith("/chat");
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/messages") ||
+    pathname.startsWith("/lab") ||
+    pathname.startsWith("/gallery") ||
+    pathname.startsWith("/plans") ||
+    pathname.startsWith("/calls") ||
+    pathname === "/dashboard" ||
+    pathname === "/auth" ||
+    pathname === "/account";
   if (chromeHasToggle) return null;
-  const dashboard = pathname === "/dashboard";
   return (
     <div
-      className={dashboard ? "fixed right-3 z-[80] md:hidden" : "fixed right-3 z-[80]"}
+      className="fixed right-3 z-[80]"
       style={{ top: "max(0.55rem, env(safe-area-inset-top, 0px))" }}
     >
       <ThemeToggle />
@@ -178,6 +192,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return () => listener?.subscription.unsubscribe();
   }, [navigate, location.pathname]);
 
+  if (location.pathname === "/account" && location.search.includes("preview=1")) {
+    return <>{children}</>;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -236,14 +254,21 @@ function App() {
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/18-plus-disclaimer" element={<EighteenPlusDisclaimer />} />
+              <Route path="/dashboard" element={<PhoneHome />} />
               <Route
-                path="/dashboard"
+                path="/vault"
                 element={
                   <ProtectedRoute>
                     <Dashboard />
                   </ProtectedRoute>
                 }
               />
+              <Route path="/messages" element={<MessagesList />} />
+              <Route path="/messages/:id" element={<PhoneThread />} />
+              <Route path="/lab" element={<LabFlow />} />
+              <Route path="/gallery" element={<GalleryView />} />
+              <Route path="/plans" element={<PlansView />} />
+              <Route path="/calls" element={<CallsView />} />
               <Route
                 path="/chat/:id"
                 element={

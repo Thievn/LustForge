@@ -9,8 +9,8 @@ export function LandingFaq() {
         <LandingHeading
           id="faq-heading"
           eyebrow="FAQ"
-          title="Questions, answered plainly"
-          lede="The short version. Policies and the app itself are the long version."
+          title="Questions"
+          lede="Short answers. The policies have the longer version."
         />
         <Accordion type="single" collapsible className="mt-8 rounded-[1.4rem] border border-border bg-card/80 px-4 sm:px-6">
           {LANDING_FAQ.map((item) => (
