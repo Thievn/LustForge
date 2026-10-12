@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import { FORGE_COIN_PACKS } from "@/data/forgeCoinPacks";
 import { CREDIT_PACKS, PLANS } from "@/lib/phone/pricing";
 import { LANDING_FAQ } from "@/data/landingFaq";
-import { LANDING_TESTIMONIAL_LABEL, LANDING_TESTIMONIALS } from "@/data/landingTestimonials";
+import { LANDING_EXAMPLE_TEXTS } from "@/data/landingExampleTexts";
+import { LANDING_TESTIMONIALS } from "@/data/landingTestimonials";
 
 describe("landing content", () => {
   it("keeps Forge Coin packs aligned with the BuyCredits edge function", () => {
@@ -19,14 +20,15 @@ describe("landing content", () => {
     }
   });
 
-  it("labels sample impressions and uses plain first-name last-initial names", () => {
-    expect(LANDING_TESTIMONIAL_LABEL).toBe("Early beta impressions (sample)");
-    expect(LANDING_TESTIMONIALS.length).toBeGreaterThanOrEqual(4);
-    expect(LANDING_TESTIMONIALS.length).toBeLessThanOrEqual(6);
-    for (const item of LANDING_TESTIMONIALS) {
-      expect(item.name).toMatch(/^[A-Z][a-z]+ [A-Z]\.$/);
-      expect(item.quote.length).toBeGreaterThan(40);
-    }
+  it("hides testimonials until real quotes exist and labels sample texts as examples", () => {
+    expect(LANDING_TESTIMONIALS).toEqual([]);
+    const testimonials = readFileSync(resolve(process.cwd(), "src/components/landing/LandingTestimonials.tsx"), "utf8");
+    expect(testimonials).toContain("LANDING_TESTIMONIALS.length === 0");
+    expect(testimonials).toContain("return null");
+    expect(LANDING_EXAMPLE_TEXTS.length).toBeGreaterThanOrEqual(3);
+    const examples = readFileSync(resolve(process.cwd(), "src/components/landing/LandingExampleTexts.tsx"), "utf8");
+    expect(examples).toMatch(/not quotes from customers/i);
+    expect(examples).not.toMatch(/Maya R\.|Jordan P\.|Elena V\./);
   });
 
   it("previews launch plans in flirty copy and keeps the sample label nearby", () => {

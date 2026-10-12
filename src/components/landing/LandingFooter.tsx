@@ -5,7 +5,7 @@ export function LandingFooter() {
   return (
     <footer className="mt-4 border-t border-border px-4 py-12">
       <div className="mx-auto max-w-3xl space-y-4 text-center text-xs leading-relaxed text-muted-foreground">
-        <p>Adults only, 18 and over. Companions on LustForge are fictional AI characters, and they are yours to make.</p>
+        <p>Adults only, 18 and over. Companions are fictional AI characters. You make them.</p>
         <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
           <Link to="/terms-of-service" className="text-foreground/80 underline-offset-2 hover:underline">
             Terms

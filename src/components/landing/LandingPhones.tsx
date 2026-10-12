@@ -89,7 +89,7 @@ export function HomePhone() {
               </span>
               <div>
                 <p className="font-gothic text-lg leading-none">Ivy</p>
-                <p className="text-[11px] text-white/75">After midnight, still wide awake.</p>
+                <p className="text-[11px] text-white/75">Morning text set for 7:02.</p>
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export function LabPhone() {
             </div>
           ))}
         </div>
-        <p className="mt-auto rounded-2xl bg-[#ff2d7b] py-2.5 text-center text-sm font-semibold">Next · name her</p>
+        <p className="mt-auto rounded-2xl bg-[#ff2d7b] py-2.5 text-center text-sm font-semibold">Next: name her</p>
       </div>
     </LandingPhone>
   );

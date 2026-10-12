@@ -10,12 +10,8 @@ export function LandingPricing() {
         <LandingHeading
           id="pricing-heading"
           eyebrow="At launch"
-          title={
-            <>
-              Plans with a pulse, <span className="gradient-vice-text">not a checkout</span>
-            </>
-          }
-          lede="Ember, Blaze, and Inferno, plus credit packs. Marked at launch because the waitlist is not a store. Planned for the first names: founding-member pricing and bonus credits when the doors open."
+          title="Prices when billing opens"
+          lede="Ember, Blaze, and Inferno, plus credit packs. You cannot buy them on this page. We plan to give early waitlist emails a lower price and bonus credits. Joining the list does not charge you."
         />
 
         <ul className="mt-10 grid gap-3 lg:grid-cols-3">
@@ -60,7 +56,7 @@ export function LandingPricing() {
         </ul>
 
         <p className="mt-8 text-center">
-          <LandingCta location="pricing">Claim a founding place</LandingCta>
+          <LandingCta location="pricing">Join for the early price</LandingCta>
         </p>
       </div>
     </section>

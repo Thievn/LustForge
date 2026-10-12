@@ -7,6 +7,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingPricing } from "@/components/landing/LandingPricing";
 import { LandingStory } from "@/components/landing/LandingStory";
+import { LandingExampleTexts } from "@/components/landing/LandingExampleTexts";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
 import WaitlistSection from "@/components/WaitlistSection";
 import { scrollToLandingId } from "@/lib/landingScroll";
@@ -28,6 +29,7 @@ const Index = () => {
         <main>
           <LandingHero />
           <LandingStory />
+          <LandingExampleTexts />
           <LandingTestimonials />
           <LandingPricing />
           <LandingFaq />

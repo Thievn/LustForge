@@ -35,13 +35,13 @@ export default function WaitlistSection() {
       setEmail("");
 
       if (res.status === "duplicate") {
-        toast.success("You're already in.", {
-          description: "We'll write when you can create them.",
+        toast.success("That email is already on the list.", {
+          description: "We'll email you when you can sign up.",
           duration: 5000,
         });
       } else {
-        toast.success("You're in.", {
-          description: "We'll write when you can create them.",
+        toast.success("You're on the list.", {
+          description: "We'll email you when you can sign up.",
           duration: 5000,
         });
       }
@@ -74,21 +74,21 @@ export default function WaitlistSection() {
           <Mail className="mx-auto mb-4 h-8 w-8 text-primary" />
 
           <h2 className="mb-2 font-gothic text-2xl font-bold text-foreground md:text-3xl">
-            Get in before <span className="gradient-vice-text">she does</span>
+            Join the <span className="gradient-vice-text">waitlist</span>
           </h2>
 
           <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-            Adults 18+ only. Leave your email. We’ll write when you can make her.
+            Adults 18+ only. Leave your email. We will write when you can make a companion.
           </p>
           <p className="mb-6 text-xs leading-relaxed text-muted-foreground">
-            Planned for early names: founding-member pricing and bonus credits when plans open. The list is the front of the line, not a charge.
+            We plan to give early signups a lower price and bonus credits when plans open. This form does not charge you.
           </p>
 
           {isSuccess ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle className="h-12 w-12 text-primary" />
-              <p className="font-gothic text-2xl text-foreground">You're in.</p>
-              <p className="text-sm text-muted-foreground">We'll write when you can create them.</p>
+              <p className="font-gothic text-2xl text-foreground">You&apos;re on the list.</p>
+              <p className="text-sm text-muted-foreground">We&apos;ll email you when you can sign up.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
@@ -115,7 +115,7 @@ export default function WaitlistSection() {
                     Joining
                   </>
                 ) : (
-                  "Count me in"
+                  "Join the waitlist"
                 )}
               </button>
             </form>
