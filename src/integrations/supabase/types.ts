@@ -750,6 +750,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_loop_video_jobs: {
+        Row: {
+          companion_id: string
+          created_at: string
+          id: string
+          public_url: string | null
+          status: string
+          user_id: string
+          xai_video_url: string | null
+        }
+        Insert: {
+          companion_id: string
+          created_at?: string
+          id?: string
+          public_url?: string | null
+          status?: string
+          user_id: string
+          xai_video_url?: string | null
+        }
+        Update: {
+          companion_id?: string
+          created_at?: string
+          id?: string
+          public_url?: string | null
+          status?: string
+          user_id?: string
+          xai_video_url?: string | null
+        }
+        Relationships: []
+      }
       user_companion_portrait_overrides: {
         Row: {
           animated_portrait_url: string | null

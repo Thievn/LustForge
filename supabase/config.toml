@@ -96,6 +96,15 @@ verify_jwt = false
 [functions.waitlist-signup]
 verify_jwt = false
 
+[functions.phone-chat]
+verify_jwt = false
+
+[functions.image-dispatch]
+verify_jwt = false
+
+[functions.archive-external-images]
+verify_jwt = false
+
 # ---------------------------------------------------------------------------
 # Auth (hosted production — keep aligned with Dashboard; do not use local dev URLs here)
 # ---------------------------------------------------------------------------
