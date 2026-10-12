@@ -335,3 +335,26 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(330 100% 58%);
 }
+
+@keyframes lf-kenburns {
+  from { transform: scale(1.05) translate3d(0, 0, 0); }
+  to { transform: scale(1.16) translate3d(-2%, -1%, 0); }
+}
+.lf-kenburns {
+  animation: lf-kenburns 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes lf-presence-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px hsl(var(--primary) / 0.45), 0 0 14px hsl(var(--primary) / 0.35); }
+  50% { box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15), 0 0 22px hsl(var(--primary) / 0.55); }
+}
+.lf-presence, .lf-presence-hot {
+  border-radius: 1.15rem;
+  animation: lf-presence-pulse 2.4s ease-in-out infinite;
+}
+.lf-presence-hot {
+  animation-duration: 1.2s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-kenburns, .lf-presence, .lf-presence-hot { animation: none; }
+}

@@ -4,6 +4,7 @@ import { parseStructuredReply, splitBubbles } from "@/lib/phone/bubbles";
 import { matchPoseId } from "@/lib/phone/poses";
 import { CREDIT_COSTS, FREE_TIER, PLANS } from "@/lib/phone/pricing";
 import { displayableMediaUrl, isSupabaseStorageUrl, isTemporaryProviderUrl, needsStorageArchive } from "@/lib/phone/storageUrl";
+import { buildGrokPhoneRequest, replyTextFromGrok } from "@/lib/phone/grokPhoneChat";
 
 describe("adult guard", () => {
   it("blocks underage wording and ages under 21", () => {
@@ -44,6 +45,22 @@ describe("storage urls", () => {
     expect(isTemporaryProviderUrl(temp)).toBe(true);
     expect(displayableMediaUrl(temp, stored)).toBe(stored);
     expect(needsStorageArchive(temp)).toBe(true);
+  });
+});
+
+describe("grok phone chat", () => {
+  it("calls the live classic_chat function shape", () => {
+    const body = buildGrokPhoneRequest({
+      companionId: "c1",
+      companionName: "Mara",
+      systemPrompt: "Stay in character.",
+      messages: [{ role: "user", content: "hey" }],
+    });
+    expect(body.intent).toBe("classic_chat");
+    expect(body.companionId).toBe("c1");
+    expect(body.messages).toHaveLength(1);
+    expect(replyTextFromGrok({ response: "Come over." })).toBe("Come over.");
+    expect(replyTextFromGrok({ error: "nope" })).toBe("");
   });
 });
 

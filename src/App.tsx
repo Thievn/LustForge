@@ -72,12 +72,14 @@ function GlobalThemeToggle() {
     pathname.startsWith("/lab") ||
     pathname.startsWith("/gallery") ||
     pathname.startsWith("/plans") ||
-    pathname.startsWith("/calls");
+    pathname.startsWith("/calls") ||
+    pathname === "/dashboard" ||
+    pathname === "/auth" ||
+    pathname === "/account";
   if (chromeHasToggle) return null;
-  const dashboard = pathname === "/dashboard";
   return (
     <div
-      className={dashboard ? "fixed right-3 z-[80] md:hidden" : "fixed right-3 z-[80]"}
+      className="fixed right-3 z-[80]"
       style={{ top: "max(0.55rem, env(safe-area-inset-top, 0px))" }}
     >
       <ThemeToggle />
@@ -189,6 +191,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
     return () => listener?.subscription.unsubscribe();
   }, [navigate, location.pathname]);
+
+  if (location.pathname === "/account" && location.search.includes("preview=1")) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (

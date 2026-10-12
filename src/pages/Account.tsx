@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Coins, Download, History, LogOut, Save, Shield, Sparkles, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,21 +24,34 @@ const NEON = "#FF2D7B";
 
 export default function Account() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const preview = params.get("preview") === "1";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const walletQuery = useProfileWallet(sessionUserId ?? undefined);
-  const tokens =
-    walletQuery.isLoading && !walletQuery.data ? null : (walletQuery.data?.tokens_balance ?? null);
+  const tokens = preview
+    ? 1200
+    : walletQuery.isLoading && !walletQuery.data
+      ? null
+      : (walletQuery.data?.tokens_balance ?? null);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [accountTab, setAccountTab] = useState<"account" | "history">("account");
   const [txLoading, setTxLoading] = useState(false);
   const [txRows, setTxRows] = useState<UserTransactionRow[]>([]);
   const [purchaseRows, setPurchaseRows] = useState<FcOrderRow[]>([]);
+  const [planLabel, setPlanLabel] = useState("Member");
 
   const load = useCallback(async () => {
+    if (preview) {
+      setEmail("preview@lustforge.app");
+      setUsername("Preview");
+      setPlanLabel("inferno");
+      setLoading(false);
+      return;
+    }
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -57,8 +70,23 @@ export default function Account() {
       .maybeSingle();
     const fromProfile = profile?.display_name?.trim();
     setUsername(fromProfile || meta?.username?.trim() || meta?.full_name?.trim() || "");
+    const planRow = await (supabase as unknown as {
+      from: (table: string) => {
+        select: (cols: string) => {
+          eq: (col: string, val: string) => {
+            maybeSingle: () => Promise<{ data: { plan?: string } | null; error: unknown }>;
+          };
+        };
+      };
+    })
+      .from("profiles")
+      .select("plan")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    const plan = !planRow.error ? planRow.data?.plan : null;
+    if (plan) setPlanLabel(plan);
     setLoading(false);
-  }, [navigate]);
+  }, [navigate, preview]);
 
   useEffect(() => {
     void load();
@@ -153,13 +181,13 @@ export default function Account() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050508] flex items-center justify-center font-sans">
-        <p className="text-sm text-muted-foreground tracking-wide">Loading your vault…</p>
+        <p className="text-sm text-white/75 tracking-wide">Loading your vault…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-foreground font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-[#050508] text-white font-sans relative overflow-hidden">
       <ParticleBackground />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#FF2D7B]/[0.07] via-transparent to-[#0a1620]/80" />
       <div
@@ -171,7 +199,7 @@ export default function Account() {
       <div className="relative z-10 mx-auto max-w-lg px-4 py-10 md:py-14 pb-mobile-nav">
         <Link
           to="/dashboard"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-[#FF2D7B]"
+          className="mb-8 inline-flex items-center gap-2 text-sm text-white/80 transition-colors hover:text-[#FF2D7B]"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to dashboard
@@ -190,7 +218,7 @@ export default function Account() {
             </div>
             <div>
               <h1 className="font-gothic text-2xl md:text-3xl tracking-wide text-white">Account</h1>
-              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mt-1">Vault & identity</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-white/75 mt-1">Vault & identity</p>
             </div>
           </div>
           <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
@@ -206,7 +234,7 @@ export default function Account() {
                 onClick={() => setAccountTab("account")}
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-medium transition-colors",
-                  accountTab === "account" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground",
+                  accountTab === "account" ? "bg-white/10 text-white" : "text-white/75 hover:text-white",
                 )}
               >
                 Profile
@@ -216,7 +244,7 @@ export default function Account() {
                 onClick={() => setAccountTab("history")}
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors",
-                  accountTab === "history" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground",
+                  accountTab === "history" ? "bg-white/10 text-white" : "text-white/75 hover:text-white",
                 )}
               >
                 <History className="h-3.5 w-3.5" />
@@ -240,18 +268,21 @@ export default function Account() {
                 <Coins className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">
                   Forge Coin balance
                 </p>
+                <span className="mt-1 inline-flex rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-white">
+                  {planLabel}
+                </span>
                 <p className="font-gothic text-2xl text-white tabular-nums">
-                  {tokens ?? "—"} <span className="text-sm font-sans text-muted-foreground">FC</span>
+                  {tokens ?? "—"} <span className="text-sm font-sans text-white/75">FC</span>
                 </p>
               </div>
             </div>
           </div>
 
           <div className="mb-6 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">
               Hardware & sync
             </p>
             <ShopSyncableToysButton variant="promo" />
@@ -259,19 +290,19 @@ export default function Account() {
 
           <div className="space-y-6">
             <div>
-              <label className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              <label className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">
                 <UserRound className="h-3.5 w-3.5 text-[#FF2D7B]" />
                 Email
               </label>
-              <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-muted-foreground">{email || "—"}</div>
-              <p className="mt-2 text-xs text-muted-foreground/80">Email is tied to your sign-in and cannot be changed here.</p>
+              <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white/75">{email || "—"}</div>
+              <p className="mt-2 text-xs text-white/75">Email is tied to your sign-in and cannot be changed here.</p>
               {sessionUser && isPlatformAdmin(sessionUser, { profileDisplayName: username }) && (
-                <p className="mt-3 flex items-center gap-2 rounded-xl border border-[#FF2D7B]/25 bg-[#FF2D7B]/[0.06] px-3 py-2 text-xs text-muted-foreground">
+                <p className="mt-3 flex items-center gap-2 rounded-xl border border-[#FF2D7B]/25 bg-[#FF2D7B]/[0.06] px-3 py-2 text-xs text-white/75">
                   <Shield className="h-3.5 w-3.5 shrink-0 text-[#FF2D7B]" />
                   <span>
-                    <span className="text-foreground font-medium">Forge operator</span> — admin matches your allowed
+                    <span className="text-white font-medium">Forge operator</span> — admin matches your allowed
                     email (Gmail ignores dots), optional user id in env, and the reserved handle{" "}
-                    <span className="text-foreground">LustForge</span> only when paired with that same account.
+                    <span className="text-white">LustForge</span> only when paired with that same account.
                   </span>
                 </p>
               )}
@@ -280,7 +311,7 @@ export default function Account() {
             <div>
               <label
                 htmlFor="account-username"
-                className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75"
               >
                 <UserRound className="h-3.5 w-3.5 text-[hsl(170_100%_42%)]" />
                 Display username
@@ -291,13 +322,13 @@ export default function Account() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="How you appear in the forge"
                 className={cn(
-                  "w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/60",
+                  "w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3.5 text-sm text-white placeholder:text-white/50",
                   "focus:outline-none focus:border-[#FF2D7B]/50 focus:ring-2 focus:ring-[#FF2D7B]/20 transition-shadow",
                 )}
                 maxLength={40}
                 autoComplete="nickname"
               />
-              <p className="mt-2 text-xs text-muted-foreground/80">
+              <p className="mt-2 text-xs text-white/75">
                 One-of-a-kind across the forge (case-insensitive): if you change or clear it, the old handle can be claimed
                 again. Shown in your dashboard greeting.
               </p>
@@ -326,9 +357,9 @@ export default function Account() {
             <div className="rounded-2xl border border-white/10 bg-black/35 px-4 py-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Download className="h-4 w-4 text-[#00E5C8]" />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Install app</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">Install app</p>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-white/75 leading-relaxed">
                 On your phone, add LustForge to your home screen for a full-screen app experience. iPhone: Safari →
                 Share → Add to Home Screen. Android: browser menu → Install app.
               </p>
@@ -350,7 +381,7 @@ export default function Account() {
               <button
                 type="button"
                 onClick={() => void signOut()}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-black/40 py-3.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-white/25 hover:bg-white/[0.04] transition-colors"
+                className="w-full flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-black/40 py-3.5 text-sm font-medium text-white/75 hover:text-white hover:border-white/25 hover:bg-white/[0.04] transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 Log out
@@ -361,18 +392,18 @@ export default function Account() {
           ) : (
             <div className="space-y-4">
               <div className="rounded-2xl border border-white/10 bg-black/35 px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Forge Coin ledger</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">Forge Coin ledger</p>
+                <p className="text-xs text-white/75 mt-1">
                   Spends and credits in Forge Coins (FC). Most recent first.
                 </p>
               </div>
               {purchaseRows.length > 0 ? (
                 <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Payments</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">Payments</p>
                   <ul className="space-y-1.5">
                     {purchaseRows.slice(0, 6).map((p) => (
                       <li key={p.id} className="text-xs flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/25 px-2.5 py-2">
-                        <span className="text-foreground/90">${p.usd_amount} → {p.fc_amount} FC</span>
+                        <span className="text-white/90">${p.usd_amount} → {p.fc_amount} FC</span>
                         <span className={cn(
                           "uppercase text-[10px] tracking-wider rounded-full border px-2 py-0.5",
                           p.payment_status === "completed" && "text-emerald-300 border-emerald-400/35 bg-emerald-500/10",
@@ -391,9 +422,9 @@ export default function Account() {
                 </div>
               ) : null}
               {txLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
+                <p className="text-sm text-white/75">Loading…</p>
               ) : txRows.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No transactions yet.</p>
+                <p className="text-sm text-white/75">No transactions yet.</p>
               ) : (
                 <ul className="max-h-[min(60vh,32rem)] overflow-y-auto space-y-2 pr-1">
                   {txRows.map((r) => {
@@ -406,10 +437,10 @@ export default function Account() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="text-xs font-medium text-foreground truncate">
+                            <p className="text-xs font-medium text-white truncate">
                               {r.description || r.transaction_type}
                             </p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                            <p className="text-[10px] text-white/75 mt-0.5">
                               {r.transaction_type} · {new Date(r.created_at).toLocaleString()}
                             </p>
                           </div>
@@ -423,7 +454,7 @@ export default function Account() {
                             {amount} FC
                           </span>
                         </div>
-                        <p className="text-[10px] text-muted-foreground/80 mt-1">Balance after: {r.balance_after} FC</p>
+                        <p className="text-[10px] text-white/75 mt-1">Balance after: {r.balance_after} FC</p>
                       </li>
                     );
                   })}

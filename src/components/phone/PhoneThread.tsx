@@ -9,6 +9,8 @@ import "@/components/phone/phone.css";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { minorReason } from "@/lib/phone/adultGuard";
 import { looksLikePictureAsk, parseStructuredReply } from "@/lib/phone/bubbles";
+import { buildGrokPhoneRequest, replyTextFromGrok } from "@/lib/phone/grokPhoneChat";
+import { messageFromFunctionsInvoke } from "@/lib/supabaseFunctionsError";
 import { PREVIEW_THREAD } from "@/lib/phone/previewData";
 import { readPhoneSkin } from "@/lib/phone/skin";
 import { parseStorageRef } from "@/lib/phone/storageUrl";
@@ -146,22 +148,23 @@ export default function PhoneThread() {
     });
 
     const history = [...messages, userBubble].map((item) => ({ role: item.role, content: item.content }));
-    const { data, error } = await supabase.functions.invoke("phone-chat", {
-      body: {
+    const { data, error } = await supabase.functions.invoke(
+      "grok-chat",
+      { body: buildGrokPhoneRequest({
         companionId: companion.id,
         companionName: companion.name,
         systemPrompt: buildSystem(companion),
         messages: history,
-      },
-    });
-    if (error || (data && typeof data === "object" && "error" in data && data.error)) {
-      const message = (data as { error?: string } | null)?.error || error?.message || "She could not answer just now.";
-      setNotice(message);
+      }) },
+    );
+    const replyText = replyTextFromGrok(data);
+    if (error || !replyText) {
+      setNotice(await messageFromFunctionsInvoke(error, data));
       setTyping(false);
       setSending(false);
       return;
     }
-    const parsed = parseStructuredReply(String((data as { content?: string }).content ?? ""));
+    const parsed = parseStructuredReply(replyText);
     const wantImage = Boolean(parsed.imageRequest) || looksLikePictureAsk(content);
     await revealBubbles(parsed.bubbles, companion.name);
     for (const bubble of parsed.bubbles) {
@@ -197,6 +200,9 @@ export default function PhoneThread() {
         storageBucket?: string;
         storagePath?: string;
       } | null;
+      if (image.error || payload?.error) {
+        setNotice(await messageFromFunctionsInvoke(image.error, image.data));
+      }
       const src = payload?.imageUrl ? await displayUrl(payload.imageUrl, payload.storageBucket, payload.storagePath) : null;
       setMessages((current) =>
         current.map((item) =>
@@ -366,13 +372,15 @@ export default function PhoneThread() {
           </AnimatePresence>
         </div>
 
-        {notice ? <p className="px-4 pb-1 text-center text-xs text-primary">{notice}</p> : null}
+        {notice ? (
+          <p className="mx-3 mb-1 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">{notice}</p>
+        ) : null}
         {limits.plan === "free" && !limits.catalogOwner ? (
           <p className="px-4 text-center text-[11px] text-muted-foreground">{limits.textsLeft} free texts left today</p>
         ) : null}
 
         <form
-          className="flex items-end gap-2 border-t border-border/70 px-3 py-2 pb-[max(0.6rem,env(safe-area-inset-bottom))]"
+          className="flex items-end gap-2 border-t border-white/10 bg-background/75 px-3 py-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-[0_-18px_40px_hsl(var(--primary)/0.16)] backdrop-blur-xl"
           onSubmit={(event) => {
             event.preventDefault();
             void send(draft);
@@ -391,7 +399,7 @@ export default function PhoneThread() {
             onChange={(event) => setDraft(event.target.value)}
             rows={1}
             placeholder={companion ? `Message ${companion.name}` : "Message"}
-            className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none ring-primary/40 placeholder:text-muted-foreground focus:ring-2"
+            className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-white/15 bg-card/80 px-3 py-2.5 text-sm text-foreground outline-none ring-primary/50 placeholder:text-foreground/45 focus:ring-2"
           />
           <button
             type="submit"

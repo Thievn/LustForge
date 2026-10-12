@@ -4,7 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { isPlatformAdmin } from "@/config/auth";
 import { dbToCompanion, mapSupabaseCustomCharacterRow, type DbCompanion } from "@/hooks/useCompanions";
 import type { Companion } from "@/data/companions";
+import { isLoopVideoStorageUrl } from "@/lib/companionMedia";
 import { PREVIEW_COMPANIONS } from "@/lib/phone/previewData";
+import { displayableMediaUrl, isTemporaryProviderUrl } from "@/lib/phone/storageUrl";
+
+export type RosterCompanion = Companion & { loopVideoUrl?: string | null };
 
 export type PhoneLimits = {
   plan: string;
@@ -29,7 +33,7 @@ const DEFAULT_LIMITS: PhoneLimits = {
 export function usePhoneRoster(preview: boolean) {
   const [user, setUser] = useState<User | null>(null);
   const [limits, setLimits] = useState<PhoneLimits>(DEFAULT_LIMITS);
-  const [companions, setCompanions] = useState<Companion[]>(preview ? PREVIEW_COMPANIONS : []);
+  const [companions, setCompanions] = useState<RosterCompanion[]>(preview ? PREVIEW_COMPANIONS : []);
   const [loading, setLoading] = useState(!preview);
 
   useEffect(() => {
@@ -116,8 +120,17 @@ export function usePhoneRoster(preview: boolean) {
   };
 }
 
+function loopVideoFromRow(row: Record<string, unknown>): string | null {
+  const raw = typeof row.animated_image_url === "string" ? row.animated_image_url : "";
+  const url = displayableMediaUrl(raw);
+  if (!url || isTemporaryProviderUrl(url)) return null;
+  if (isLoopVideoStorageUrl(url)) return url;
+  if (row.profile_loop_video_enabled === true && !/\.(png|jpe?g|webp|gif)(\?|$)/i.test(url)) return url;
+  return null;
+}
+
 /** Real companions live in custom_characters. The companions table is empty in production. */
-async function loadRoster(userId: string, catalogOwner: boolean): Promise<Companion[]> {
+async function loadRoster(userId: string, catalogOwner: boolean): Promise<RosterCompanion[]> {
   const own = await supabase
     .from("custom_characters")
     .select("*")
@@ -132,7 +145,10 @@ async function loadRoster(userId: string, catalogOwner: boolean): Promise<Compan
     }
   }
 
-  const mapped = rows.map((row) => dbToCompanion(mapSupabaseCustomCharacterRow(row)));
+  const mapped: RosterCompanion[] = rows.map((row) => ({
+    ...dbToCompanion(mapSupabaseCustomCharacterRow(row)),
+    loopVideoUrl: loopVideoFromRow(row),
+  }));
   const seen = new Set(mapped.map((item) => item.id));
   const stock = await supabase.from("companions").select("*").eq("is_active", true);
   if (!stock.error && stock.data?.length) {
@@ -142,7 +158,7 @@ async function loadRoster(userId: string, catalogOwner: boolean): Promise<Compan
         tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
         kinks: Array.isArray(row.kinks) ? (row.kinks as string[]) : [],
       });
-      if (!seen.has(companion.id)) mapped.push(companion);
+      if (!seen.has(companion.id)) mapped.push({ ...companion, loopVideoUrl: loopVideoFromRow(row) });
     }
   }
   return mapped;

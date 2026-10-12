@@ -216,7 +216,7 @@ export default function Auth() {
   };
 
   const inputClass =
-    "w-full pl-10 pr-4 py-3 rounded-xl border border-white/10 bg-black/45 text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#FF2D7B]/45 focus:ring-2 focus:ring-[#FF2D7B]/15 transition-shadow text-sm";
+    "w-full pl-10 pr-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder:text-white/55 focus:outline-none focus:border-[#FF2D7B]/70 focus:ring-2 focus:ring-[#FF2D7B]/25 transition-shadow text-sm";
 
   return (
     <div className="min-h-screen bg-[#050508] flex items-center justify-center py-14 px-4 relative overflow-hidden font-sans">
@@ -250,7 +250,7 @@ export default function Auth() {
           <h1 className="font-gothic text-2xl md:text-3xl tracking-wide text-white mb-1">
             <span style={{ color: NEON }}>LustForge</span>
           </h1>
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Access your empire</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/80">Access your empire</p>
         </div>
 
         {signUpOffered ? (
@@ -262,7 +262,7 @@ export default function Auth() {
                 "flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all",
                 mode === "signIn"
                   ? "text-white shadow-lg"
-                  : "text-muted-foreground hover:text-foreground/80",
+                  : "text-white/80 hover:text-foreground/80",
               )}
               style={
                 mode === "signIn"
@@ -282,7 +282,7 @@ export default function Auth() {
                 "flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all",
                 mode === "signUp"
                   ? "text-white shadow-lg"
-                  : "text-muted-foreground hover:text-foreground/80",
+                  : "text-white/80 hover:text-foreground/80",
               )}
               style={
                 mode === "signUp"
@@ -297,13 +297,13 @@ export default function Auth() {
             </button>
           </div>
         ) : (
-          <p className="mb-6 text-center text-[11px] text-muted-foreground leading-relaxed px-1">
+          <p className="mb-6 text-center text-[11px] text-white/80 leading-relaxed px-1">
             Sign-in only. New account registration is turned off in the app. You can also disable public signups in
             Supabase → Authentication → Providers.
           </p>
         )}
         {!publicSignup && signUpOffered ? (
-          <p className="mb-4 -mt-2 text-center text-[11px] text-muted-foreground/95 leading-relaxed px-1 border border-white/10 rounded-xl py-2 bg-black/30">
+          <p className="mb-4 -mt-2 text-center text-[11px] text-white/85 leading-relaxed px-1 border border-white/10 rounded-xl py-2 bg-black/30">
             Limited beta: new accounts are only for invited addresses. Already have an account? Use Sign in.
           </p>
         ) : null}
@@ -311,11 +311,11 @@ export default function Auth() {
         {mode === "signIn" ? (
           <form onSubmit={signInForm.handleSubmit(onSubmitSignIn)} className="space-y-4">
             <div>
-              <label htmlFor="auth-signin-identifier" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="auth-signin-identifier" className="block text-xs font-medium text-white/80 mb-1.5">
                 E-Mail/Username
               </label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/80 pointer-events-none" />
                 <input
                   id="auth-signin-identifier"
                   {...signInForm.register("identifier")}
@@ -331,11 +331,11 @@ export default function Auth() {
             </div>
 
             <div>
-              <label htmlFor="auth-signin-password" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="auth-signin-password" className="block text-xs font-medium text-white/80 mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/80 pointer-events-none" />
                 <input
                   id="auth-signin-password"
                   {...signInForm.register("password")}
@@ -347,7 +347,7 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-[hsl(170_100%_45%)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-white/80 hover:text-[hsl(170_100%_45%)] transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -359,7 +359,7 @@ export default function Auth() {
             </div>
 
             <div className="flex items-center justify-between gap-3 pt-1">
-              <label className="flex items-center gap-2 text-xs cursor-pointer select-none text-muted-foreground">
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none text-white/80">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -388,15 +388,15 @@ export default function Auth() {
         ) : (
           <form onSubmit={signUpForm.handleSubmit(onSubmitSignUp)} className="space-y-4">
             <div>
-              <label htmlFor="auth-signup-username" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="auth-signup-username" className="block text-xs font-medium text-white/80 mb-1.5">
                 Your username
               </label>
-              <p className="text-[10px] text-muted-foreground/90 mb-1.5 leading-snug">
+              <p className="text-[10px] text-white/80 mb-1.5 leading-snug">
                 Global handle — no duplicates (case-insensitive). Used for sign-in with E-Mail/Username. Freed if someone
                 renames or their account is removed.
               </p>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/80 pointer-events-none" />
                 <input
                   id="auth-signup-username"
                   {...signUpForm.register("username")}
@@ -412,11 +412,11 @@ export default function Auth() {
             </div>
 
             <div>
-              <label htmlFor="auth-signup-email" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="auth-signup-email" className="block text-xs font-medium text-white/80 mb-1.5">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/80 pointer-events-none" />
                 <input
                   id="auth-signup-email"
                   {...signUpForm.register("email")}
@@ -432,11 +432,11 @@ export default function Auth() {
             </div>
 
             <div>
-              <label htmlFor="auth-signup-password" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="auth-signup-password" className="block text-xs font-medium text-white/80 mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/80 pointer-events-none" />
                 <input
                   id="auth-signup-password"
                   {...signUpForm.register("password")}
@@ -448,7 +448,7 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-[hsl(170_100%_45%)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-white/80 hover:text-[hsl(170_100%_45%)] transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -460,11 +460,11 @@ export default function Auth() {
             </div>
 
             <div>
-              <label htmlFor="auth-signup-confirm" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="auth-signup-confirm" className="block text-xs font-medium text-white/80 mb-1.5">
                 Confirm password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/80 pointer-events-none" />
                 <input
                   id="auth-signup-confirm"
                   {...signUpForm.register("confirmPassword")}
@@ -476,7 +476,7 @@ export default function Auth() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-[hsl(170_100%_45%)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-white/80 hover:text-[hsl(170_100%_45%)] transition-colors"
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -487,7 +487,7 @@ export default function Auth() {
               )}
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none pt-1">
+            <label className="flex items-center gap-2 text-xs text-white/80 cursor-pointer select-none pt-1">
               <input
                 type="checkbox"
                 checked={rememberMe}
@@ -512,7 +512,7 @@ export default function Auth() {
         )}
 
         <div className="mt-8 text-center border-t border-white/10 pt-6">
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <p className="text-[11px] leading-relaxed text-white/80">
             By continuing you agree to our{" "}
             <Link to="/terms-of-service" className="text-[#FF2D7B] hover:underline underline-offset-2">
               Terms of Service

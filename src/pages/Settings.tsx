@@ -285,10 +285,13 @@ const Settings = () => {
 
       <div className="max-w-2xl mx-auto px-4 py-8 pb-mobile-nav relative z-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="font-gothic text-3xl font-bold text-foreground mb-2">Preferences</h1>
-          <p className="text-sm text-muted-foreground mb-8">
-            Safety, voice, call alerts, toys, and privacy — keep your vault tuned the way you like.
-          </p>
+          <div className="mb-8 rounded-3xl border border-primary/25 bg-card/80 p-5 shadow-[0_18px_50px_hsl(var(--primary)/0.08)] backdrop-blur-xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">Vault</p>
+            <h1 className="font-gothic text-3xl font-bold text-foreground">Preferences</h1>
+            <p className="mt-1 text-sm text-foreground/75">
+              Safety, voice, call alerts, toys, and privacy — keep your vault tuned the way you like.
+            </p>
+          </div>
 
           {/* Safety */}
           <div className="rounded-xl border border-border bg-card p-6 mb-6">

@@ -29,7 +29,8 @@ New in-chat Runpod images are uploaded to Storage before a `generated_images` ro
 
 ## Finished
 
-- Phone home, messages, thread (LustForge bubbles by default; iOS, Android, and Forge Noir are optional)
+- Phone home with custom app tiles, a Ken Burns or existing Storage loop wallpaper, a lock-screen note, and an online glow. Motion stops under `prefers-reduced-motion`
+- Messages and thread (LustForge bubbles by default; iOS, Android, and Forge Noir are optional). Signed-in sends call the existing `grok-chat` function with `intent: classic_chat`
 - Typing indicator, read receipts, multi-bubble pacing, photo placeholder
 - Lab: profile, edit, 5-step create
 - Gallery from the real image tables

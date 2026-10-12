@@ -45,7 +45,7 @@ export function PhoneStage({ children }: { children: ReactNode }) {
     <div className="relative min-h-[100dvh] bg-background text-foreground">
       <ParticleBackground />
       <div className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.16),transparent_55%)]" />
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col bg-background/90 shadow-[0_30px_90px_hsl(var(--primary)/0.14)] max-lg:bg-background lg:my-4 lg:min-h-[calc(100dvh-2rem)] lg:overflow-hidden lg:rounded-[1.8rem] lg:border lg:border-border lg:backdrop-blur-xl">
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background/80 shadow-[0_30px_90px_hsl(var(--primary)/0.14)] max-lg:bg-background lg:my-4 lg:min-h-[calc(100dvh-2rem)] lg:rounded-[1.8rem] lg:border lg:border-border lg:backdrop-blur-xl">
         {children}
       </div>
     </div>

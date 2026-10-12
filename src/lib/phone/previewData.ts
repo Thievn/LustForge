@@ -11,7 +11,7 @@ const base = {
   systemPrompt: "You are a fictional consenting adult, 21 or older.",
   appearanceReference: null,
   characterReference: null,
-  portraitUrl: null,
+  portraitUrl: "/og-image.jpg",
 };
 
 export const PREVIEW_COMPANIONS: Companion[] = [
