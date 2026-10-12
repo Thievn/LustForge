@@ -34,7 +34,7 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
   {
     id: "cost",
     question: "What does it cost?",
-    answer: `You get ${DAILY_FREE_CHAT_MESSAGES} free text messages a day. The pool resets at 3:00 a.m. Eastern. After that, each text is ${CHAT_MESSAGE_FC_AFTER_DAILY_FREE} Forge Coins. Packs start at $5. Creating a companion is ${FORGE_CREATE_COMPANION_FC} FC, a Moment is ${CHAT_IMAGE_LEWD_FC} FC, and Live Voice or Live Call is ${LIVE_VOICE_FC_PER_MINUTE} FC per started minute. Pay by card or crypto. It is not a subscription.`,
+    answer: `At launch: Ember $14.99, Blaze $24.99, and Inferno $39.99, plus credit packs. The waitlist is not checkout. The app also uses Forge Coins: ${DAILY_FREE_CHAT_MESSAGES} free texts a day, then ${CHAT_MESSAGE_FC_AFTER_DAILY_FREE} FC. Creating a companion is ${FORGE_CREATE_COMPANION_FC} FC, a Moment is ${CHAT_IMAGE_LEWD_FC} FC, and Live Voice is ${LIVE_VOICE_FC_PER_MINUTE} FC per started minute.`,
   },
   {
     id: "voice",
@@ -58,5 +58,11 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
     question: "What happens to my chats and my data?",
     answer:
       "Conversations are saved to your account so you can leave and pick them up, including from Chat History. We use your email for the waitlist or your account, and we don't sell personal data. Card numbers are handled by checkout — LustForge doesn't store them. The Privacy Policy has the full picture.",
+  },
+  {
+    id: "discreet",
+    question: "Can the notification stay discreet?",
+    answer:
+      "Yes. Alerts can show her name or just LustForge. You can also add LustForge to your home screen so it opens full screen, like an installed app.",
   },
 ];

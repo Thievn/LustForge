@@ -5,20 +5,33 @@ type IconName = "messages" | "lab" | "gallery" | "calls" | "plans" | "settings" 
 const GLAZE =
   "pointer-events-none absolute inset-0 rounded-[1.15rem] bg-[linear-gradient(160deg,rgba(255,255,255,0.55),transparent_42%,rgba(255,255,255,0.08)_70%,transparent)]";
 
-export function AppIconTile({ name, label }: { name: IconName; label: string }) {
+export function AppIconTile({
+  name,
+  label,
+  compact = false,
+  labelClassName = "text-foreground",
+}: {
+  name: IconName;
+  label: string;
+  compact?: boolean;
+  labelClassName?: string;
+}) {
   return (
-    <span className="flex flex-col items-center gap-2">
+    <span className={compact ? "flex flex-col items-center gap-1" : "flex flex-col items-center gap-2"}>
       <span
-        className="relative grid h-[3.35rem] w-[3.35rem] place-items-center overflow-hidden rounded-[1.15rem] shadow-[0_10px_22px_rgba(80,10,40,0.28),inset_0_1px_0_rgba(255,255,255,0.45)]"
+        className={
+          compact
+            ? "relative grid h-10 w-10 place-items-center overflow-hidden rounded-[0.8rem] shadow-[0_8px_16px_rgba(80,10,40,0.28),inset_0_1px_0_rgba(255,255,255,0.45)]"
+            : "relative grid h-[3.35rem] w-[3.35rem] place-items-center overflow-hidden rounded-[1.15rem] shadow-[0_10px_22px_rgba(80,10,40,0.28),inset_0_1px_0_rgba(255,255,255,0.45)]"
+        }
         style={{ background: fills[name] }}
       >
-        <span className={GLAZE} />
-        <span className="pointer-events-none absolute -bottom-2 left-1/2 h-6 w-8 -translate-x-1/2 rounded-full bg-black/25 blur-md" />
-        <svg viewBox="0 0 48 48" className="relative h-8 w-8 drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]" aria-hidden>
+        <span className={compact ? "pointer-events-none absolute inset-0 rounded-[0.8rem] bg-[linear-gradient(160deg,rgba(255,255,255,0.55),transparent_42%,rgba(255,255,255,0.08)_70%,transparent)]" : GLAZE} />
+        <svg viewBox="0 0 48 48" className={compact ? "relative h-6 w-6 drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]" : "relative h-8 w-8 drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)]"} aria-hidden>
           {glyphs[name]}
         </svg>
       </span>
-      <span className="text-[11px] font-medium tracking-wide text-foreground">{label}</span>
+      <span className={compact ? `text-[9px] font-medium tracking-wide ${labelClassName}` : `text-[11px] font-medium tracking-wide ${labelClassName}`}>{label}</span>
     </span>
   );
 }

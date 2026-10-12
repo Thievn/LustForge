@@ -74,11 +74,14 @@ export default function WaitlistSection() {
           <Mail className="mx-auto mb-4 h-8 w-8 text-primary" />
 
           <h2 className="mb-2 font-gothic text-2xl font-bold text-foreground md:text-3xl">
-            Be first to <span className="gradient-vice-text">make yours</span>
+            Get in before <span className="gradient-vice-text">she does</span>
           </h2>
 
-          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-            LustForge is an adults-only AI companion app. Leave your email — we'll write when you can create them.
+          <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+            Adults 18+ only. Leave your email. We’ll write when you can make her.
+          </p>
+          <p className="mb-6 text-xs leading-relaxed text-muted-foreground">
+            Planned for early names: founding-member pricing and bonus credits when plans open. The list is the front of the line, not a charge.
           </p>
 
           {isSuccess ? (
@@ -112,7 +115,7 @@ export default function WaitlistSection() {
                     Joining
                   </>
                 ) : (
-                  "Join the waitlist"
+                  "Count me in"
                 )}
               </button>
             </form>
