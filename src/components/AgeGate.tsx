@@ -82,7 +82,7 @@ export default function AgeGate({ onConfirm }: AgeGateProps) {
         </h1>
         <p id="age-gate-desc" className="mx-auto mb-8 max-w-sm text-pretty text-sm leading-relaxed text-muted-foreground">
           This experience contains mature themes, AI companions, and optional intimate hardware integration. You must be{" "}
-          <span className="text-foreground/90">18 or older</span> to continue.
+          <span className="text-foreground/90">18 or older</span> to continue. Every companion is a fictional consenting adult, 21 or older.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
