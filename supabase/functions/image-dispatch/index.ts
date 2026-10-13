@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireSessionUser, isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { ADULT_ANCHOR, minorReason } from "../_shared/adultGuard.ts";
-import { POSE_SET } from "../_shared/studioPoseIds.ts";
+import { SKELETON_POSE_SET } from "../_shared/studioPoseIds.ts";
 import { bytesFromImageUrl } from "../_shared/storageArchive.ts";
 import { persistImageBytes } from "../_shared/persistChatImage.ts";
 
@@ -187,7 +187,8 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join(", ");
     const explicitPose = String(body?.poseId ?? "").trim();
-    const poseId = POSE_SET.has(explicitPose) ? explicitPose : matchPose(`${body?.poseHint ?? ""} ${body?.userText ?? ""} ${scene}`);
+    const matched = matchPose(`${body?.poseHint ?? ""} ${body?.userText ?? ""} ${scene}`);
+    const poseId = SKELETON_POSE_SET.has(explicitPose) ? explicitPose : matched && SKELETON_POSE_SET.has(matched) ? matched : null;
     const seed = Number.isFinite(Number(body?.seed)) ? Number(body?.seed) : Math.floor(Math.random() * 1_000_000_000);
 
     let bytes: Uint8Array;

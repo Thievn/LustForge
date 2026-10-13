@@ -6,6 +6,7 @@ import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { parseStorageRef } from "@/lib/phone/storageUrl";
 import { pollStudioJobs, readFileAsJpeg, readStudioEdit, stitchOutfitRefs, studioEdit, studioEnhance, studioImport, StudioError } from "@/lib/studio/api";
 import { renderPosePng, type StudioPose } from "@/lib/studio/poses";
+import { poseThumbUrl } from "@/lib/studio/poseThumbs";
 import { quoteStackedEdit, stackedEditReady } from "../../../supabase/functions/_shared/stackedEdit";
 import { CompareSlider } from "@/components/studio/CompareSlider";
 import { MaskBrush } from "@/components/studio/MaskBrush";
@@ -235,7 +236,11 @@ export function EditTab() {
             </label>
           </div>
           <button type="button" onClick={() => setPoseOpen(true)} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border bg-background text-sm">
-            <ImageIcon className="h-4 w-4 text-primary" />
+            {pose && poseThumbUrl(pose.id) ? (
+              <img src={poseThumbUrl(pose.id) ?? ""} alt="" className="h-9 w-7 rounded-md bg-black object-contain" />
+            ) : (
+              <ImageIcon className="h-4 w-4 text-primary" />
+            )}
             {pose ? pose.name : "Choose a pose"}
           </button>
           {pose ? <button type="button" className="text-xs text-muted-foreground" onClick={() => setPose(null)}>Clear pose</button> : null}

@@ -6,7 +6,8 @@ import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { pollStudioJobs, stashStudioEdit, studioEnhance, studioGenerate, StudioError, type StudioJob } from "@/lib/studio/api";
 import { STUDIO_SCENES } from "@/lib/studio/options";
 import { CREATOR_DEFAULTS, CREATOR_FIELDS, CREATOR_STYLES, buildCreatorPrompt, creatorDims, type CreatorLook } from "@/lib/studio/creator";
-import { renderPosePng, STUDIO_POSES, type StudioPose } from "@/lib/studio/poses";
+import { renderPosePng, studioPoseById, type StudioPose } from "@/lib/studio/poses";
+import { poseThumbUrl } from "@/lib/studio/poseThumbs";
 import { Chip } from "@/components/studio/Sheet";
 import { PoseSheet } from "@/components/studio/PoseSheet";
 import { StudioEditWand } from "@/components/studio/EditWand";
@@ -137,7 +138,7 @@ export function CreateTab() {
         worn = String(composed.data?.prompt ?? "");
         wornPose = composed.data?.poseId ? String(composed.data.poseId) : null;
       }
-      const poseForSkeleton = pose ?? (wornPose ? STUDIO_POSES.find((item) => item.id === wornPose) ?? null : null);
+      const poseForSkeleton = pose ?? studioPoseById(wornPose);
       const poseDataUrl = poseForSkeleton ? await renderPosePng(poseForSkeleton) : null;
       const sized = creatorDims(look.aspect);
       const started = await studioGenerate({
@@ -321,7 +322,8 @@ export function CreateTab() {
           <button type="button" onClick={() => void enhance()} className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 text-sm">
             <Sparkles className="h-4 w-4 text-primary" /> Grok Enhance
           </button>
-          <button type="button" onClick={() => setPoseOpen(true)} className="h-12 flex-1 rounded-2xl border border-border bg-card/80 text-sm">
+          <button type="button" onClick={() => setPoseOpen(true)} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-border bg-card/80 text-sm">
+            {pose && poseThumbUrl(pose.id) ? <img src={poseThumbUrl(pose.id) ?? ""} alt="" className="h-9 w-7 rounded-md bg-black object-contain" /> : null}
             {pose ? pose.name : "Pose"}
           </button>
         </div>

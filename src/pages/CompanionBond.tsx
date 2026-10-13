@@ -9,6 +9,7 @@ import { STORYLINES, searchStorylines } from "@/lib/bond/storylines";
 import { awardMessageXp, applyStoryChoice, dailyLine, moodFor, nextStreak, tierForXp } from "@/lib/bond/logic";
 import { invokeWebPushSend } from "@/lib/invokeWebPushSend";
 import { studioGenerate } from "@/lib/studio/api";
+import { renderPosePngForId } from "@/lib/studio/poses";
 import { StyleHer } from "@/components/vault/StyleHer";
 
 type Memory = { id: string; body: string; feeling: string };
@@ -202,10 +203,12 @@ export default function CompanionBond() {
       setNotice(payload?.error || "She has nothing to wear yet.");
       return;
     }
+    const poseDataUrl = payload.poseId ? await renderPosePngForId(payload.poseId) : null;
     const started = await studioGenerate({
       companionId: id,
       builtPrompt: payload.prompt,
       poseId: payload.poseId,
+      poseDataUrl,
       variations: 1,
       prompt: "",
     });

@@ -257,6 +257,7 @@ export default function VelvetVault() {
             kind={reveal.kind}
             rarity={reveal.rarity}
             blurb={reveal.blurb}
+            poseId={reveal.poseId}
             onDone={() => setQueue((current) => current.slice(1))}
           />
         </Suspense>
@@ -286,7 +287,7 @@ function TreasureGrid({ items }: { items: PoolItem[] }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {items.map((item) => (
-        <Card key={item.id} name={item.name} kind={item.kind} rarity={item.rarity} blurb={item.blurb} owned={item.owned} percent={item.percent} isNew={item.isNew} />
+        <Card key={item.id} name={item.name} kind={item.kind} rarity={item.rarity} blurb={item.blurb} owned={item.owned} percent={item.percent} isNew={item.isNew} poseId={item.poseId} />
       ))}
     </div>
   );

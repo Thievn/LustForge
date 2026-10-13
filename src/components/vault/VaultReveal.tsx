@@ -12,12 +12,14 @@ export function VaultReveal({
   kind,
   rarity,
   blurb,
+  poseId,
   onDone,
 }: {
   name: string;
   kind: VaultCategory;
   rarity: VaultRarity;
   blurb: string;
+  poseId?: string | null;
   onDone: () => void;
 }) {
   const reduced = useReducedMotion();
@@ -151,7 +153,7 @@ export function VaultReveal({
         >
           <div className={`overflow-hidden rounded-[1.8rem] border border-white/20 shadow-[0_30px_80px_rgba(0,0,0,0.45)] ${obsession ? "obsession-card" : ""}`} style={obsession ? undefined : { boxShadow: `0 20px 70px ${tone.glow}` }}>
             <div className="aspect-[4/5]">
-              <TreasureArt kind={kind} rarity={rarity} />
+              <TreasureArt kind={kind} rarity={rarity} poseId={poseId} />
             </div>
             <div className="bg-[#12080e] px-4 py-4 text-center">
               <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: tone.from }}>{tone.label}</p>

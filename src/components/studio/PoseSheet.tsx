@@ -1,28 +1,12 @@
 import { useMemo, useState } from "react";
-import { POSE_CATEGORIES, STUDIO_POSES, poseLines, type StudioPose } from "@/lib/studio/poses";
+import { POSE_CATEGORIES, STUDIO_POSES, type StudioPose } from "@/lib/studio/poses";
+import { poseThumbUrl } from "@/lib/studio/poseThumbs";
 import { Chip, StudioSheet } from "@/components/studio/Sheet";
 
 export function PoseMark({ pose }: { pose: StudioPose }) {
-  const lines = poseLines(pose);
-  const head = lines[0];
-  return (
-    <svg viewBox="0 0 100 140" className="h-full w-full" aria-hidden>
-      <rect width="100" height="140" fill="#07040c" />
-      <circle cx={head.x1 * 100} cy={(head.y1 - 0.08) * 140} r="5" fill="#f4f4f5" />
-      {lines.map((line, index) => (
-        <line
-          key={index}
-          x1={line.x1 * 100}
-          y1={line.y1 * 140}
-          x2={line.x2 * 100}
-          y2={line.y2 * 140}
-          stroke={line.color}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-      ))}
-    </svg>
-  );
+  const src = poseThumbUrl(pose.id);
+  if (!src) return <div className="h-full w-full bg-black" />;
+  return <img src={src} alt="" className="h-full w-full bg-black object-contain" />;
 }
 
 export function PoseSheet({
