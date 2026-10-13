@@ -95,6 +95,25 @@ export function editLocksPixels(tool: string): boolean {
   return tool === "outfit" || tool === "brush" || tool === "fix";
 }
 
+const CLOTHING_RE = /\b(outfit|cloth(es|ing)|wear(ing)?|dress(ed)?|jacket|coat|hoodie|sweater|cardigan|shirt|t-?shirt|top|blouse|jeans|pants|trousers|skirt|shorts|uniform|suit|blazer|vest|leggings)\b/i;
+
+/** Orientation guard: stops Qwen from rendering the back of garments (rear prints, back pockets) on a front-facing person. */
+export const ORIENTATION_GUARD =
+  "Keep the person's exact pose and body orientation; the person faces the camera, so show the FRONT of all clothing " +
+  "(front of the jacket or top with its zipper/buttons/front panel, front of the jeans or pants with fly and front pockets); " +
+  "torso and hips face the same direction as the face. Do not show the back of any garment.";
+export const ORIENTATION_NEGATIVE = "back view of clothing, rear print, back pockets, twisted torso, reversed body, head on backwards";
+
+export function isClothingEdit(tool: string, text: string): boolean {
+  return tool === "outfit" || CLOTHING_RE.test(text);
+}
+
+/** Prefix + suffix the guard for outfit/clothing edits; other edits are returned unchanged. */
+export function withOrientationGuard(tool: string, instruction: string, userText = instruction): string {
+  if (!isClothingEdit(tool, userText)) return instruction;
+  return `${ORIENTATION_GUARD} ${instruction} Front view of the outfit, matching the face direction.`.trim();
+}
+
 /**
  * Qwen-Image-Edit-2511 + Lightning LoRA (4 steps, cfg 1), same graph as the Lab `qwenEdit()`
  * (lustforge-lab lib/workflows.js, comfy-serverless/PIXEL_PERFECT.md).
@@ -105,7 +124,7 @@ export function editLocksPixels(tool: string): boolean {
  */
 export function qwenEdit(
   prompt: string,
-  opts: { seed: number; denoise: number; images: EditImages; lock?: boolean },
+  opts: { seed: number; denoise: number; images: EditImages; lock?: boolean; negative?: string },
 ): Graph {
   const extra: string[] = [];
   if (opts.images.outfit) extra.push("outfit");
@@ -141,7 +160,7 @@ export function qwenEdit(
     prep: { class_type: "LFPrepareEdit", inputs: { image: ["subj", 0], multiple: 16, max_megapixels: 1.6 } },
     qLatent: { class_type: "VAEEncode", inputs: { pixels: ["prep", 0], vae: ["q6", 0] } },
     qPos: { class_type: "TextEncodeQwenImageEditPlus", inputs: enc(prompt) },
-    qNeg: { class_type: "TextEncodeQwenImageEditPlus", inputs: enc("") },
+    qNeg: { class_type: "TextEncodeQwenImageEditPlus", inputs: enc(opts.negative ?? "") },
     rPos: { class_type: "ReferenceLatent", inputs: { conditioning: ["qPos", 0], latent: ["qLatent", 0] } },
     rNeg: { class_type: "ReferenceLatent", inputs: { conditioning: ["qNeg", 0], latent: ["qLatent", 0] } },
     mPos: { class_type: "FluxKontextMultiReferenceLatentMethod", inputs: { conditioning: ["rPos", 0], reference_latents_method: "index_timestep_zero" } },

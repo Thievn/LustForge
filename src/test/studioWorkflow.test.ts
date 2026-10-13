@@ -67,3 +67,12 @@ describe("qwen edit workflow (matches Lab qwenEdit / PIXEL_PERFECT.md)", () => {
     expect(g.z7.inputs.model).toEqual(["p3", 0]);
   });
 });
+
+import { withOrientationGuard as guard } from "../../supabase/functions/_shared/studioWorkflows";
+describe("outfit orientation guard", () => {
+  it("guards outfit/clothing edits only", () => {
+    expect(guard("outfit", "x")).toContain("FRONT of all clothing");
+    expect(guard("prompt", "put her in a denim jacket")).toContain("FRONT of all clothing");
+    expect(guard("prompt", "make the sky purple")).toBe("make the sky purple");
+  });
+});

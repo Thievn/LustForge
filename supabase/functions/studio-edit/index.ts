@@ -8,7 +8,7 @@ import { submitWorkflow } from "../_shared/studioRunpod.ts";
 import { EXPLICIT_UPLOAD_MESSAGE, parseDataUrl, type SourceTag } from "../_shared/studioSafety.ts";
 import { poseCountsAsUpload, resolveImage, weakest } from "../_shared/studioStore.ts";
 import { POSE_SET } from "../_shared/studioPoseIds.ts";
-import { editLocksPixels, qwenEdit } from "../_shared/studioWorkflows.ts";
+import { editLocksPixels, isClothingEdit, ORIENTATION_NEGATIVE, qwenEdit, withOrientationGuard } from "../_shared/studioWorkflows.ts";
 
 function b64(bytes: Uint8Array): string {
   let binary = "";
@@ -100,6 +100,9 @@ Deno.serve(async (req) => {
     if (maskParsed) images.push({ name: "mask.png", image: b64(maskParsed.bytes) });
 
     const tool = String(body.tool ?? "prompt");
+    const userText = String(body.instruction ?? "");
+    const prompt = withOrientationGuard(tool, instruction, userText);
+    const negative = isClothingEdit(tool, userText) ? ORIENTATION_NEGATIVE : "";
     const flags = { outfit: Boolean(outfits[0]), pose: Boolean(poseBytes), mask: Boolean(maskParsed) };
     const lock = editLocksPixels(tool);
     const companionId = String(body.companionId ?? "").trim() || null;
@@ -109,7 +112,7 @@ Deno.serve(async (req) => {
     try {
       for (let i = 0; i < variations; i++) {
         const seed = baseSeed + i;
-        const workflow = qwenEdit(instruction, { seed, denoise: strength, images: flags, lock });
+        const workflow = qwenEdit(prompt, { seed, denoise: strength, images: flags, lock, negative });
         const runpodId = await submitWorkflow(workflow, images);
         const inserted = await svc.from("studio_jobs").insert({
           user_id: user.id,
@@ -117,7 +120,7 @@ Deno.serve(async (req) => {
           status: "IN_QUEUE",
           kind: "edit",
           source_tag: inherited,
-          prompt: instruction,
+          prompt,
           companion_id: companionId,
           charge_mode: charge.mode,
           seed,
