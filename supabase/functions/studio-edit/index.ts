@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { minorReason } from "../_shared/adultGuard.ts";
 import { chargeStudio, refundOne } from "../_shared/studioBilling.ts";
-import { textIsExplicit } from "../_shared/studioGrok.ts";
+import { classifyEditText } from "../_shared/studioGrok.ts";
 import { gate, json } from "../_shared/studioHttp.ts";
 import { isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { submitWorkflow } from "../_shared/studioRunpod.ts";
@@ -36,7 +36,7 @@ function instructionFor(body: Record<string, unknown>): { tool: string; text: st
   }
   if (tool === "background") return { tool, variations, text: `Replace the background with ${text || "a soft studio backdrop"}. Keep the person identical.` };
   if (tool === "outfit") return { tool, variations, text: `Change the outfit to match the reference. Keep the face identical. ${text}`.trim() };
-  if (tool === "pose") return { tool, variations, text: `Change the pose to match the skeleton reference. Keep the face and outfit. ${text}`.trim() };
+  if (tool === "pose") return { tool, variations, text: `Repose the person from image 1 so their whole body matches the stick-figure pose skeleton in image 2.${String(body.poseId ?? "").trim() ? ` Target pose: ${String(body.poseId).replace(/[^a-z0-9_]/gi, "").replace(/_/g, " ")}, full body in frame.` : ""} Keep the same face, hair, and outfit. ${text}`.trim() };
   if (tool === "brush") return { tool, variations, text: `Change only the white painted region. Leave everything else identical. ${text}`.trim() };
   return { tool, variations, text };
 }
@@ -88,7 +88,15 @@ Deno.serve(async (req) => {
     const blocked = minorReason(instruction);
     if (blocked) return json({ error: blocked, code: "MINOR_BLOCKED" }, 400);
 
-    const explicit = await textIsExplicit(instruction);
+    const posePhrase = poseId && POSE_SET.has(poseId) ? `pose: ${poseId.replace(/_/g, " ")}` : "";
+    const checkText = [
+      String(body.instruction ?? "").slice(0, 800),
+      String(body.background ?? "").slice(0, 300),
+      posePhrase,
+    ].map((part) => part.trim()).filter(Boolean).join(". ");
+    const check = await classifyEditText(checkText);
+    const explicit = check.explicit;
+    console.log(JSON.stringify({ fn: "studio-edit", explicitCheck: check.reason, explicit, detail: check.detail ?? null }));
     const sources: SourceTag[] = [subject.source, ...outfits.map((item) => item.source)];
     if (poseCountsAsUpload(poseId, poseBytes, POSE_SET)) sources.push("upload");
     const inherited = weakest(sources);
@@ -150,6 +158,7 @@ Deno.serve(async (req) => {
       credits: charge.credits,
       freeLeft: charge.freeLeft,
       explicit,
+      explicitCheck: check.reason,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

@@ -23,10 +23,15 @@ export function resolveStackedEdit(body: Record<string, unknown>): {
     else parts.push("Fix the face: natural adult features, symmetrical eyes. Keep identity, clothing, pose, and background.");
   }
   if (requested === "background" || backgroundText) {
-    parts.push(`Replace the background with ${backgroundText || userText || "a soft studio backdrop"}. Keep the person identical.`);
+    parts.push(`Replace the background with ${backgroundText || userText || "a soft studio backdrop"}. ${hasPose ? "Keep the person's face, hair, and outfit." : "Keep the person identical."}`);
   }
   if (outfitCount > 0) parts.push("Change the outfit to match the reference. Keep the face identical.");
-  if (hasPose) parts.push("Change the pose to match the skeleton reference. Keep the face and outfit.");
+  if (hasPose) {
+    const ref = outfitCount > 0 ? "image 3" : "image 2";
+    const poseName = String(body.poseId ?? "").trim().replace(/[^a-z0-9_]/gi, "").replace(/_/g, " ");
+    const named = poseName ? ` Target pose: ${poseName}, full body in frame.` : "";
+    parts.push(`Repose the person from image 1 so their whole body matches the stick-figure pose skeleton in ${ref}.${named} Keep the same face, hair, and outfit.`);
+  }
   if (hasMask) parts.push("Change only the white painted region. Leave everything else identical.");
   if (userText && (requested !== "background" || backgroundText)) parts.push(userText);
 
