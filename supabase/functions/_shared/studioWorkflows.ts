@@ -1,7 +1,10 @@
 /**
  * ComfyUI graphs for the LustForge Runpod worker.
  * `zimage` is the Lab graph (Z-Image Turbo, 8 steps, AuraFlow, lumina2 CLIP).
- * Pose adds ControlNet. Edits use Qwen-Image-Edit-2511 + the Lightning LoRA.
+ * Pose adds ControlNet.
+ * Edits use the Lab `qwenEdit()` graph from lustforge-lab commit e0b26ab:
+ * native resolution snapped to a multiple of 16, the same VAE latent as the
+ * reference (no 1MP resize), then optional PixelDriftFix + composite.
  * Model filenames can be overridden with STUDIO_* secrets if the volume differs.
  */
 
@@ -94,18 +97,31 @@ export type EditImages = {
 };
 
 /**
+ * Tools that keep the face and untouched pixels: outfit, painted region, fix.
+ * Pose changes and whole-image changes (background, style/prompt) skip
+ * PixelDriftFix and the composite back onto the original.
+ */
+export function editLocksPixels(tool: string): boolean {
+  return tool === "outfit" || tool === "brush" || tool === "fix";
+}
+
+/**
  * Qwen-Image-Edit-2511 + Lightning LoRA (4 steps, cfg 1).
  * Subject is `subject.png`. Optional outfit / pose / mask images are extra references.
+ * `lock` adds PixelDriftFix and LFPixelPerfect Composite. The prepare node and the
+ * exact reference latent stay on for every edit.
  */
 export function qwenEdit(
   prompt: string,
-  opts: { seed: number; denoise: number; images: EditImages },
+  opts: { seed: number; denoise: number; images: EditImages; lock?: boolean },
 ): Graph {
+  const prepareNode = envName("STUDIO_LF_PREPARE", "LFPixelPerfectPrepare");
+  const compositeNode = envName("STUDIO_LF_COMPOSITE", "LFPixelPerfectComposite");
+  const driftNode = envName("STUDIO_DRIFT_NODE", "PixelDriftFix");
   const imageInputs: Record<string, unknown> = {
     clip: ["q3", 0],
     prompt: `${prompt}\nAvoid: ${NEG}`,
-    vae: ["q4", 0],
-    image1: ["subj", 0],
+    image1: ["prep", 0],
   };
   if (opts.images.outfit) imageInputs.image2 = ["outfit", 0];
   else if (opts.images.pose) imageInputs.image2 = ["pose", 0];
@@ -138,14 +154,19 @@ export function qwenEdit(
     },
     q4: { class_type: "VAELoader", inputs: { vae_name: envName("STUDIO_QWEN_VAE", "qwen_image_vae.safetensors") } },
     subj: { class_type: "LoadImage", inputs: { image: "subject.png" } },
+    prep: {
+      class_type: prepareNode,
+      inputs: { image: ["subj", 0] },
+    },
     q6: { class_type: "TextEncodeQwenImageEditPlus", inputs: imageInputs },
+    qLatent: { class_type: "VAEEncode", inputs: { pixels: ["prep", 0], vae: ["q4", 0] } },
+    qRef: { class_type: "ReferenceLatent", inputs: { conditioning: ["q6", 0], latent: ["qLatent", 0] } },
     q7: { class_type: "ConditioningZeroOut", inputs: { conditioning: ["q6", 0] } },
-    qLatent: { class_type: "VAEEncode", inputs: { pixels: ["subj", 0], vae: ["q4", 0] } },
     q8: {
       class_type: "KSampler",
       inputs: {
         model: ["q2", 0],
-        positive: ["q6", 0],
+        positive: ["qRef", 0],
         negative: ["q7", 0],
         latent_image: ["qLatent", 0],
         seed: opts.seed,
@@ -162,5 +183,26 @@ export function qwenEdit(
   if (opts.images.outfit) graph.outfit = { class_type: "LoadImage", inputs: { image: "outfit.png" } };
   if (opts.images.pose) graph.pose = { class_type: "LoadImage", inputs: { image: "pose.png" } };
   if (opts.images.mask) graph.mask = { class_type: "LoadImage", inputs: { image: "mask.png" } };
+
+  if (opts.lock) {
+    graph.drift = {
+      class_type: driftNode,
+      inputs: {
+        source_image: ["prep", 0],
+        edited_image: ["q9", 0],
+        method: "flat_4_points",
+        max_mesh_points: 400,
+      },
+    };
+    graph.comp = {
+      class_type: compositeNode,
+      inputs: {
+        original: ["subj", 0],
+        edited: ["drift", 0],
+        ...(opts.images.mask ? { mask: ["mask", 0] } : {}),
+      },
+    };
+    graph.q10.inputs.images = ["comp", 0];
+  }
   return graph;
 }
