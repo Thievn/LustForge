@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 .vercel
 .env*.local
+
+# decoded from *.webp.b64 at build time
+src/assets/landing-gallery/*.webp
