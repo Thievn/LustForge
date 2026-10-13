@@ -1,15 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#f7f1ea" />
+    <meta name="theme-color" content="#050508" />
     <script>
       (function () {
         try {
           var theme = localStorage.getItem("lustforge-theme");
-          var dark = theme === "dark";
-          if (dark) document.documentElement.classList.add("dark");
+          // Dark by default; only an explicit "light" choice opts out.
+          var dark = theme !== "light";
+          document.documentElement.classList.toggle("dark", dark);
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.setAttribute("content", dark ? "#050508" : "#f7f1ea");
         } catch (e) {}

@@ -5,11 +5,12 @@ export type ThemeMode = "light" | "dark";
 const STORAGE_KEY = "lustforge-theme";
 
 function readTheme(): ThemeMode {
-  if (typeof window === "undefined") return "light";
+  // Dark is the default; only a saved explicit "light" choice switches it off.
+  if (typeof window === "undefined") return "dark";
   try {
-    return window.localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+    return window.localStorage.getItem(STORAGE_KEY) === "light" ? "light" : "dark";
   } catch {
-    return "light";
+    return "dark";
   }
 }
 
@@ -26,7 +27,7 @@ type ThemeContextValue = {
 };
 
 const ThemeContext = createContext<ThemeContextValue>({
-  mode: "light",
+  mode: "dark",
   toggle: () => {},
 });
 
@@ -35,15 +36,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyTheme(mode);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, mode);
-    } catch {
-      /* private mode */
-    }
   }, [mode]);
 
+  // Persist only when the visitor actually toggles, so the default stays dark for everyone else.
   const toggle = useCallback(() => {
-    setMode((current) => (current === "dark" ? "light" : "dark"));
+    setMode((current) => {
+      const next = current === "dark" ? "light" : "dark";
+      try {
+        window.localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
   }, []);
 
   const value = useMemo(() => ({ mode, toggle }), [mode, toggle]);
