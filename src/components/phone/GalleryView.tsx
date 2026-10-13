@@ -4,14 +4,28 @@ import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneEmpty, PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
+import { StudioEditWand } from "@/components/studio/EditWand";
 import { displayableMediaUrl, parseStorageRef } from "@/lib/phone/storageUrl";
 
-type Tile = { id: string; src: string; companionId: string | null; createdAt: string };
+type Source = "lab" | "character" | "upload";
+type Tile = {
+  id: string;
+  src: string;
+  storageUrl?: string;
+  companionId: string | null;
+  createdAt: string;
+  source: Source;
+};
+
+const PREVIEW_TILES: Tile[] = [
+  { id: "preview-1", src: "/og-image.png", companionId: "preview-ivy", createdAt: new Date().toISOString(), source: "character" },
+  { id: "preview-2", src: "/og-image.png", companionId: "preview-luna", createdAt: new Date().toISOString(), source: "lab" },
+];
 
 export default function GalleryView() {
   const preview = usePhonePreview();
   const { user, companions } = usePhoneRoster(preview);
-  const [tiles, setTiles] = useState<Tile[]>([]);
+  const [tiles, setTiles] = useState<Tile[]>(preview ? PREVIEW_TILES : []);
   const [loading, setLoading] = useState(!preview);
   const [active, setActive] = useState<Tile | null>(null);
   const [filter, setFilter] = useState<string>("all");
@@ -63,33 +77,34 @@ export default function GalleryView() {
       if (cancelled) return;
       const seen = new Set<string>();
       const next: Tile[] = [];
-      const push = async (id: string, raw: string | null | undefined, companionId: string | null, createdAt: string) => {
+      const push = async (id: string, raw: string | null | undefined, companionId: string | null, createdAt: string, source: Source) => {
         const chosen = displayableMediaUrl(raw);
         const src = await resolveSrc(chosen);
         if (!src || seen.has(src)) return;
         seen.add(src);
-        next.push({ id, src, companionId, createdAt });
+        const storageUrl = raw && parseStorageRef(raw) ? raw : chosen && parseStorageRef(chosen) ? chosen : undefined;
+        next.push({ id, src, storageUrl, companionId, createdAt, source });
       };
       for (const row of generated.data ?? []) {
         if (row.is_video) continue;
-        await push(row.id, row.image_url, row.companion_id, row.created_at);
+        await push(row.id, row.image_url, row.companion_id, row.created_at, "lab");
       }
       for (const row of portraits.data ?? []) {
-        await push(row.id, row.image_url, null, row.created_at);
+        await push(row.id, row.image_url, null, row.created_at, "character");
       }
       for (const row of overrides.data ?? []) {
-        await push(`${row.user_id}-${row.companion_id}-still`, row.portrait_url, row.companion_id, row.updated_at);
-        await push(`${row.user_id}-${row.companion_id}-loop`, row.animated_portrait_url, row.companion_id, row.updated_at);
+        await push(`${row.user_id}-${row.companion_id}-still`, row.portrait_url, row.companion_id, row.updated_at, "character");
+        await push(`${row.user_id}-${row.companion_id}-loop`, row.animated_portrait_url, row.companion_id, row.updated_at, "character");
       }
       for (const row of loops.data ?? []) {
-        await push(row.id, row.public_url, row.companion_id, row.created_at);
+        await push(row.id, row.public_url, row.companion_id, row.created_at, "lab");
       }
       for (const row of characters.data ?? []) {
         const still = displayableMediaUrl(row.static_image_url, row.image_url, row.avatar_url);
-        await push(`cc-${row.id}`, still, `cc-${row.id}`, row.created_at);
+        await push(`cc-${row.id}`, still, `cc-${row.id}`, row.created_at, "character");
       }
       for (const row of messages.data ?? []) {
-        await push(row.id, row.image_url, row.companion_id, row.created_at);
+        await push(row.id, row.image_url, row.companion_id, row.created_at, "upload");
       }
       setTiles(next);
       setLoading(false);
@@ -134,17 +149,23 @@ export default function GalleryView() {
         ) : (
           <div className="grid grid-cols-3 gap-2">
             {visible.map((tile) => (
-              <button key={tile.id} type="button" onClick={() => setActive(tile)} className="overflow-hidden rounded-xl border border-border">
-                <img src={tile.src} alt="" className="aspect-[3/4] w-full object-cover" />
-              </button>
+              <div key={tile.id} className="relative overflow-hidden rounded-xl border border-border">
+                <button type="button" onClick={() => setActive(tile)} className="block w-full">
+                  <img src={tile.src} alt="" className="aspect-[3/4] w-full object-cover" />
+                </button>
+                <StudioEditWand imageUrl={tile.src} storageUrl={tile.storageUrl} companionId={tile.companionId} source={tile.source} />
+              </div>
             ))}
           </div>
         )}
       </div>
       {active ? (
-        <button type="button" className="absolute inset-0 z-20 flex items-center bg-black/70 p-4" onClick={() => setActive(null)}>
-          <img src={active.src} alt="" className="max-h-full w-full rounded-2xl object-contain" />
-        </button>
+        <div className="absolute inset-0 z-20 flex items-center bg-black/70 p-4" onClick={() => setActive(null)}>
+          <div className="relative mx-auto w-full" onClick={(event) => event.stopPropagation()}>
+            <img src={active.src} alt="" className="max-h-[70vh] w-full rounded-2xl object-contain" />
+            <StudioEditWand imageUrl={active.src} storageUrl={active.storageUrl} companionId={active.companionId} source={active.source} />
+          </div>
+        </div>
       ) : null}
     </PhoneStage>
   );

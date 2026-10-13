@@ -105,6 +105,18 @@ verify_jwt = false
 [functions.archive-external-images]
 verify_jwt = false
 
+[functions.studio-generate]
+verify_jwt = false
+
+[functions.studio-edit]
+verify_jwt = false
+
+[functions.studio-import]
+verify_jwt = false
+
+[functions.studio-status]
+verify_jwt = false
+
 # ---------------------------------------------------------------------------
 # Auth (hosted production — keep aligned with Dashboard; do not use local dev URLs here)
 # ---------------------------------------------------------------------------
