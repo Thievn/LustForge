@@ -182,17 +182,24 @@ export function ChatComposer({
 
   useEffect(() => () => stopVoice(), [stopVoice]);
 
-  const toggleVoice = useCallback(() => {
+  const toggleVoice = useCallback(async () => {
     if (micLive) {
       stopVoice();
       return;
     }
     // Web Speech API — typings vary; keep construction loose.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+    } catch {
+      toast.error("The microphone needs permission. Allow it in the browser, then try again.");
+      return;
+    }
     const w = window as any;
     const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!SR) {
-      toast.error("Voice input is not available in this browser. Try Chrome or Edge.");
+      toast.error("This browser can hear you, but it cannot turn speech into text. Use Chrome, or type it.");
       return;
     }
     stopVoice();
@@ -221,8 +228,10 @@ export function ChatComposer({
       const merged = [base, tail].filter(Boolean).join(base && tail ? " " : "");
       onChange(merged);
     };
-    r.onerror = () => {
+    r.onerror = (event: { error?: string }) => {
       setMicLive(false);
+      const reason = event?.error === "not-allowed" ? "Microphone permission was blocked." : "The microphone stopped. Try again.";
+      toast.error(reason);
     };
     r.onend = () => {
       setMicLive(false);

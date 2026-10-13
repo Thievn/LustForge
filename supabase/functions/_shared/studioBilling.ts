@@ -24,11 +24,21 @@ export async function chargeStudio(
   svc: Svc,
   user: { id: string; email?: string | null },
   count: number,
+) {
+  return chargeExact(svc, user, count, 4);
+}
+
+/** Credit charge with an explicit cap. Studio edits stay at 4; the vault can go higher. */
+export async function chargeExact(
+  svc: Svc,
+  user: { id: string; email?: string | null },
+  count: number,
+  cap = 4,
 ): Promise<
   | { ok: true; mode: ChargeMode; credits: number; freeLeft: number }
   | { ok: false; status: number; error: string; code: string }
 > {
-  const n = Math.max(1, Math.min(4, Math.floor(count)));
+  const n = Math.max(1, Math.min(cap, Math.floor(count)));
   const admin = await isLustforgeAdminUser(user);
   const { data: profile, error } = await svc
     .from("profiles")
@@ -82,14 +92,19 @@ function needCredits(n: number, credits: number, freeLeft: number) {
 }
 
 export async function refundOne(svc: Svc, userId: string, mode: string) {
+  await refundCredits(svc, userId, mode, 1);
+}
+
+export async function refundCredits(svc: Svc, userId: string, mode: string, count: number) {
+  const n = Math.max(1, Math.floor(count));
   if (mode !== "credits" && mode !== "free") return;
   const { data: profile } = await svc.from("profiles").select("credits, studio_free_left").eq("user_id", userId).maybeSingle();
   if (!profile) return;
   if (mode === "credits") {
-    const credits = Number(profile.credits ?? 0) + 1;
+    const credits = Number(profile.credits ?? 0) + n;
     await svc.from("profiles").update({ credits }).eq("user_id", userId).select("credits");
   } else {
-    const studio_free_left = Number(profile.studio_free_left ?? 0) + 1;
+    const studio_free_left = Number(profile.studio_free_left ?? 0) + n;
     await svc.from("profiles").update({ studio_free_left }).eq("user_id", userId).select("studio_free_left");
   }
 }

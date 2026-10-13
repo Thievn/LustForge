@@ -68,9 +68,10 @@ export function buildForgeCompanionNamingBrief(ctx: ForgeCompanionNamingContext)
     tagline ? `Tagline mood: ${tagline}` : "",
     appearance ? `Appearance flavor: ${appearance}` : "",
     "",
-    "Invent ONE display name that sounds native to this exact mix — not a generic dark-fantasy default.",
-    "Never output procedural compounds (Shadowveil, Grimdawn, Nightbane, Dreadmarch, Failfrost, Gearlock).",
-    "Prefer realistic given names when the theme is modern/contemporary; theme-native handles or proper nouns otherwise.",
+    "Invent ONE display name that sounds like a person you would want to text. Sensual, specific, and easy to say.",
+    "Never output procedural compounds (Shadowveil, Grimdawn, Nightbane, Dreadmarch, Failfrost, Gearlock) or titles.",
+    "When the theme is modern or contemporary, use a realistic attractive given name. One or two words. Do not use nature words as names: Luna, Violet, Ivy, Jade, Ruby, Willow, River, Sky, Storm, Phoenix, Ocean, Sage, Cedar, Indigo.",
+    "For other eras, a theme-native proper name is right. Still one person, not a costume.",
   ].filter(Boolean);
 
   const raw = parts.join("\n");

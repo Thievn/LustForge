@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireSessionUser, isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { ADULT_ANCHOR, minorReason } from "../_shared/adultGuard.ts";
+import { POSE_SET } from "../_shared/studioPoseIds.ts";
 import { bytesFromImageUrl } from "../_shared/storageArchive.ts";
 import { persistImageBytes } from "../_shared/persistChatImage.ts";
 
@@ -132,6 +133,7 @@ Deno.serve(async (req) => {
       framing?: string;
       expression?: string;
       poseHint?: string;
+      poseId?: string;
       userText?: string;
     } | null;
 
@@ -184,7 +186,8 @@ Deno.serve(async (req) => {
       .map((part) => String(part ?? "").trim())
       .filter(Boolean)
       .join(", ");
-    const poseId = matchPose(`${body?.poseHint ?? ""} ${body?.userText ?? ""} ${scene}`);
+    const explicitPose = String(body?.poseId ?? "").trim();
+    const poseId = POSE_SET.has(explicitPose) ? explicitPose : matchPose(`${body?.poseHint ?? ""} ${body?.userText ?? ""} ${scene}`);
     const seed = Number.isFinite(Number(body?.seed)) ? Number(body?.seed) : Math.floor(Math.random() * 1_000_000_000);
 
     let bytes: Uint8Array;

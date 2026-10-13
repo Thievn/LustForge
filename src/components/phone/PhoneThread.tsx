@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ImagePlus, Loader2, Phone, Send } from "lucide-react";
+import { ChevronLeft, ImagePlus, Loader2, Mic, Phone, Send, Shirt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatTypingIndicator } from "@/components/chat/ChatTypingIndicator";
 import { PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
@@ -17,6 +17,12 @@ import { parseStorageRef, storageUri } from "@/lib/phone/storageUrl";
 import { StudioEditWand } from "@/components/studio/EditWand";
 import { planAllowsClearPictures } from "@/lib/phone/pricing";
 import { cn } from "@/lib/utils";
+import { useVoiceInput } from "@/lib/voice/useVoiceInput";
+import { loadBondPrompt } from "@/lib/bond/context";
+import { matchOutfitName } from "@/lib/bond/logic";
+import { TREASURES } from "@/lib/vault/treasures";
+import { loadCompanionLooks, vaultCall, type LookRow } from "@/lib/vault/looks";
+import { invokeWebPushSend } from "@/lib/invokeWebPushSend";
 
 type Bubble = {
   id: string;
@@ -45,6 +51,11 @@ export default function PhoneThread() {
   const skin = readPhoneSkin();
   const scroller = useRef<HTMLDivElement>(null);
   const q = preview ? "?preview=1" : "";
+  const [bond, setBond] = useState("");
+  const [sceneBg, setSceneBg] = useState<string | null>(null);
+  const [looksOpen, setLooksOpen] = useState(false);
+  const [looks, setLooks] = useState<LookRow[]>([]);
+  const voice = useVoiceInput(setDraft);
 
   useEffect(() => {
     if (preview || !user || !id) {
@@ -78,6 +89,24 @@ export default function PhoneThread() {
       cancelled = true;
     };
   }, [preview, user, id]);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    void loadBondPrompt(user.id, id).then(setBond).catch(() => setBond(""));
+    void (supabase as unknown as {
+      from: (table: string) => {
+        select: (cols: string) => {
+          eq: (col: string, val: string) => {
+            eq: (col: string, val: string) => {
+              maybeSingle: () => Promise<{ data: { setting?: string } | null }>;
+            };
+          };
+        };
+      };
+    }).from("companion_scenes").select("setting").eq("user_id", user.id).eq("companion_id", id).maybeSingle().then(({ data }) => {
+      setSceneBg(data?.setting ?? null);
+    });
+  }, [user, id]);
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
@@ -150,13 +179,27 @@ export default function PhoneThread() {
       read_at: new Date().toISOString(),
     });
 
+    let wearNote = "";
+    if (user) {
+      const wornName = matchOutfitName(content, TREASURES.map((item) => item.name));
+      const worn = TREASURES.find((item) => item.name === wornName);
+      if (worn) {
+        const wornResult = await vaultCall({ action: "wear", companionId: companion.id, itemId: worn.id });
+        if (wornResult.error) {
+          wearNote = "She does not own that treasure. Do not claim she put it on. Tell him to find it in the Vault.";
+          setNotice(wornResult.error);
+        } else {
+          setNotice(`${companion.name} is wearing ${worn.name}.`);
+        }
+      }
+    }
     const history = [...messages, userBubble].map((item) => ({ role: item.role, content: item.content }));
     const { data, error } = await supabase.functions.invoke(
       "grok-chat",
       { body: buildGrokPhoneRequest({
         companionId: companion.id,
         companionName: companion.name,
-        systemPrompt: buildSystem(companion),
+        systemPrompt: buildSystem(companion, [bond, wearNote].filter(Boolean).join("\n"), sceneBg),
         messages: history,
       }) },
     );
@@ -170,6 +213,10 @@ export default function PhoneThread() {
     const parsed = parseStructuredReply(replyText);
     const wantImage = Boolean(parsed.imageRequest) || looksLikePictureAsk(content);
     await revealBubbles(parsed.bubbles, companion.name);
+    const pushed = parsed.bubbles.filter(Boolean).join(" ");
+    if (pushed) {
+      void invokeWebPushSend({ title: companion.name, body: pushed.slice(0, 140), url: `/messages/${companion.id}`, kind: "message", tag: `message-${companion.id}` });
+    }
     for (const bubble of parsed.bubbles) {
       await insertMessage({
         user_id: user.id,
@@ -387,13 +434,41 @@ export default function PhoneThread() {
           </AnimatePresence>
         </div>
 
-        {notice ? (
-          <p className="mx-3 mb-1 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground">{notice}</p>
+        {notice || voice.notice ? (
+          <p className="mx-3 mb-1 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-center text-xs text-foreground" role="alert">{notice || voice.notice}</p>
         ) : null}
         {limits.plan === "free" && !limits.catalogOwner ? (
           <p className="px-4 text-center text-[11px] text-muted-foreground">{limits.textsLeft} free texts left today</p>
         ) : null}
 
+        {looksOpen ? (
+          <div className="border-t border-white/10 px-3 py-2">
+            <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-primary">Looks</p>
+            {looks.length ? (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {looks.map((look) => (
+                  <button
+                    key={look.id}
+                    type="button"
+                    className="h-10 shrink-0 rounded-full border border-border px-3 text-xs"
+                    onClick={() => {
+                      if (!companion) return;
+                      void vaultCall({ action: "applyLook", companionId: companion.id, lookId: look.id }).then((res) => {
+                        setNotice(res.error ?? `${companion.name} is in ${look.name}.`);
+                        if (!res.error) setLooksOpen(false);
+                      });
+                    }}
+                  >
+                    {look.name}{look.is_default ? " · default" : ""}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No looks yet. Style her, then they show up here.</p>
+            )}
+            <Link to={`/companions/${id}/bond${q}`} className="mt-1 inline-block text-xs text-primary">Style her</Link>
+          </div>
+        ) : null}
         <form
           className="flex items-end gap-2 border-t border-white/10 bg-background/75 px-3 py-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-[0_-18px_40px_hsl(var(--primary)/0.16)] backdrop-blur-xl"
           onSubmit={(event) => {
@@ -408,6 +483,28 @@ export default function PhoneThread() {
             onClick={() => void send("Send me a picture of you")}
           >
             <ImagePlus className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className={cn("inline-flex h-11 w-11 items-center justify-center rounded-2xl border text-primary", looksOpen ? "border-primary bg-primary/20" : "border-border")}
+            aria-label="Pick a look"
+            aria-pressed={looksOpen}
+            onClick={() => {
+              const next = !looksOpen;
+              setLooksOpen(next);
+              if (next && user && companion) void loadCompanionLooks(user.id, companion.id).then(setLooks);
+            }}
+          >
+            <Shirt className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className={cn("inline-flex h-11 w-11 items-center justify-center rounded-2xl border text-primary", voice.live ? "border-primary bg-primary/20" : "border-border")}
+            aria-label={voice.live ? "Stop microphone" : "Speak"}
+            aria-pressed={voice.live}
+            onClick={() => void voice.toggle(draft)}
+          >
+            <Mic className="h-4 w-4" />
           </button>
           <textarea
             value={draft}
@@ -449,14 +546,20 @@ function hashSeed(id: string) {
   return hash;
 }
 
-function buildSystem(companion: { name: string; personality: string; backstory?: string; role: string; appearance: string }) {
+function buildSystem(
+  companion: { name: string; personality: string; backstory?: string; role: string; appearance: string },
+  bond = "",
+  scene: string | null = null,
+) {
   return [
     `You are ${companion.name}, a fictional consenting adult aged 21 or older.`,
     `Type: ${companion.role}.`,
     companion.personality,
     companion.backstory || "",
     `Look: ${companion.appearance}`,
+    scene ? `You are here: ${scene}` : "",
     "Text like a person: short bubbles, no labels, no markdown.",
+    bond,
   ]
     .filter(Boolean)
     .join("\n");

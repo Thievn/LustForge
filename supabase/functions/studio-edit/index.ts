@@ -9,6 +9,7 @@ import { EXPLICIT_UPLOAD_MESSAGE, parseDataUrl, type SourceTag } from "../_share
 import { poseCountsAsUpload, resolveImage, weakest } from "../_shared/studioStore.ts";
 import { POSE_SET } from "../_shared/studioPoseIds.ts";
 import { editLocksPixels, isClothingEdit, ORIENTATION_NEGATIVE, qwenEdit, withOrientationGuard } from "../_shared/studioWorkflows.ts";
+import { resolveStackedEdit } from "../_shared/stackedEdit.ts";
 
 function b64(bytes: Uint8Array): string {
   let binary = "";
@@ -19,20 +20,25 @@ function b64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-function instructionFor(body: Record<string, unknown>): string {
+function instructionFor(body: Record<string, unknown>): { tool: string; text: string; variations: number } {
+  if (body.stacked === true) {
+    const stacked = resolveStackedEdit(body);
+    return { tool: stacked.tool, text: stacked.instruction, variations: stacked.variations };
+  }
   const text = String(body.instruction ?? "").slice(0, 800);
   const tool = String(body.tool ?? "prompt");
+  const variations = Math.max(1, Math.min(4, Number(body.variations ?? 1) || 1));
   if (tool === "fix") {
     const fix = String(body.fix ?? "face");
-    if (fix === "hands") return `Fix the hands: five fingers, natural adult anatomy. Keep the face, clothing, pose, and background identical. ${text}`.trim();
-    if (fix === "touch") return `Subtle natural touch-up. Keep identity and clothing identical. ${text}`.trim();
-    return `Fix the face: natural adult features, symmetrical eyes. Keep identity, clothing, pose, and background. ${text}`.trim();
+    if (fix === "hands") return { tool, variations, text: `Fix the hands: five fingers, natural adult anatomy. Keep the face, clothing, pose, and background identical. ${text}`.trim() };
+    if (fix === "touch") return { tool, variations, text: `Subtle natural touch-up. Keep identity and clothing identical. ${text}`.trim() };
+    return { tool, variations, text: `Fix the face: natural adult features, symmetrical eyes. Keep identity, clothing, pose, and background. ${text}`.trim() };
   }
-  if (tool === "background") return `Replace the background with ${text || "a soft studio backdrop"}. Keep the person identical.`;
-  if (tool === "outfit") return `Change the outfit to match the reference. Keep the face identical. ${text}`.trim();
-  if (tool === "pose") return `Change the pose to match the skeleton reference. Keep the face and outfit. ${text}`.trim();
-  if (tool === "brush") return `Change only the white painted region. Leave everything else identical. ${text}`.trim();
-  return text;
+  if (tool === "background") return { tool, variations, text: `Replace the background with ${text || "a soft studio backdrop"}. Keep the person identical.` };
+  if (tool === "outfit") return { tool, variations, text: `Change the outfit to match the reference. Keep the face identical. ${text}`.trim() };
+  if (tool === "pose") return { tool, variations, text: `Change the pose to match the skeleton reference. Keep the face and outfit. ${text}`.trim() };
+  if (tool === "brush") return { tool, variations, text: `Change only the white painted region. Leave everything else identical. ${text}`.trim() };
+  return { tool, variations, text };
 }
 
 Deno.serve(async (req) => {
@@ -76,7 +82,8 @@ Deno.serve(async (req) => {
     const poseBytes = poseParsed && poseParsed.bytes.byteLength < 2_000_000 ? poseParsed.bytes : null;
     const maskParsed = parseDataUrl(String(body.maskDataUrl ?? ""));
 
-    const instruction = instructionFor(body);
+    const resolved = instructionFor(body);
+    const instruction = resolved.text;
     if (!instruction.trim()) return json({ error: "Add an edit instruction." }, 400);
     const blocked = minorReason(instruction);
     if (blocked) return json({ error: blocked, code: "MINOR_BLOCKED" }, 400);
@@ -89,7 +96,7 @@ Deno.serve(async (req) => {
       return json({ error: EXPLICIT_UPLOAD_MESSAGE, code: "EXPLICIT_UPLOAD" }, 400);
     }
 
-    const variations = Math.max(1, Math.min(4, Number(body.variations ?? 1) || 1));
+    const variations = resolved.variations;
     const strength = Math.max(0.2, Math.min(1, Number(body.strength ?? 1) || 1));
     const charge = await chargeStudio(svc, user, variations);
     if (!charge.ok) return json({ error: charge.error, code: charge.code }, charge.status);
@@ -99,12 +106,13 @@ Deno.serve(async (req) => {
     if (poseBytes) images.push({ name: "pose.png", image: b64(poseBytes) });
     if (maskParsed) images.push({ name: "mask.png", image: b64(maskParsed.bytes) });
 
-    const tool = String(body.tool ?? "prompt");
+    const tool = resolved.tool;
     const userText = String(body.instruction ?? "");
-    const prompt = withOrientationGuard(tool, instruction, userText);
-    const negative = isClothingEdit(tool, userText) ? ORIENTATION_NEGATIVE : "";
+    const guardTool = outfits.length ? "outfit" : tool;
+    const prompt = withOrientationGuard(guardTool, instruction, userText);
+    const negative = isClothingEdit(guardTool, userText) ? ORIENTATION_NEGATIVE : "";
     const flags = { outfit: Boolean(outfits[0]), pose: Boolean(poseBytes), mask: Boolean(maskParsed) };
-    const lock = editLocksPixels(tool);
+    const lock = editLocksPixels(tool) || Boolean(outfits[0]) || Boolean(maskParsed);
     const companionId = String(body.companionId ?? "").trim() || null;
     const baseSeed = Math.floor(Math.random() * 1_000_000_000);
     const jobs: Array<Record<string, unknown>> = [];

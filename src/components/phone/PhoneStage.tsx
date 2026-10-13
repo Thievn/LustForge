@@ -9,7 +9,7 @@ export function usePhonePreview() {
   return params.get("preview") === "1";
 }
 
-export function PhoneStage({ children }: { children: ReactNode }) {
+export function PhoneStage({ children, layout = "phone" }: { children: ReactNode; layout?: "phone" | "app" }) {
   const preview = usePhonePreview();
   const [ready, setReady] = useState(preview);
   const [authed, setAuthed] = useState(preview);
@@ -41,13 +41,16 @@ export function PhoneStage({ children }: { children: ReactNode }) {
   }
   if (!authed) return <Navigate to="/auth" replace />;
 
+  const frame =
+    layout === "app"
+      ? "relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-6xl flex-col px-3 pb-24 lg:px-6 lg:pb-8"
+      : "relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background/80 shadow-[0_30px_90px_hsl(var(--primary)/0.14)] max-lg:bg-background lg:my-4 lg:min-h-[calc(100dvh-2rem)] lg:rounded-[1.8rem] lg:border lg:border-border lg:backdrop-blur-xl";
+
   return (
     <div className="relative min-h-[100dvh] bg-background text-foreground">
       <ParticleBackground />
       <div className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.16),transparent_55%)]" />
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-background/80 shadow-[0_30px_90px_hsl(var(--primary)/0.14)] max-lg:bg-background lg:my-4 lg:min-h-[calc(100dvh-2rem)] lg:rounded-[1.8rem] lg:border lg:border-border lg:backdrop-blur-xl">
-        {children}
-      </div>
+      <div className={frame}>{children}</div>
     </div>
   );
 }

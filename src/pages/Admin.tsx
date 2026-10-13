@@ -26,6 +26,7 @@ import {
   BarChart3,
   Download,
   Flame,
+  Gem,
   LayoutDashboard,
   Loader2,
   Palette,
@@ -835,6 +836,13 @@ function AdminShell() {
               {label}
             </button>
           ))}
+          <Link
+            to="/admin/treasures"
+            className="flex w-full items-center gap-3 rounded-xl border border-transparent px-3 py-3 text-left text-sm font-medium text-muted-foreground transition-all hover:bg-white/5 hover:text-foreground"
+          >
+            <Gem className="h-5 w-5 shrink-0" />
+            The Velvet Vault
+          </Link>
         </nav>
         <div className="p-4 border-t border-border/60 text-[10px] text-muted-foreground uppercase tracking-widest">
           LustForge · {platformAdminEmailDisplay()}
@@ -868,6 +876,12 @@ function AdminShell() {
                 {label}
               </button>
             ))}
+            <Link
+              to="/admin/treasures"
+              className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground"
+            >
+              Velvet Vault
+            </Link>
           </div>
         </div>
 
@@ -1536,7 +1550,7 @@ function UsersSection({
                           className="text-xs font-semibold text-primary hover:underline px-1"
                           style={{ color: NEON }}
                         >
-                          Manage
+                          Edit
                         </button>
                       </div>
                     </td>

@@ -117,6 +117,9 @@ verify_jwt = false
 [functions.studio-status]
 verify_jwt = false
 
+[functions.velvet-vault]
+verify_jwt = false
+
 # ---------------------------------------------------------------------------
 # Auth (hosted production — keep aligned with Dashboard; do not use local dev URLs here)
 # ---------------------------------------------------------------------------

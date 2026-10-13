@@ -7,6 +7,7 @@ export type WebPushSendPayload = {
   url: string;
   tag?: string;
   icon?: string;
+  kind?: "message" | "moment" | "call";
 };
 
 export async function invokeWebPushSend(

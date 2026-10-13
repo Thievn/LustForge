@@ -60,7 +60,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    const prompt = ensureAdult([style, identity, scene, poseHint, userText].filter(Boolean).join(", "));
+    const built = String(body?.builtPrompt ?? "").slice(0, 4000);
+    const prompt = ensureAdult(
+      built
+        ? [identity, built].filter(Boolean).join(". ")
+        : [style, identity, scene, poseHint, userText].filter(Boolean).join(", "),
+    );
     const blocked = minorReason(prompt);
     if (blocked) return json({ error: blocked, code: "MINOR_BLOCKED" }, 400);
 
@@ -85,7 +90,10 @@ Deno.serve(async (req) => {
     try {
       for (let i = 0; i < variations; i++) {
         const seed = baseSeed + i;
-        const workflow = poseImage ? zimagePose(prompt, { seed }) : zimage(prompt, { seed });
+        const width = Number(body?.width);
+        const height = Number(body?.height);
+        const size = [832, 1024, 1216].includes(width) && [832, 1024, 1216].includes(height) ? { w: width, h: height } : {};
+        const workflow = poseImage ? zimagePose(prompt, { seed, ...size }) : zimage(prompt, { seed, ...size });
         const images = poseImage ? [{ name: "pose.png", image: poseImage }] : [];
         const runpodId = await submitWorkflow(workflow, images);
         const inserted = await svc

@@ -114,14 +114,28 @@ function listForGen(bucket: NameGender, bank: NameBank): readonly string[] {
 }
 
 function pick<T>(arr: readonly T[], rng: () => number): T {
-  return arr[Math.floor(rng() * arr.length)]!;
+  const index = Math.min(arr.length - 1, Math.floor(rng() * arr.length));
+  return arr[Math.max(0, index)]!;
 }
+
+/** Modern Day given names should sound like people, not weather or plants. */
+const NATURE_GIVEN = new Set([
+  "luna", "violet", "stormy", "phoenix", "ocean", "ivy", "jade", "ruby", "willow", "sky",
+  "river", "sage", "ash", "bay", "cedar", "indigo", "reign", "rain", "ember", "wren", "briar", "storm",
+]);
+
+function isNatureGiven(name: string): boolean {
+  const first = name.trim().toLowerCase().split(/\s+/)[0] ?? "";
+  return NATURE_GIVEN.has(first);
+}
+
+const REAL_FALLBACK = ["Mara", "Elena", "Nadia", "Camille", "Adrian", "Julian", "Leila", "Mateo", "Amira", "Soren", "Clara", "Theo"];
 
 function makeRng(seed?: number): () => number {
   let s = (seed ?? Math.floor(Math.random() * 0x7fff_ffff)) >>> 0;
   return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return (s & 0xffff_ffff) / 0x1_0000_0000;
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 0x1_0000_0000;
   };
 }
 
@@ -152,7 +166,11 @@ export function generateForgeName(input: ForgeNameInput): string {
   const quirkyList =
     p.timePeriod === "Cyberpunk/Futuristic" ? listForGen(bucket, QUIRKY_CYBER as NameBank) : quirkyMod;
   const useQuirk = wantsQuirky(p, p.timePeriod) && rng() < 0.55 && quirkyEra;
-  const primary: readonly string[] = useQuirk ? quirkyList : baseList;
+  const modern = p.timePeriod === "Modern Day";
+  const eligible = (list: readonly string[]) => (modern ? list.filter((name) => !isNatureGiven(name)) : list);
+  const quirkEligible = eligible(quirkyList);
+  const baseEligible = eligible(baseList);
+  const primary: readonly string[] = useQuirk && quirkEligible.length ? quirkEligible : baseEligible.length ? baseEligible : baseList;
 
   const trySurname = useSurname(p, surnames) && rng() < 0.42;
   const surname = trySurname && surnames?.length ? pick(surnames, rng) : null;
@@ -179,13 +197,22 @@ export function generateForgeName(input: ForgeNameInput): string {
   for (let t = 0; t < 32; t++) {
     const given = pick(listForGen(bucket, BANK_MODERN), rng);
     if (isTooGothicForSoft(given, p)) continue;
+    if (modern && isNatureGiven(given)) continue;
     const k = normalizeNameKey(given);
     if (!ex.has(k)) {
       ex.add(k);
       return given;
     }
   }
-  const stamp = `Nom ${Math.floor(rng() * 900 + 100)}`;
+  for (const given of REAL_FALLBACK) {
+    if (isNatureGiven(given)) continue;
+    const key = normalizeNameKey(given);
+    if (!ex.has(key)) {
+      ex.add(key);
+      return given;
+    }
+  }
+  const stamp = `Mara ${Math.floor(rng() * 90 + 10)}`;
   ex.add(normalizeNameKey(stamp));
   return stamp;
 }

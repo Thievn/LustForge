@@ -20,7 +20,7 @@ export default function Studio() {
   }
 
   return (
-    <PhoneStage>
+    <PhoneStage layout="app">
       <header className="flex items-center gap-2 px-3 pb-1 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Link to={`/dashboard${q ? `?${q}` : ""}`} className="inline-flex h-11 w-11 items-center justify-center text-primary" aria-label="Back">
           <ChevronLeft className="h-5 w-5" />
