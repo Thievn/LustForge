@@ -2,6 +2,14 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
+import { execFileSync } from "node:child_process";
+
+// Landing gallery images live in git as *.webp.b64; decode them before every build/dev run
+// (Vercel calls `vite build` directly, so npm prebuild hooks are not enough).
+execFileSync(process.execPath, [path.resolve(__dirname, "scripts/decode-landing-gallery.mjs")], {
+  cwd: __dirname,
+  stdio: "inherit",
+});
 
 /**
  * Open Graph / Twitter cards need absolute URLs matching the site users share.
