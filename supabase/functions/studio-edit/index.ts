@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
     }
 
     const variations = Math.max(1, Math.min(4, Number(body.variations ?? 1) || 1));
-    const strength = Math.max(0.2, Math.min(1, Number(body.strength ?? 0.7) || 0.7));
+    const strength = Math.max(0.2, Math.min(1, Number(body.strength ?? 1) || 1));
     const charge = await chargeStudio(svc, user, variations);
     if (!charge.ok) return json({ error: charge.error, code: charge.code }, charge.status);
 

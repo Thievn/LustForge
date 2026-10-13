@@ -8,7 +8,6 @@
  * Model filenames can be overridden with STUDIO_* secrets if the volume differs.
  */
 
-const NEG = "low quality, blurry, deformed, bad anatomy, extra fingers, watermark, text, child, minor, underage";
 
 type Node = { class_type: string; inputs: Record<string, unknown> };
 type Graph = Record<string, Node>;
@@ -59,34 +58,25 @@ export function zimage(
   };
 }
 
-/** Z-Image Turbo with a pose skeleton on `pose.png`. */
+/**
+ * Z-Image Turbo with a pose skeleton on `pose.png` (sized w x h).
+ * Same as the Lab `addPose()`: Fun ControlNet Union 2.1 loaded as a model patch.
+ */
 export function zimagePose(
   prompt: string,
   opts: { seed: number; steps?: number; w?: number; h?: number; strength?: number },
 ): Graph {
   const graph = zimage(prompt, opts);
-  const strength = opts.strength ?? 0.85;
-  graph.pose = { class_type: "LoadImage", inputs: { image: "pose.png" } };
-  graph.cn = {
-    class_type: "ControlNetLoader",
-    inputs: {
-      control_net_name: envName("STUDIO_POSE_CONTROLNET", "Z-Image-Turbo-Fun-Controlnet-Union.safetensors"),
-    },
+  graph.p1 = {
+    class_type: "ModelPatchLoader",
+    inputs: { name: envName("STUDIO_POSE_CONTROLNET", "Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors") },
   };
-  graph.cnApply = {
-    class_type: "ControlNetApplyAdvanced",
-    inputs: {
-      positive: ["z4", 0],
-      negative: ["z5", 0],
-      control_net: ["cn", 0],
-      image: ["pose", 0],
-      strength,
-      start_percent: 0,
-      end_percent: 0.85,
-    },
+  graph.p2 = { class_type: "LoadImage", inputs: { image: "pose.png" } };
+  graph.p3 = {
+    class_type: "ZImageFunControlnet",
+    inputs: { model: ["z1b", 0], model_patch: ["p1", 0], vae: ["z3", 0], strength: opts.strength ?? 0.8, image: ["p2", 0] },
   };
-  graph.z7.inputs.positive = ["cnApply", 0];
-  graph.z7.inputs.negative = ["cnApply", 1];
+  graph.z7.inputs.model = ["p3", 0];
   return graph;
 }
 
@@ -106,103 +96,95 @@ export function editLocksPixels(tool: string): boolean {
 }
 
 /**
- * Qwen-Image-Edit-2511 + Lightning LoRA (4 steps, cfg 1).
- * Subject is `subject.png`. Optional outfit / pose / mask images are extra references.
- * `lock` adds PixelDriftFix and LFPixelPerfect Composite. The prepare node and the
- * exact reference latent stay on for every edit.
+ * Qwen-Image-Edit-2511 + Lightning LoRA (4 steps, cfg 1), same graph as the Lab `qwenEdit()`
+ * (lustforge-lab lib/workflows.js, comfy-serverless/PIXEL_PERFECT.md).
+ * Images: `subject.png` (image1) + optional `outfit.png` / `pose.png` (image2, image3) + `mask.png` (white = edit; NOT sent to the model).
+ * Always: LFPrepareEdit (native res, pad to /16), encoder WITHOUT vae, ReferenceLatent = exact VAE latent of the working image,
+ * crop the padding off, LFPixelPerfectComposite back to the original size.
+ * `lock` adds PixelDriftFix and composite mode "auto" (mask -> "mask"); unlocked = mode "off" (or "mask" when a mask is given).
  */
 export function qwenEdit(
   prompt: string,
   opts: { seed: number; denoise: number; images: EditImages; lock?: boolean },
 ): Graph {
-  const prepareNode = envName("STUDIO_LF_PREPARE", "LFPixelPerfectPrepare");
-  const compositeNode = envName("STUDIO_LF_COMPOSITE", "LFPixelPerfectComposite");
-  const driftNode = envName("STUDIO_DRIFT_NODE", "PixelDriftFix");
-  const imageInputs: Record<string, unknown> = {
-    clip: ["q3", 0],
-    prompt: `${prompt}\nAvoid: ${NEG}`,
-    image1: ["prep", 0],
+  const extra: string[] = [];
+  if (opts.images.outfit) extra.push("outfit");
+  if (opts.images.pose) extra.push("pose");
+  const enc = (text: string) => {
+    const inputs: Record<string, unknown> = { clip: ["q5", 0], prompt: text, image1: ["prep", 1] };
+    extra.forEach((n, k) => { inputs[`image${k + 2}`] = [n, 0]; });
+    return inputs;
   };
-  if (opts.images.outfit) imageInputs.image2 = ["outfit", 0];
-  else if (opts.images.pose) imageInputs.image2 = ["pose", 0];
-  else if (opts.images.mask) imageInputs.image2 = ["mask", 0];
-  if (opts.images.outfit && opts.images.pose) imageInputs.image3 = ["pose", 0];
-  else if ((opts.images.outfit || opts.images.pose) && opts.images.mask) imageInputs.image3 = ["mask", 0];
-
+  const mask = Boolean(opts.images.mask);
+  const mode = opts.lock ? (mask ? "mask" : "auto") : (mask ? "mask" : "off");
   const graph: Graph = {
     q1: {
       class_type: "UNETLoader",
-      inputs: {
-        unet_name: envName("STUDIO_QWEN_UNET", "qwen_image_edit_2511_bf16.safetensors"),
-        weight_dtype: "default",
-      },
+      inputs: { unet_name: envName("STUDIO_QWEN_UNET", "qwen_image_edit_2511_fp8mixed.safetensors"), weight_dtype: "default" },
     },
     q2: {
       class_type: "LoraLoaderModelOnly",
       inputs: {
         model: ["q1", 0],
         lora_name: envName("STUDIO_QWEN_LORA", "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors"),
-        strength_model: 1,
+        strength_model: 1.0,
       },
     },
-    q3: {
+    q3: { class_type: "ModelSamplingAuraFlow", inputs: { model: ["q2", 0], shift: 3.0 } },
+    q4: { class_type: "CFGNorm", inputs: { model: ["q3", 0], strength: 1.0 } },
+    q5: {
       class_type: "CLIPLoader",
-      inputs: {
-        clip_name: envName("STUDIO_QWEN_CLIP", "qwen_2.5_vl_7b_fp8_scaled.safetensors"),
-        type: "qwen_image",
-      },
+      inputs: { clip_name: envName("STUDIO_QWEN_CLIP", "qwen_2.5_vl_7b_fp8_scaled.safetensors"), type: "qwen_image" },
     },
-    q4: { class_type: "VAELoader", inputs: { vae_name: envName("STUDIO_QWEN_VAE", "qwen_image_vae.safetensors") } },
+    q6: { class_type: "VAELoader", inputs: { vae_name: envName("STUDIO_QWEN_VAE", "qwen_image_vae.safetensors") } },
     subj: { class_type: "LoadImage", inputs: { image: "subject.png" } },
-    prep: {
-      class_type: prepareNode,
-      inputs: { image: ["subj", 0] },
-    },
-    q6: { class_type: "TextEncodeQwenImageEditPlus", inputs: imageInputs },
-    qLatent: { class_type: "VAEEncode", inputs: { pixels: ["prep", 0], vae: ["q4", 0] } },
-    qRef: { class_type: "ReferenceLatent", inputs: { conditioning: ["q6", 0], latent: ["qLatent", 0] } },
-    q7: { class_type: "ConditioningZeroOut", inputs: { conditioning: ["q6", 0] } },
+    prep: { class_type: "LFPrepareEdit", inputs: { image: ["subj", 0], multiple: 16, max_megapixels: 1.6 } },
+    qLatent: { class_type: "VAEEncode", inputs: { pixels: ["prep", 0], vae: ["q6", 0] } },
+    qPos: { class_type: "TextEncodeQwenImageEditPlus", inputs: enc(prompt) },
+    qNeg: { class_type: "TextEncodeQwenImageEditPlus", inputs: enc("") },
+    rPos: { class_type: "ReferenceLatent", inputs: { conditioning: ["qPos", 0], latent: ["qLatent", 0] } },
+    rNeg: { class_type: "ReferenceLatent", inputs: { conditioning: ["qNeg", 0], latent: ["qLatent", 0] } },
+    mPos: { class_type: "FluxKontextMultiReferenceLatentMethod", inputs: { conditioning: ["rPos", 0], reference_latents_method: "index_timestep_zero" } },
+    mNeg: { class_type: "FluxKontextMultiReferenceLatentMethod", inputs: { conditioning: ["rNeg", 0], reference_latents_method: "index_timestep_zero" } },
     q8: {
       class_type: "KSampler",
       inputs: {
-        model: ["q2", 0],
-        positive: ["qRef", 0],
-        negative: ["q7", 0],
+        model: ["q4", 0],
+        positive: ["mPos", 0],
+        negative: ["mNeg", 0],
         latent_image: ["qLatent", 0],
         seed: opts.seed,
         steps: 4,
-        cfg: 1,
+        cfg: 1.0,
         sampler_name: "euler",
         scheduler: "simple",
         denoise: Math.max(0.2, Math.min(1, opts.denoise)),
       },
     },
-    q9: { class_type: "VAEDecode", inputs: { samples: ["q8", 0], vae: ["q4", 0] } },
-    q10: { class_type: "SaveImage", inputs: { images: ["q9", 0], filename_prefix: "qwen_edit" } },
+    q9: { class_type: "VAEDecode", inputs: { samples: ["q8", 0], vae: ["q6", 0] } },
+    crop: { class_type: "ImageCrop", inputs: { image: ["q9", 0], width: ["prep", 2], height: ["prep", 3], x: 0, y: 0 } },
+    comp: {
+      class_type: "LFPixelPerfectComposite",
+      inputs: {
+        original: ["subj", 0], edited: ["crop", 0], work_w: 0, work_h: 0, mode,
+        threshold: 0.07, grow: 12, feather: 8, min_area: 0.0015,
+      },
+    },
+    q10: { class_type: "SaveImage", inputs: { images: ["comp", 0], filename_prefix: "studio_edit" } },
   };
   if (opts.images.outfit) graph.outfit = { class_type: "LoadImage", inputs: { image: "outfit.png" } };
   if (opts.images.pose) graph.pose = { class_type: "LoadImage", inputs: { image: "pose.png" } };
-  if (opts.images.mask) graph.mask = { class_type: "LoadImage", inputs: { image: "mask.png" } };
-
+  if (mask) {
+    graph.mask = { class_type: "LoadImage", inputs: { image: "mask.png" } };
+    graph.maskM = { class_type: "ImageToMask", inputs: { image: ["mask", 0], channel: "red" } };
+    graph.comp.inputs.mask = ["maskM", 0];
+  }
   if (opts.lock) {
     graph.drift = {
-      class_type: driftNode,
-      inputs: {
-        source_image: ["prep", 0],
-        edited_image: ["q9", 0],
-        method: "flat_4_points",
-        max_mesh_points: 400,
-      },
+      class_type: "PixelDriftFix",
+      inputs: { source_image: ["prep", 1], edited_image: ["crop", 0], method: "flat_4_points", max_mesh_points: 400 },
     };
-    graph.comp = {
-      class_type: compositeNode,
-      inputs: {
-        original: ["subj", 0],
-        edited: ["drift", 0],
-        ...(opts.images.mask ? { mask: ["mask", 0] } : {}),
-      },
-    };
-    graph.q10.inputs.images = ["comp", 0];
+    graph.comp.inputs.edited = ["drift", 0];
   }
   return graph;
 }

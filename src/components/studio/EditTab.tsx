@@ -57,7 +57,7 @@ export function EditTab() {
   const [index, setIndex] = useState(0);
   const [tool, setTool] = useState<ToolId | null>(null);
   const [instruction, setInstruction] = useState("");
-  const [strength, setStrength] = useState(0.7);
+  const [strength, setStrength] = useState(1);
   const [variations, setVariations] = useState(1);
   const [pose, setPose] = useState<StudioPose | null>(null);
   const [poseOpen, setPoseOpen] = useState(false);
