@@ -2,15 +2,25 @@ import type { ReactNode } from "react";
 import { AppIconTile } from "@/components/phone/AppIcon";
 import { LANDING_LOCAL_PORTRAITS } from "@/components/landing/landingPortraitSources";
 import { cn } from "@/lib/utils";
+import valeriaLingerie from "@/assets/landing-gallery/valeria-lingerie.webp";
+import valeriaPool from "@/assets/landing-gallery/valeria-pool.webp";
+import valeriaCoffee from "@/assets/landing-gallery/valeria-coffee.webp";
+import valeriaPark from "@/assets/landing-gallery/valeria-park.webp";
+import valeriaHome from "@/assets/landing-gallery/valeria-home.webp";
+import valeriaNight from "@/assets/landing-gallery/valeria-night.webp";
+import valeriaYoga from "@/assets/landing-gallery/valeria-yoga.webp";
+import valeriaMarket from "@/assets/landing-gallery/valeria-market.webp";
 
 const IVY = LANDING_LOCAL_PORTRAITS["lilith-vesper"];
 const TILES = [
-  LANDING_LOCAL_PORTRAITS["kira-lux"],
-  LANDING_LOCAL_PORTRAITS["zara-eclipse"],
-  LANDING_LOCAL_PORTRAITS["lena-frost"],
-  LANDING_LOCAL_PORTRAITS["kaelen-veyra"],
-  LANDING_LOCAL_PORTRAITS["tyler-kane"],
-  LANDING_LOCAL_PORTRAITS["jaxson-voss"],
+  { src: valeriaLingerie, alt: "Valeria in emerald lace lingerie with a silk robe, reclining on a bed" },
+  { src: valeriaPool, alt: "Valeria in a white retro bikini at the edge of a pool" },
+  { src: valeriaCoffee, alt: "Valeria smiling over a cappuccino at a coffee shop window" },
+  { src: valeriaPark, alt: "Valeria in a denim jacket and white sundress on a spring park walk" },
+  { src: valeriaHome, alt: "Valeria cozy on the sofa in an oversized knit sweater with a mug of tea" },
+  { src: valeriaNight, alt: "Valeria in a black satin evening gown on a night out" },
+  { src: valeriaYoga, alt: "Valeria in sage green athleisure on a yoga mat" },
+  { src: valeriaMarket, alt: "Valeria picking fruit at a farmer's market" },
 ];
 
 export function LandingPhone({
@@ -203,10 +213,10 @@ export function GalleryPhone() {
     <LandingPhone label="Private gallery of saved pictures">
       <div className="h-[460px] bg-[#140910] px-3 py-3">
         <p className="font-gothic text-2xl">Gallery</p>
-        <p className="text-[11px] text-white/70">Ivy · saved on your account</p>
-        <div className="mt-3 grid grid-cols-3 gap-1.5">
-          {TILES.map((src) => (
-            <img key={src} src={src} alt="" className="aspect-[3/4] w-full rounded-lg object-cover" />
+        <p className="text-[11px] text-white/70">Valeria · saved on your account</p>
+        <div className="mt-3 grid grid-cols-4 gap-1.5">
+          {TILES.map(({ src, alt }) => (
+            <img key={src} src={src} alt={alt} loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-lg object-cover" />
           ))}
         </div>
       </div>
