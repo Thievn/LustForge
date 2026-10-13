@@ -2,15 +2,21 @@ import type { ReactNode } from "react";
 import { AppIconTile } from "@/components/phone/AppIcon";
 import { LANDING_LOCAL_PORTRAITS } from "@/components/landing/landingPortraitSources";
 import { cn } from "@/lib/utils";
+import miaLingerie from "@/assets/landing-gallery/mia-lingerie.webp";
+import miaPark from "@/assets/landing-gallery/mia-park.webp";
+import miaCafe from "@/assets/landing-gallery/mia-cafe.webp";
+import miaHome from "@/assets/landing-gallery/mia-home.webp";
+import miaRooftop from "@/assets/landing-gallery/mia-rooftop.webp";
+import miaBeach from "@/assets/landing-gallery/mia-beach.webp";
 
 const IVY = LANDING_LOCAL_PORTRAITS["lilith-vesper"];
 const TILES = [
-  LANDING_LOCAL_PORTRAITS["kira-lux"],
-  LANDING_LOCAL_PORTRAITS["zara-eclipse"],
-  LANDING_LOCAL_PORTRAITS["lena-frost"],
-  LANDING_LOCAL_PORTRAITS["kaelen-veyra"],
-  LANDING_LOCAL_PORTRAITS["tyler-kane"],
-  LANDING_LOCAL_PORTRAITS["jaxson-voss"],
+  { src: miaLingerie, alt: "Mia in black lace lingerie and a silk robe, sitting on the edge of a bed" },
+  { src: miaPark, alt: "Mia laughing on an autumn walk in the park" },
+  { src: miaCafe, alt: "Mia smiling over a latte at a cozy cafe" },
+  { src: miaHome, alt: "Mia at home on the sofa in an oversized grey sweater" },
+  { src: miaRooftop, alt: "Mia in a red satin dress at a rooftop bar at night" },
+  { src: miaBeach, alt: "Mia on the beach in a black bikini and open linen shirt" },
 ];
 
 export function LandingPhone({
@@ -203,10 +209,10 @@ export function GalleryPhone() {
     <LandingPhone label="Private gallery of saved pictures">
       <div className="h-[460px] bg-[#140910] px-3 py-3">
         <p className="font-gothic text-2xl">Gallery</p>
-        <p className="text-[11px] text-white/70">Ivy · saved on your account</p>
+        <p className="text-[11px] text-white/70">Mia · saved on your account</p>
         <div className="mt-3 grid grid-cols-3 gap-1.5">
-          {TILES.map((src) => (
-            <img key={src} src={src} alt="" className="aspect-[3/4] w-full rounded-lg object-cover" />
+          {TILES.map(({ src, alt }) => (
+            <img key={src} src={src} alt={alt} loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-lg object-cover" />
           ))}
         </div>
       </div>
