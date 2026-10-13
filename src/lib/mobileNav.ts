@@ -5,7 +5,9 @@ export function showMobileBottomNav(pathname: string): boolean {
   if (/^\/(lab|calls)(\/|$)/.test(pathname)) return false;
   /** Forge has its own Controls / Preview bar — stacking both caused touch + scroll fights on small screens. */
   if (/^\/create-companion(\/|$)/.test(pathname)) return false;
-  return /^\/(dashboard|companions\/|account|settings|messages|gallery|plans|vault)(\/|$)/.test(pathname);
+  /** AppShell owns the tab bar on the signed-in home. */
+  if (/^\/(dashboard|companions|account|settings|messages|gallery|plans|vault|treasures|admin)(\/|$)/.test(pathname)) return false;
+  return false;
 }
 
 export const MOBILE_NAV_SAFE_BOTTOM =

@@ -39,6 +39,7 @@ import {
   LovenseCommand,
 } from "@/lib/lovense";
 import { buildChatSystemPrompt } from "@/lib/companionSystemPrompts";
+import { loadBondPrompt } from "@/lib/bond/context";
 import { useCompanionVibrationPatterns, type CompanionVibrationPatternRow } from "@/hooks/useCompanionVibrationPatterns";
 import { buildLovenseCommand } from "@/lib/buildLovenseCommand";
 import { createSustainedLovenseSession } from "@/lib/sustainedLovenseSession";
@@ -155,6 +156,24 @@ export function useChatSessionController() {
     [dbCompStripped, displayOverride],
   );
   const companion = dbCompDisplay ? dbToCompanion(dbCompDisplay) : null;
+  const bondAppendRef = useRef("");
+  useEffect(() => {
+    const companionId = companion?.id;
+    const userId = user?.id as string | undefined;
+    if (!companionId || !userId) {
+      bondAppendRef.current = "";
+      return;
+    }
+    let cancelled = false;
+    void loadBondPrompt(userId, companionId).then((text) => {
+      if (!cancelled) bondAppendRef.current = text;
+    }).catch(() => {
+      if (!cancelled) bondAppendRef.current = "";
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [companion?.id, user?.id]);
 
   const breedingPartnerDb = useMemo((): DbCompanion | null => {
     if (!dbComp || !dbCompanions?.length) return null;
@@ -1256,7 +1275,7 @@ export function useChatSessionController() {
             connectedToysSummary: toyBlock,
           });
       }
-      return live;
+      return bondAppendRef.current ? `${live}\n\n${bondAppendRef.current}` : live;
     }
     return buildChatSystemPrompt(companion, {
       replyStyle: "immersive",
@@ -1266,6 +1285,7 @@ export function useChatSessionController() {
       userToyIntensityPercent: Number.isFinite(pct) ? pct : 100,
       chatAffectionTier: relationship?.chat_affection_level ?? 1,
       vibrationPatterns,
+      bondAppend: bondAppendRef.current,
     });
   };
 

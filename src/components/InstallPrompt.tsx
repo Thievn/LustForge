@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Download, X, Share } from "lucide-react";
 import { trackPwaGaAndDb } from "@/lib/pwaTelemetry";
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 const DISMISS_KEY = "lustforge-install-dismiss";
 const AUTO_SESSION_KEY = "lustforge-install-auto-prompt";
 const SHOWN_SESSION_KEY = "lustforge-install-prompt-logged";
@@ -144,7 +149,7 @@ export default function InstallPrompt() {
                     Install LustForge
                   </p>
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Full-screen app, faster return visits, and your tab bar out of the way.
+                    Add her to your home screen. One tap, and she is right there.
                   </p>
                 </div>
               </div>

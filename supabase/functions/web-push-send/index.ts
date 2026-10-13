@@ -29,6 +29,8 @@ type SendBody = {
   url?: string;
   tag?: string;
   icon?: string;
+  /** Calls respect the quiet window. Messages and daily moments do not. */
+  kind?: "message" | "moment" | "call";
 };
 
 Deno.serve(async (req) => {
@@ -68,6 +70,11 @@ Deno.serve(async (req) => {
   const url = typeof body.url === "string" && body.url.trim() ? body.url.trim() : "/";
   const tag = typeof body.tag === "string" && body.tag.trim() ? body.tag.trim() : "lf-push";
   const icon = typeof body.icon === "string" && body.icon.trim() ? body.icon.trim() : "";
+  const kind = body.kind === "message" || body.kind === "moment" || body.kind === "call"
+    ? body.kind
+    : tag.startsWith("lf-incoming-")
+      ? "call"
+      : "message";
 
   const payload = JSON.stringify({ title, body: text, url, tag, icon: icon || undefined });
 
@@ -84,7 +91,7 @@ Deno.serve(async (req) => {
     .eq("user_id", session.user.id)
     .maybeSingle();
 
-  if (!isWithinCallNotifyWindow(new Date(), prof as CallNotifyWindowRow | null)) {
+  if (kind === "call" && !isWithinCallNotifyWindow(new Date(), prof as CallNotifyWindowRow | null)) {
     return new Response(JSON.stringify({ ok: true, sent: 0, skipped: "outside_call_notify_window" }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

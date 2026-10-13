@@ -4,12 +4,15 @@ import { Sparkles } from "lucide-react";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { pollStudioJobs, stashStudioEdit, studioEnhance, studioGenerate, StudioError, type StudioJob } from "@/lib/studio/api";
-import { STUDIO_SCENES, STUDIO_STYLES, type StudioStyleId } from "@/lib/studio/options";
-import { renderPosePng, type StudioPose } from "@/lib/studio/poses";
+import { STUDIO_SCENES } from "@/lib/studio/options";
+import { CREATOR_DEFAULTS, CREATOR_FIELDS, CREATOR_STYLES, buildCreatorPrompt, creatorDims, type CreatorLook } from "@/lib/studio/creator";
+import { renderPosePng, STUDIO_POSES, type StudioPose } from "@/lib/studio/poses";
 import { Chip } from "@/components/studio/Sheet";
 import { PoseSheet } from "@/components/studio/PoseSheet";
 import { StudioEditWand } from "@/components/studio/EditWand";
 import { supabase } from "@/integrations/supabase/client";
+import { TREASURES, type TreasureSlot } from "@/lib/vault/treasures";
+import { loadCompanionLooks, lookSlotId, vaultCall, type LookRow, type VaultPiece } from "@/lib/vault/looks";
 
 type Result = StudioJob & { imageUrl: string };
 
@@ -19,11 +22,16 @@ export function CreateTab() {
   const { companions, limits, user } = usePhoneRoster(preview);
   const [companionId, setCompanionId] = useState<string | null>(companions[0]?.id ?? null);
   const companionTouched = useRef(Boolean(companions[0]));
-  const [styleId, setStyleId] = useState<StudioStyleId>("photoreal");
+  const [styleId, setStyleId] = useState("photoreal");
+  const [look, setLook] = useState<CreatorLook>(CREATOR_DEFAULTS);
   const [sceneId, setSceneId] = useState<string>("portrait");
   const [prompt, setPrompt] = useState("");
   const [pose, setPose] = useState<StudioPose | null>(null);
   const [poseOpen, setPoseOpen] = useState(false);
+  const [vaultPieces, setVaultPieces] = useState<VaultPiece[]>([]);
+  const [savedLooks, setSavedLooks] = useState<LookRow[]>([]);
+  const [lookId, setLookId] = useState<string>("");
+  const [slots, setSlots] = useState<Partial<Record<TreasureSlot, string>>>({});
   const [variations, setVariations] = useState(1);
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
@@ -35,6 +43,57 @@ export function CreateTab() {
     if (companionTouched.current || companionId || !companions[0]) return;
     setCompanionId(companions[0].id);
   }, [companionId, companions]);
+
+  useEffect(() => {
+    void vaultCall({ action: "quote" }).then((res) => {
+      const rows = Array.isArray(res.data?.items) ? res.data.items as Array<Record<string, unknown>> : [];
+      const next = rows.length
+        ? rows.map((item) => ({
+          id: String(item.id),
+          name: String(item.name ?? ""),
+          slot: String(item.slot ?? "outfit") as TreasureSlot,
+          kind: String(item.kind ?? ""),
+          rarity: String(item.rarity ?? "silk"),
+          blurb: String(item.blurb ?? ""),
+          owned: Boolean(item.owned),
+          isNew: Boolean(item.isNew),
+        }))
+        : TREASURES.map((item) => ({
+          id: item.id,
+          name: item.name,
+          slot: item.slot,
+          kind: item.kind,
+          rarity: item.rarity,
+          blurb: item.blurb,
+          owned: false,
+          isNew: item.isNew,
+        }));
+      setVaultPieces(next);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!user || !companionId) {
+      setSavedLooks([]);
+      return;
+    }
+    void loadCompanionLooks(user.id, companionId).then(setSavedLooks);
+  }, [user, companionId]);
+
+  function chooseLook(id: string) {
+    setLookId(id);
+    const look = savedLooks.find((item) => item.id === id);
+    if (!look) {
+      setSlots({});
+      return;
+    }
+    const next: Partial<Record<TreasureSlot, string>> = {};
+    (["outfit", "accessory", "pose", "scene", "hair", "mood"] as TreasureSlot[]).forEach((slot) => {
+      const piece = lookSlotId(look, slot);
+      if (piece) next[slot] = piece;
+    });
+    setSlots(next);
+  }
 
   async function enhance() {
     if (preview) {
@@ -61,16 +120,38 @@ export function CreateTab() {
     setBusy("Starting the GPU…");
     setNotice(null);
     try {
-      const poseDataUrl = pose ? await renderPosePng(pose) : null;
+      const style = CREATOR_STYLES.find((item) => item.id === styleId) ?? CREATOR_STYLES[0];
+      const slotIds = {
+        outfitId: slots.outfit || null,
+        accessoryId: slots.accessory || null,
+        sceneId: slots.scene || null,
+        poseId: slots.pose || null,
+        hairId: slots.hair || null,
+        moodId: slots.mood || null,
+      };
+      let worn = "";
+      let wornPose: string | null = null;
+      if (Object.values(slotIds).some(Boolean)) {
+        const composed = await vaultCall({ action: "compose", artLabel: style.label, companionId, ...slotIds });
+        if (composed.error) throw new StudioError(composed.error);
+        worn = String(composed.data?.prompt ?? "");
+        wornPose = composed.data?.poseId ? String(composed.data.poseId) : null;
+      }
+      const poseForSkeleton = pose ?? (wornPose ? STUDIO_POSES.find((item) => item.id === wornPose) ?? null : null);
+      const poseDataUrl = poseForSkeleton ? await renderPosePng(poseForSkeleton) : null;
+      const sized = creatorDims(look.aspect);
       const started = await studioGenerate({
         companionId,
         styleId,
         scene: scene.text,
-        poseId: pose?.id ?? null,
+        poseId: poseForSkeleton?.id ?? null,
         poseHint: pose?.hint ?? "",
         poseDataUrl,
         prompt,
         variations,
+        builtPrompt: buildCreatorPrompt({ ...look, style: styleId, custom: [prompt, worn].filter(Boolean).join(". ") }, scene.text),
+        width: sized.width,
+        height: sized.height,
       });
       const ids = (started.jobs ?? []).map((job) => job.id);
       if (!ids.length) throw new StudioError("No job was started");
@@ -163,9 +244,41 @@ export function CreateTab() {
           </div>
         </div>
         <div>
+          <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-primary">Look</p>
+          <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+            <Chip on={lookId === ""} onClick={() => chooseLook("")}>Slots</Chip>
+            {savedLooks.map((item) => (
+              <Chip key={item.id} on={lookId === item.id} onClick={() => chooseLook(item.id)}>{item.name}</Chip>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {(["outfit", "accessory", "pose", "scene", "hair", "mood"] as TreasureSlot[]).map((slot) => {
+              const choices = vaultPieces.filter((item) => item.slot === slot && item.owned);
+              const locked = vaultPieces.some((item) => item.slot === slot && !item.owned);
+              return (
+                <label key={slot} className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  {slot}
+                  <select
+                    value={slots[slot] ?? ""}
+                    onChange={(event) => {
+                      setLookId("");
+                      setSlots((current) => ({ ...current, [slot]: event.target.value }));
+                    }}
+                    className="mt-1 h-11 w-full rounded-xl border border-border bg-card px-2 text-sm capitalize text-foreground"
+                  >
+                    <option value="">None</option>
+                    {choices.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  </select>
+                  {locked ? <Link to={`/treasures${q}`} className="mt-1 block text-[10px] normal-case tracking-normal text-primary">Find in the Vault</Link> : null}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+        <div>
           <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-primary">Style</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {STUDIO_STYLES.map((style) => (
+            {CREATOR_STYLES.map((style) => (
               <Chip key={style.id} on={styleId === style.id} onClick={() => setStyleId(style.id)}>{style.label}</Chip>
             ))}
           </div>
@@ -178,8 +291,24 @@ export function CreateTab() {
             ))}
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          {(Object.keys(CREATOR_FIELDS) as Array<keyof typeof CREATOR_FIELDS>).map((key) => (
+            <label key={key} className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              {key}
+              <select
+                value={look[key]}
+                onChange={(event) => setLook((current) => ({ ...current, [key]: event.target.value }))}
+                className="mt-1 h-11 w-full rounded-xl border border-border bg-card px-2 text-sm capitalize text-foreground"
+              >
+                {CREATOR_FIELDS[key].map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
         <label className="block">
-          <span className="mb-2 block text-[10px] uppercase tracking-[0.2em] text-primary">Prompt</span>
+          <span className="mb-2 block text-[10px] uppercase tracking-[0.2em] text-primary">Extra</span>
           <textarea
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}

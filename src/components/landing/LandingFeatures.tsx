@@ -1,3 +1,4 @@
+import { ComingSoon } from "@/components/shell/ComingSoon";
 import { History, ImageIcon, Orbit, Phone, Shield, Sparkles, Waves } from "lucide-react";
 import {
   CHAT_IMAGE_LEWD_FC,
@@ -92,6 +93,12 @@ export function LandingFeatures() {
             );
           })}
         </ul>
+        <div className="mt-12">
+          <p className="text-center text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Later</p>
+          <div className="mt-4">
+            <ComingSoon />
+          </div>
+        </div>
         <p className="mt-8 text-center">
           <button
             type="button"

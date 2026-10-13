@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { initAnalytics, trackPageView } from "@/lib/analytics";
 import { dismissAllProfileLoopToasts } from "@/lib/invokeGenerateProfileLoopVideo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { AppShell } from "@/components/shell/AppShell";
 import AgeGate from "./components/AgeGate";
 import InstallPrompt from "./components/InstallPrompt";
 import Index from "./pages/Index";
@@ -21,6 +22,12 @@ import { isPlatformAdmin } from "@/config/auth";
 import type { Session } from "@supabase/supabase-js";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const HomeDashboard = lazy(() => import("./pages/HomeDashboard"));
+const CompanionsHome = lazy(() => import("./pages/CompanionsHome"));
+const CompanionBond = lazy(() => import("./pages/CompanionBond"));
+const GroupChat = lazy(() => import("./pages/GroupChat"));
+const VelvetVault = lazy(() => import("./pages/VelvetVault"));
+const AdminTreasures = lazy(() => import("./pages/AdminTreasures"));
 const PhoneHome = lazy(() => import("./components/phone/PhoneHome"));
 const MessagesList = lazy(() => import("./components/phone/MessagesList"));
 const PhoneThread = lazy(() => import("./components/phone/PhoneThread"));
@@ -160,7 +167,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
         setLoading(false);
 
         // For /admin path: Redirect non-admins to /dashboard
-        if (location.pathname === '/admin' && authenticated && !admin) {
+        if (location.pathname.startsWith('/admin') && authenticated && !admin) {
           navigate('/dashboard', { replace: true });
           return;
         }
@@ -184,7 +191,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
           return;
         }
 
-        if (location.pathname === '/admin' && authenticated && !admin) {
+        if (location.pathname.startsWith('/admin') && authenticated && !admin) {
           navigate('/dashboard', { replace: true });
         }
       })();
@@ -206,7 +213,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   // For /admin, only allow if isAdmin
-  if (location.pathname === '/admin' && !isAdmin) {
+  if (location.pathname.startsWith('/admin') && !isAdmin) {
     return null; // Redirect handled above
   }
 
@@ -255,7 +262,14 @@ function App() {
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/18-plus-disclaimer" element={<EighteenPlusDisclaimer />} />
-              <Route path="/dashboard" element={<PhoneHome />} />
+              <Route path="/companions/:id" element={<CompanionProfile />} />
+              <Route element={<AppShell />}>
+              <Route path="/dashboard" element={<HomeDashboard />} />
+              <Route path="/companions" element={<CompanionsHome />} />
+              <Route path="/companions/:id/bond" element={<CompanionBond />} />
+              <Route path="/treasures" element={<VelvetVault />} />
+              <Route path="/messages/group" element={<GroupChat />} />
+              <Route path="/admin/treasures" element={<ProtectedRoute><AdminTreasures /></ProtectedRoute>} />
               <Route
                 path="/vault"
                 element={
@@ -295,7 +309,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/companions/:id" element={<CompanionProfile />} />
               <Route
                 path="/create-companion"
                 element={
@@ -329,6 +342,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

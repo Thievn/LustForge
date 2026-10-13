@@ -13,7 +13,7 @@ export const BANK_MODERN: NameBank = {
   f: stripDupes([
     "Riley", "Zoey", "Harper", "Lexi", "Maya", "Jenna", "Chloe", "Natalie", "Skylar", "Morgan", "Priya", "Lily",
     "Hannah", "Sophia", "Zoe", "Emma", "Olivia", "Madison", "Avery", "Kendall", "Brielle", "Dani", "Elle", "Gracie",
-    "Ivy", "Jade", "Kinsley", "Luna", "Nora", "Paige", "Quinn", "Ruby", "Sienna", "Tessa", "Violet", "Willow", "Ari",
+    "Isla", "Jada", "Kinsley", "Lena", "Nora", "Paige", "Quinn", "Rosa", "Sienna", "Tessa", "Valerie", "Willa", "Ari",
   ]),
   m: stripDupes([
     "Dylan", "Cole", "Jordan", "Jake", "Finn", "Omar", "Devin", "Tyler", "Noah", "Kai", "Gavin", "Aidan", "Brett",
@@ -21,9 +21,9 @@ export const BANK_MODERN: NameBank = {
     "Tristan", "Vince", "Wes", "Xavier", "Yuri", "Zain", "Alec", "Brady", "Cam", "Drew", "Evan", "Grant", "Hugo",
   ]),
   x: stripDupes([
-    "Jordan", "River", "Avery", "Riley", "Parker", "Kai", "Morgan", "Cameron", "Skylar", "Peyton", "Rowan", "Sage",
+    "Jordan", "Remy", "Avery", "Riley", "Parker", "Kai", "Morgan", "Cameron", "Skylar", "Peyton", "Rowan", "Sasha",
     "Jules", "Alex", "Sydney", "Casey", "Ellis", "Kendall", "Remi", "Sam", "Sloane", "Tatum", "Quinn", "Dakota", "Reese",
-    "Reign", "Lane", "Bay", "Ash", "Ocean", "Sky", "Stormy", "Indigo", "Cedar", "Phoenix", "Harper", "Charlie", "Sawyer",
+    "Robin", "Lane", "Blake", "Auden", "Emery", "Shane", "Stevie", "Ira", "Cory", "Frankie", "Harper", "Charlie", "Sawyer",
   ]),
 };
 

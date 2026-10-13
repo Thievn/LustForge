@@ -23,6 +23,8 @@ export type ChatSystemPromptOptions = {
   chatAffectionTier?: number;
   /** DB-backed Lovense rows — teaches signature / pattern names for toy JSON. */
   vibrationPatterns?: CompanionVibrationPatternRow[];
+  /** Memories, scene, outfit, and closeness. Appended after the profile. */
+  bondAppend?: string | null;
 };
 
 function clamp(n: number, lo: number, hi: number) {
@@ -171,7 +173,7 @@ ${nexusLineageBlock}
 ${profileCard(companion)}
 
 === FANTASY STARTERS (reference) ===
-${fantasyStartersReference(companion.fantasyStarters)}`;
+${fantasyStartersReference(companion.fantasyStarters)}${opts.bondAppend?.trim() ? `\n\n${opts.bondAppend.trim()}` : ""}`;
 }
 
 /** @deprecated Prefer buildChatSystemPrompt(companion, opts). */
