@@ -448,7 +448,7 @@ AS $$
 DECLARE
   bal integer;
   owner boolean;
-  item_id text;
+  v_item text;
   idx integer := 0;
 BEGIN
   IF p_item_ids IS NULL OR cardinality(p_item_ids) < 2 THEN
@@ -477,20 +477,20 @@ BEGIN
     END IF;
   END IF;
 
-  FOREACH item_id IN ARRAY p_item_ids LOOP
+  FOREACH v_item IN ARRAY p_item_ids LOOP
     idx := idx + 1;
-    IF NOT EXISTS (SELECT 1 FROM public.collectible_items WHERE id = item_id AND active) THEN
+    IF NOT EXISTS (SELECT 1 FROM public.collectible_items WHERE id = v_item AND active) THEN
       RAISE EXCEPTION 'UNKNOWN_ITEM';
     END IF;
-    IF EXISTS (SELECT 1 FROM public.user_collectibles WHERE user_id = p_user_id AND item_id = item_id) THEN
+    IF EXISTS (SELECT 1 FROM public.user_collectibles WHERE user_id = p_user_id AND item_id = v_item) THEN
       RAISE EXCEPTION 'ALREADY_OWNED';
     END IF;
-    INSERT INTO public.user_collectibles (user_id, item_id) VALUES (p_user_id, item_id);
-    PERFORM public.vault_note_pull(p_user_id, item_id);
+    INSERT INTO public.user_collectibles (user_id, item_id) VALUES (p_user_id, v_item);
+    PERFORM public.vault_note_pull(p_user_id, v_item);
     INSERT INTO public.box_opens (user_id, item_id, cost, charged, roll, odds)
     VALUES (
       p_user_id,
-      item_id,
+      v_item,
       p_cost,
       CASE WHEN idx = 1 AND NOT p_skip_charge AND NOT COALESCE(owner, false) THEN p_cost ELSE 0 END,
       COALESCE((p_rolls ->> (idx - 1))::double precision, 0),
