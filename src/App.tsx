@@ -25,6 +25,7 @@ const PhoneHome = lazy(() => import("./components/phone/PhoneHome"));
 const MessagesList = lazy(() => import("./components/phone/MessagesList"));
 const PhoneThread = lazy(() => import("./components/phone/PhoneThread"));
 const LabFlow = lazy(() => import("./components/phone/LabFlow"));
+const Studio = lazy(() => import("./components/studio/Studio"));
 const GalleryView = lazy(() => import("./components/phone/GalleryView"));
 const PlansView = lazy(() => import("./components/phone/PlansView"));
 const CallsView = lazy(() => import("./components/phone/CallsView"));
@@ -265,7 +266,8 @@ function App() {
               />
               <Route path="/messages" element={<MessagesList />} />
               <Route path="/messages/:id" element={<PhoneThread />} />
-              <Route path="/lab" element={<LabFlow />} />
+              <Route path="/lab" element={<Studio />} />
+              <Route path="/lab/new" element={<LabFlow />} />
               <Route path="/gallery" element={<GalleryView />} />
               <Route path="/plans" element={<PlansView />} />
               <Route path="/calls" element={<CallsView />} />

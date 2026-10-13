@@ -76,5 +76,6 @@ export const PREVIEW_THREAD = [
     role: "assistant" as const,
     content: "Then stay with me a minute.",
     createdAt: new Date(Date.now() - 1000 * 60 * 11).toISOString(),
+    imageUrl: "/og-image.png",
   },
 ];

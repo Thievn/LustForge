@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const ICONS = [
   { to: "/messages", label: "Messages", name: "messages" },
-  { to: "/lab", label: "Lab", name: "lab" },
+  { to: "/lab", label: "Studio", name: "lab" },
   { to: "/gallery", label: "Gallery", name: "gallery" },
   { to: "/calls", label: "Calls", name: "calls" },
   { to: "/plans", label: "Plans", name: "plans" },
@@ -122,7 +122,7 @@ export default function PhoneHome() {
                 </Link>
               </motion.div>
             ) : (
-              <PhoneEmpty title="Your phone is empty" body="Create a companion in the Lab. She will land on this screen." />
+              <PhoneEmpty title="Your phone is empty" body="Create a companion in Studio. She will land on this screen." />
             )}
 
             <div className="grid grid-cols-4 gap-y-5">

@@ -13,7 +13,8 @@ import { buildGrokPhoneRequest, replyTextFromGrok } from "@/lib/phone/grokPhoneC
 import { messageFromFunctionsInvoke } from "@/lib/supabaseFunctionsError";
 import { PREVIEW_THREAD } from "@/lib/phone/previewData";
 import { readPhoneSkin } from "@/lib/phone/skin";
-import { parseStorageRef } from "@/lib/phone/storageUrl";
+import { parseStorageRef, storageUri } from "@/lib/phone/storageUrl";
+import { StudioEditWand } from "@/components/studio/EditWand";
 import { planAllowsClearPictures } from "@/lib/phone/pricing";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ type Bubble = {
   content: string;
   createdAt: string;
   imageUrl?: string | null;
+  storageUrl?: string | null;
   pendingImage?: boolean;
   blurred?: boolean;
   deliveredAt?: string | null;
@@ -66,6 +68,7 @@ export default function PhoneThread() {
             content: row.content,
             createdAt: row.created_at,
             imageUrl: await displayUrl(row.image_url),
+            storageUrl: row.image_url && parseStorageRef(row.image_url) ? row.image_url : null,
           })),
         );
         setMessages(rows);
@@ -204,6 +207,7 @@ export default function PhoneThread() {
         setNotice(await messageFromFunctionsInvoke(image.error, image.data));
       }
       const src = payload?.imageUrl ? await displayUrl(payload.imageUrl, payload.storageBucket, payload.storagePath) : null;
+      const stored = payload?.storageBucket && payload.storagePath ? storageUri(payload.storageBucket, payload.storagePath) : null;
       setMessages((current) =>
         current.map((item) =>
           item.id === pendingId
@@ -212,6 +216,7 @@ export default function PhoneThread() {
                 pendingImage: false,
                 blurred: Boolean(payload?.blurred) || !src,
                 imageUrl: src,
+                storageUrl: stored,
                 content: payload?.error
                   ? "My camera is being weird. I will send it in a bit."
                   : payload?.blurred
@@ -341,11 +346,21 @@ export default function PhoneThread() {
                     >
                       {message.pendingImage ? <PhotoPlaceholder name={companion.name} /> : null}
                       {message.imageUrl ? (
-                        <img
-                          src={message.imageUrl}
-                          alt=""
-                          className={cn("mb-2 max-h-72 w-full rounded-xl object-cover", message.blurred && "scale-105 blur-xl")}
-                        />
+                        <div className="relative mb-2">
+                          <img
+                            src={message.imageUrl}
+                            alt=""
+                            className={cn("max-h-72 w-full rounded-xl object-cover", message.blurred && "scale-105 blur-xl")}
+                          />
+                          {message.blurred ? null : (
+                            <StudioEditWand
+                              imageUrl={message.imageUrl}
+                              storageUrl={message.storageUrl ?? undefined}
+                              companionId={id}
+                              source="lab"
+                            />
+                          )}
+                        </div>
                       ) : message.blurred ? (
                         <div className="mb-2 flex h-40 items-center justify-center rounded-xl bg-primary/20 text-xs uppercase tracking-[0.18em] text-primary">
                           Locked
