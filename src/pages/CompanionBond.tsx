@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Phone, PhoneOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
@@ -49,7 +49,8 @@ export default function CompanionBond() {
   const navigate = useNavigate();
   const { companions, user } = usePhoneRoster(preview);
   const companion = companions.find((item) => item.id === id);
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Her");
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState<(typeof TABS)[number]>(params.get("tab") === "style" ? "Style Her" : "Her");
   const [xp, setXp] = useState(0);
   const [streak, setStreak] = useState(0);
   const [memories, setMemories] = useState<Memory[]>([]);
