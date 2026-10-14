@@ -1,8 +1,10 @@
-import { useId, useState } from "react";
+import { useId, useState, type CSSProperties, type ReactNode } from "react";
+import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RARITY_TONE, rarityBreathes, rarityShimmers } from "@/lib/vault/art";
 import type { VaultCategory, VaultRarity } from "@/lib/vault/treasures";
 
-export const RARITY_COLOR: Record<VaultRarity, { label: string; from: string; to: string; glow: string; ink: string }> = {
+const RARITY_COLOR: Record<VaultRarity, { label: string; from: string; to: string; glow: string; ink: string }> = {
   silk: { label: "Silk", from: "#ffd0e4", to: "#f4a7c5", glow: "rgba(255, 182, 213, 0.62)", ink: "#4a1830" },
   satin: { label: "Satin", from: "#ddd6fe", to: "#7c3aed", glow: "rgba(139, 92, 246, 0.7)", ink: "#1e1033" },
   velvet: { label: "Velvet", from: "#fb7185", to: "#7f1d1d", glow: "rgba(159, 18, 57, 0.8)", ink: "#fff5f5" },
@@ -18,6 +20,7 @@ function artShape(kind: VaultCategory): "lace" | "swim" | "jewel" | "place" | "p
   return "place";
 }
 
+/** Flat fallback used outside the vault grid. The vault itself uses photographed cards. */
 export function TreasureArt({ kind, rarity, hidden }: { kind: VaultCategory; rarity: VaultRarity; hidden?: boolean }) {
   const tone = RARITY_COLOR[rarity];
   const grad = useId().replace(/:/g, "");
@@ -31,7 +34,6 @@ export function TreasureArt({ kind, rarity, hidden }: { kind: VaultCategory; rar
       </defs>
       <rect width="160" height="200" fill="#140910" />
       <rect x="8" y="8" width="144" height="184" rx="18" fill={hidden ? "#1a1020" : `url(#${grad})`} opacity="0.95" />
-      {hidden ? <text x="80" y="112" textAnchor="middle" fontSize="42" fill="#f4e9f2">?</text> : null}
       {!hidden && artShape(kind) === "lace" ? (
         <>
           <path d="M80 48c18 0 28 16 28 32 0 28-28 48-28 48S52 108 52 80c0-16 10-32 28-32z" fill={tone.ink} opacity="0.85" />
@@ -76,68 +78,105 @@ export function TreasureArt({ kind, rarity, hidden }: { kind: VaultCategory; rar
   );
 }
 
+export function VaultArt({
+  src,
+  locked,
+  rarity,
+  eager,
+  alt = "",
+}: {
+  src: string;
+  locked?: boolean;
+  rarity: VaultRarity;
+  eager?: boolean;
+  alt?: string;
+}) {
+  const tone = RARITY_TONE[rarity];
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="relative aspect-[3/4] overflow-hidden bg-[#14090f]">
+      {failed ? null : (
+        <img
+          src={src}
+          alt={alt}
+          width={eager ? 512 : 256}
+          height={eager ? 683 : 341}
+          loading={eager ? "eager" : "lazy"}
+          decoding="async"
+          onError={() => setFailed(true)}
+          className={cn("absolute inset-0 h-full w-full object-cover", locked && "scale-110 blur-[10px] brightness-[0.35]")}
+        />
+      )}
+      {locked ? (
+        <>
+          <div className="absolute inset-0" style={{ backgroundColor: tone.tint }} aria-hidden />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/15 via-transparent to-transparent" aria-hidden />
+          <Lock className="absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-white/90" strokeWidth={1.75} aria-hidden />
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+export function VaultFrame({
+  rarity,
+  owned,
+  children,
+  className,
+}: {
+  rarity: VaultRarity;
+  owned?: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
+  const tone = RARITY_TONE[rarity];
+  const breathe = rarityBreathes(rarity, Boolean(owned));
+  const style = { "--vault-glow": tone.glow } as CSSProperties;
+  if (rarity === "obsession") {
+    return (
+      <div className={cn("vault-obsession-frame rounded-[10px] p-[1.5px]", breathe && "vault-breathe", className)} style={style}>
+        <div className="overflow-hidden rounded-[8.5px] bg-[#120910]">{children}</div>
+      </div>
+    );
+  }
+  return (
+    <div className={cn("rounded-[10px] border-[1.5px]", breathe && "vault-breathe", className)} style={{ ...style, borderColor: tone.border }}>
+      <div className="overflow-hidden rounded-[8.5px]">{children}</div>
+    </div>
+  );
+}
+
 export function TreasureCard({
   name,
-  kind,
   rarity,
-  blurb,
   owned,
-  percent,
+  thumbUrl,
   isNew,
   onClick,
 }: {
   name: string;
-  kind: VaultCategory;
   rarity: VaultRarity;
-  blurb?: string;
   owned?: boolean;
-  percent?: number;
+  thumbUrl: string;
   isNew?: boolean;
   onClick?: () => void;
 }) {
-  const tone = RARITY_COLOR[rarity];
-  const [flipped, setFlipped] = useState(false);
-  const locked = !owned;
+  const shimmer = rarityShimmers(rarity, Boolean(owned));
   return (
     <button
       type="button"
-      onClick={() => {
-        setFlipped((open) => !open);
-        onClick?.();
-      }}
-      className={cn(
-        "group relative aspect-[3/4] w-full overflow-hidden rounded-2xl border text-left [perspective:800px]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        rarity === "obsession" && "obsession-card",
-        rarity === "forbidden" && "forbidden-card",
-      )}
-      style={
-        rarity === "obsession" || rarity === "forbidden"
-          ? undefined
-          : { boxShadow: `0 0 0 1px ${tone.from}, 0 10px 28px ${tone.glow}`, borderColor: tone.from }
-      }
-      aria-pressed={flipped}
+      onClick={onClick}
+      className="block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+      aria-label={owned ? name : `${name}, locked`}
     >
-      <div className={cn("relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]", flipped && "[transform:rotateY(180deg)]")}>
-        <div className="absolute inset-0 [backface-visibility:hidden]">
-          {rarity === "forbidden" ? <span className="pointer-events-none absolute inset-0 z-[1] animate-forbidden-shimmer opacity-80" aria-hidden /> : null}
-          {rarity === "obsession" ? <span className="pointer-events-none absolute inset-0 z-[1] animate-obsession-sheen" aria-hidden /> : null}
-          <TreasureArt kind={kind} rarity={rarity} hidden={locked} />
-          {isNew ? <span className="absolute left-2 top-2 z-[2] rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">New!</span> : null}
-          {!flipped && !locked ? (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2">
-              <p className="text-[9px] uppercase tracking-[0.16em]" style={{ color: tone.from }}>{tone.label}</p>
-              <p className="font-gothic text-sm leading-tight text-white">{name}</p>
-            </div>
-          ) : null}
+      <VaultFrame rarity={rarity} owned={owned}>
+        <div className="relative">
+          <VaultArt src={thumbUrl} locked={!owned} rarity={rarity} />
+          {shimmer ? <span className="vault-sheen pointer-events-none absolute inset-0" aria-hidden /> : null}
+          {isNew ? <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden /> : null}
         </div>
-        <div className="absolute inset-0 flex flex-col justify-end bg-[#12080e] p-3 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-          <p className="text-[9px] uppercase tracking-[0.16em]" style={{ color: tone.from }}>{tone.label}</p>
-          <p className="font-gothic text-base leading-tight text-white">{locked ? name : name}</p>
-          <p className="mt-1 line-clamp-4 text-[11px] text-white/75">{blurb}</p>
-          <p className="mt-2 text-[11px] text-white/80">{owned ? "Yours" : percent != null ? `${percent.toFixed(2)}% to find` : "Locked"}</p>
-        </div>
-      </div>
+      </VaultFrame>
+      <p className="mt-1 line-clamp-2 h-[2.35em] text-[10px] leading-[1.15] text-foreground/75">{name}</p>
     </button>
   );
 }

@@ -441,3 +441,99 @@
   .obsession-card,
   .obsession-card::before { animation: none; }
 }
+
+.vault-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (min-width: 480px) {
+  .vault-grid {
+    grid-template-columns: repeat(auto-fill, 140px);
+    justify-content: start;
+  }
+}
+
+.vault-obsession-frame {
+  background: conic-gradient(from 210deg, #f4cfe2, #c4b5fd, #e7d7a8, #e4c4ef, #f4cfe2);
+}
+
+.vault-breathe {
+  position: relative;
+}
+.vault-breathe::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 12px 1px var(--vault-glow, transparent);
+  opacity: 0.28;
+  animation: vault-breathe 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes vault-breathe {
+  0%, 100% { opacity: 0.22; }
+  50% { opacity: 0.72; }
+}
+
+.vault-sheen {
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.2) 50%, transparent 62%);
+  mix-blend-mode: soft-light;
+  transform: translate3d(-36%, 0, 0);
+  animation: vault-sheen 7s ease-in-out infinite;
+}
+@keyframes vault-sheen {
+  0%, 100% { transform: translate3d(-36%, 0, 0); opacity: 0.2; }
+  50% { transform: translate3d(36%, 0, 0); opacity: 0.65; }
+}
+
+.vault-reveal-light {
+  background: radial-gradient(circle, var(--vault-light, transparent) 0%, transparent 68%);
+  opacity: 0;
+  transform: scale(0.9);
+}
+.vault-reveal-play .vault-reveal-light {
+  animation: vault-light 1.5s ease-out forwards;
+}
+@keyframes vault-light {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.vault-reveal-play .vault-reveal-card {
+  opacity: 0.45;
+  transform: translate3d(0, 10px, 0);
+  animation: vault-arrive 1.7s cubic-bezier(0.22, 0.7, 0.28, 1) forwards;
+}
+@keyframes vault-arrive {
+  0% { opacity: 0.45; transform: translate3d(0, 10px, 0); }
+  12% { opacity: 0.55; transform: translate3d(-2px, 9px, 0); }
+  24% { opacity: 0.65; transform: translate3d(2px, 8px, 0); }
+  36% { opacity: 0.78; transform: translate3d(-1px, 6px, 0); }
+  48% { opacity: 0.88; transform: translate3d(0, 5px, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.vault-reveal-play .vault-frost {
+  animation: vault-frost 0.9s ease 1.05s forwards;
+}
+@keyframes vault-frost {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-breathe::after,
+  .vault-sheen,
+  .vault-reveal-light,
+  .vault-reveal-play .vault-reveal-card,
+  .vault-reveal-play .vault-frost {
+    animation: none;
+  }
+  .vault-reveal-play .vault-frost {
+    opacity: 0;
+  }
+  .vault-breathe::after {
+    opacity: 0.4;
+  }
+}
