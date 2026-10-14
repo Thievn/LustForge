@@ -1,8 +1,15 @@
-// Landing gallery images are stored as base64 text (*.webp.b64) and decoded before dev/build.
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+// Image binaries are stored as base64 text (*.b64) and decoded before dev/build.
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-const dir = join(process.cwd(), "src/assets/landing-gallery");
-for (const f of readdirSync(dir)) {
-  if (!f.endsWith(".webp.b64")) continue;
-  writeFileSync(join(dir, f.slice(0, -4)), Buffer.from(readFileSync(join(dir, f), "utf8").replace(/\s+/g, ""), "base64"));
+
+function decodeDir(dir) {
+  if (!existsSync(dir)) return;
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith(".b64")) continue;
+    writeFileSync(join(dir, f.slice(0, -4)), Buffer.from(readFileSync(join(dir, f), "utf8").replace(/\s+/g, ""), "base64"));
+  }
 }
+
+const root = process.cwd();
+decodeDir(join(root, "src/assets/landing-gallery"));
+decodeDir(join(root, "src/assets/pose-thumbs"));

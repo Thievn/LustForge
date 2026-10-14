@@ -23,6 +23,7 @@ import { matchOutfitName } from "@/lib/bond/logic";
 import { TREASURES } from "@/lib/vault/treasures";
 import { loadCompanionLooks, vaultCall, type LookRow } from "@/lib/vault/looks";
 import { invokeWebPushSend } from "@/lib/invokeWebPushSend";
+import { matchPoseId } from "@/lib/phone/poses";
 
 type Bubble = {
   id: string;
@@ -240,6 +241,7 @@ export default function PhoneThread() {
           framing: request?.framing || "half-body",
           expression: request?.expression || "",
           poseHint: request?.poseHint || "",
+          poseId: matchPoseId(`${content}\n${request?.scene || ""}\n${request?.poseHint || ""}`),
           userText: content,
         },
       });

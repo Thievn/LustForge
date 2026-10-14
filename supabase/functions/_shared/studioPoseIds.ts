@@ -101,3 +101,14 @@ export const POSE_IDS = [
 ] as const;
 
 export const POSE_SET = new Set<string>(POSE_IDS);
+
+/** Hidden chat keyword poses. In the skeleton catalog, not the Studio picker. */
+export const CHAT_POSE_IDS = [
+  "couch_lying_03",
+  "mirror_selfie_01",
+  "kneeling_02",
+  "bed_reclining_04",
+  "standing_portrait_01",
+] as const;
+
+export const SKELETON_POSE_SET = new Set<string>([...POSE_IDS, ...CHAT_POSE_IDS]);

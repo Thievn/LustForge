@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
+import { poseThumbUrl } from "@/lib/studio/poseThumbs";
 import type { VaultCategory, VaultRarity } from "@/lib/vault/treasures";
 
 export const RARITY_COLOR: Record<VaultRarity, { label: string; from: string; to: string; glow: string; ink: string }> = {
@@ -18,9 +19,23 @@ function artShape(kind: VaultCategory): "lace" | "swim" | "jewel" | "place" | "p
   return "place";
 }
 
-export function TreasureArt({ kind, rarity, hidden }: { kind: VaultCategory; rarity: VaultRarity; hidden?: boolean }) {
+export function TreasureArt({
+  kind,
+  rarity,
+  hidden,
+  poseId,
+}: {
+  kind: VaultCategory;
+  rarity: VaultRarity;
+  hidden?: boolean;
+  poseId?: string | null;
+}) {
   const tone = RARITY_COLOR[rarity];
   const grad = useId().replace(/:/g, "");
+  const poseSrc = !hidden && poseId ? poseThumbUrl(poseId) : null;
+  if (poseSrc) {
+    return <img src={poseSrc} alt="" className="h-full w-full bg-black object-contain" />;
+  }
   return (
     <svg viewBox="0 0 160 200" className="h-full w-full" aria-hidden>
       <defs>
@@ -84,6 +99,7 @@ export function TreasureCard({
   owned,
   percent,
   isNew,
+  poseId,
   onClick,
 }: {
   name: string;
@@ -93,6 +109,7 @@ export function TreasureCard({
   owned?: boolean;
   percent?: number;
   isNew?: boolean;
+  poseId?: string | null;
   onClick?: () => void;
 }) {
   const tone = RARITY_COLOR[rarity];
@@ -122,7 +139,7 @@ export function TreasureCard({
         <div className="absolute inset-0 [backface-visibility:hidden]">
           {rarity === "forbidden" ? <span className="pointer-events-none absolute inset-0 z-[1] animate-forbidden-shimmer opacity-80" aria-hidden /> : null}
           {rarity === "obsession" ? <span className="pointer-events-none absolute inset-0 z-[1] animate-obsession-sheen" aria-hidden /> : null}
-          <TreasureArt kind={kind} rarity={rarity} hidden={locked} />
+          <TreasureArt kind={kind} rarity={rarity} hidden={locked} poseId={poseId} />
           {isNew ? <span className="absolute left-2 top-2 z-[2] rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">New!</span> : null}
           {!flipped && !locked ? (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2">

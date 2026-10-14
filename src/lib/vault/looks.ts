@@ -23,6 +23,7 @@ export type VaultPiece = {
   blurb: string;
   owned: boolean;
   isNew: boolean;
+  poseId?: string | null;
 };
 
 const SLOT_COLUMN: Record<TreasureSlot, keyof LookRow> = {
