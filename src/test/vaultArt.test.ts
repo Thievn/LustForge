@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TREASURES } from "@/lib/vault/treasures";
-import { resolveVaultArt, vaultImageUrl, vaultThumbUrl } from "@/lib/vault/art";
+import { resolveVaultArt, vaultFrostClass, vaultImageUrl, vaultThumbUrl } from "@/lib/vault/art";
 
 describe("vault card art", () => {
   it("derives the public card and thumb from the treasure id", () => {
@@ -24,5 +24,12 @@ describe("vault card art", () => {
       imageUrl: vaultImageUrl("ling-ruby"),
       thumbUrl: vaultThumbUrl("ling-ruby"),
     });
+  });
+
+  it("keeps locked frost light enough to read the garment", () => {
+    expect(vaultFrostClass("card")).toContain("blur-[3.5px]");
+    expect(vaultFrostClass("card")).toContain("brightness-[0.55]");
+    expect(vaultFrostClass("sheet")).toContain("blur-[2px]");
+    expect(vaultFrostClass("sheet")).not.toContain("blur-[10px]");
   });
 });

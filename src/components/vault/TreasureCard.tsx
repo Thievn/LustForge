@@ -1,7 +1,7 @@
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RARITY_TONE, rarityBreathes, rarityShimmers } from "@/lib/vault/art";
+import { RARITY_TONE, rarityBreathes, rarityShimmers, vaultFrostClass } from "@/lib/vault/art";
 import type { VaultCategory, VaultRarity } from "@/lib/vault/treasures";
 
 const RARITY_COLOR: Record<VaultRarity, { label: string; from: string; to: string; glow: string; ink: string }> = {
@@ -78,20 +78,40 @@ export function TreasureArt({ kind, rarity, hidden }: { kind: VaultCategory; rar
   );
 }
 
+export function VaultFrostVeil({ rarity, className }: { rarity: VaultRarity; className?: string }) {
+  const tone = RARITY_TONE[rarity];
+  return (
+    <>
+      <div
+        className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-[40%]", className)}
+        style={{ background: `linear-gradient(to top, ${tone.wash}, transparent)` }}
+        aria-hidden
+      />
+      <Lock
+        className={cn("absolute left-1 top-1 h-2.5 w-2.5 text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]", className)}
+        strokeWidth={2.25}
+        aria-hidden
+      />
+    </>
+  );
+}
+
 export function VaultArt({
   src,
   locked,
   rarity,
   eager,
+  frost = "card",
   alt = "",
 }: {
   src: string;
   locked?: boolean;
   rarity: VaultRarity;
   eager?: boolean;
+  /** Card blur is 3.5px. Sheet blur is 2px. */
+  frost?: "card" | "sheet";
   alt?: string;
 }) {
-  const tone = RARITY_TONE[rarity];
   const [failed, setFailed] = useState(false);
   return (
     <div className="relative aspect-[3/4] overflow-hidden bg-[#14090f]">
@@ -104,16 +124,10 @@ export function VaultArt({
           loading={eager ? "eager" : "lazy"}
           decoding="async"
           onError={() => setFailed(true)}
-          className={cn("absolute inset-0 h-full w-full object-cover", locked && "scale-110 blur-[10px] brightness-[0.35]")}
+          className={cn("absolute inset-0 h-full w-full object-cover", locked && vaultFrostClass(frost))}
         />
       )}
-      {locked ? (
-        <>
-          <div className="absolute inset-0" style={{ backgroundColor: tone.tint }} aria-hidden />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/15 via-transparent to-transparent" aria-hidden />
-          <Lock className="absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-white/90" strokeWidth={1.75} aria-hidden />
-        </>
-      ) : null}
+      {locked ? <VaultFrostVeil rarity={rarity} /> : null}
     </div>
   );
 }

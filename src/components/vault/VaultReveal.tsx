@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { Lock } from "lucide-react";
-import { RARITY_TONE } from "@/lib/vault/art";
-import { VaultFrame } from "@/components/vault/TreasureCard";
+import { cn } from "@/lib/utils";
+import { RARITY_TONE, vaultFrostClass } from "@/lib/vault/art";
+import { VaultFrame, VaultFrostVeil } from "@/components/vault/TreasureCard";
 import type { VaultRarity } from "@/lib/vault/treasures";
 
 function useReducedMotion() {
@@ -48,10 +48,8 @@ export function VaultReveal({
                 {rarity === "obsession" ? <span className="vault-sheen pointer-events-none absolute inset-0" aria-hidden /> : null}
                 {play ? (
                   <>
-                    <img src={imageUrl} alt="" width={512} height={683} className="vault-frost absolute inset-0 h-full w-full scale-110 object-cover blur-[10px] brightness-[0.35]" aria-hidden />
-                    <div className="vault-frost absolute inset-0" style={{ backgroundColor: tone.tint }} aria-hidden />
-                    <div className="vault-frost pointer-events-none absolute inset-0 bg-gradient-to-b from-white/15 to-transparent" aria-hidden />
-                    <Lock className="vault-frost absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-white/90" strokeWidth={1.75} aria-hidden />
+                    <img src={imageUrl} alt="" width={512} height={683} className={cn("vault-frost absolute inset-0 h-full w-full object-cover", vaultFrostClass("card"))} aria-hidden />
+                    <VaultFrostVeil rarity={rarity} className="vault-frost" />
                   </>
                 ) : null}
               </div>

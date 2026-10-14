@@ -82,7 +82,7 @@ export function VaultSheet({
         </div>
         <div className="mx-auto w-[168px]">
           <VaultFrame rarity={rarity} owned={owned}>
-            <VaultArt src={imageUrl} locked={!owned} rarity={rarity} eager />
+            <VaultArt src={imageUrl} locked={!owned} rarity={rarity} eager frost="sheet" />
           </VaultFrame>
         </div>
         <h2 id="vault-sheet-title" className="mt-2.5 text-center font-gothic text-lg leading-tight text-white">{name}</h2>

@@ -31,6 +31,8 @@ export type RarityTone = {
   label: string;
   border: string;
   tint: string;
+  /** Low-opacity color for the locked-card wash. Bottom edge only. */
+  wash: string;
   glow: string;
   light: string;
 };
@@ -41,6 +43,7 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
     label: "Silk",
     border: "#f0c2d6",
     tint: "rgba(240, 194, 214, 0.2)",
+    wash: "rgba(240, 194, 214, 0.32)",
     glow: "rgba(240, 194, 214, 0.34)",
     light: "rgba(240, 194, 214, 0.38)",
   },
@@ -48,6 +51,7 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
     label: "Satin",
     border: "#a78bfa",
     tint: "rgba(139, 92, 246, 0.2)",
+    wash: "rgba(139, 92, 246, 0.3)",
     glow: "rgba(167, 139, 250, 0.42)",
     light: "rgba(167, 139, 250, 0.46)",
   },
@@ -55,6 +59,7 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
     label: "Velvet",
     border: "#9f1239",
     tint: "rgba(159, 18, 57, 0.22)",
+    wash: "rgba(159, 18, 57, 0.34)",
     glow: "rgba(159, 18, 57, 0.5)",
     light: "rgba(176, 36, 68, 0.52)",
   },
@@ -62,6 +67,7 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
     label: "Forbidden",
     border: "#e0c072",
     tint: "rgba(224, 192, 114, 0.18)",
+    wash: "rgba(224, 192, 114, 0.28)",
     glow: "rgba(224, 192, 114, 0.46)",
     light: "rgba(224, 192, 114, 0.52)",
   },
@@ -69,10 +75,18 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
     label: "Obsession",
     border: "#e7d4f2",
     tint: "rgba(196, 170, 230, 0.2)",
+    wash: "rgba(196, 170, 230, 0.3)",
     glow: "rgba(214, 186, 232, 0.5)",
     light: "rgba(220, 196, 236, 0.56)",
   },
 };
+
+/** Grid frost stays soft enough to read the garment. The sheet is a step clearer. */
+export function vaultFrostClass(frost: "card" | "sheet" = "card"): string {
+  return frost === "sheet"
+    ? "scale-[1.03] blur-[2px] brightness-[0.55]"
+    : "scale-[1.05] blur-[3.5px] brightness-[0.55]";
+}
 
 export function rarityBreathes(rarity: VaultRarity, owned: boolean): boolean {
   return owned && rarity !== "silk" && rarity !== "obsession";
