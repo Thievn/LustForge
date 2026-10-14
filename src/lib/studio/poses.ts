@@ -1,4 +1,5 @@
 import { POSE_IDS } from "../../../supabase/functions/_shared/studioPoseIds";
+import rawKeypoints from "./poseKeypoints.json";
 
 const CATS: Record<string, string> = {
   stand: "Standing",
@@ -33,11 +34,78 @@ export type StudioPose = {
   hint: string;
 };
 
+export type PosePoint = [number, number] | null;
+
+export type PoseSkeleton = {
+  id: string;
+  width: number;
+  height: number;
+  keypoints: PosePoint[];
+};
+
+type KeypointFile = {
+  names: string[];
+  poses: Record<string, { width: number; height: number; points: PosePoint[] }>;
+};
+
+const keypoints = rawKeypoints as unknown as KeypointFile;
+
+export const POSE_KEYPOINT_NAMES = keypoints.names;
+
+const SKELETONS = new Map<string, PoseSkeleton>(
+  Object.entries(keypoints.poses).map(([id, row]) => [
+    id,
+    { id, width: row.width, height: row.height, keypoints: row.points },
+  ]),
+);
+
+/** OpenPose BODY_18 links (0-index). Colours follow the ControlNet annotator. */
+const LIMBS: Array<[number, number]> = [
+  [1, 2],
+  [1, 5],
+  [2, 3],
+  [3, 4],
+  [5, 6],
+  [6, 7],
+  [1, 8],
+  [8, 9],
+  [9, 10],
+  [1, 11],
+  [11, 12],
+  [12, 13],
+  [1, 0],
+  [0, 14],
+  [14, 16],
+  [0, 15],
+  [15, 17],
+];
+
+const COLORS = [
+  "#ff0000",
+  "#ff5500",
+  "#ffaa00",
+  "#ffff00",
+  "#aaff00",
+  "#55ff00",
+  "#00ff00",
+  "#00ff55",
+  "#00ffaa",
+  "#00ffff",
+  "#00aaff",
+  "#0055ff",
+  "#0000ff",
+  "#5500ff",
+  "#aa00ff",
+  "#ff00ff",
+  "#ff00aa",
+  "#ff0055",
+];
+
 function title(id: string) {
   return id.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export const STUDIO_POSES: StudioPose[] = POSE_IDS.map((id) => {
+function describe(id: string): StudioPose {
   const prefix = id.split("_")[0] ?? "stand";
   const cat = CATS[prefix] ?? "Pose";
   return {
@@ -46,76 +114,73 @@ export const STUDIO_POSES: StudioPose[] = POSE_IDS.map((id) => {
     cat,
     hint: `${title(id)}, full-body shot, whole figure in frame`,
   };
-});
+}
+
+export const STUDIO_POSES: StudioPose[] = POSE_IDS.map((id) => describe(id));
 
 export const POSE_CATEGORIES = ["All", ...Array.from(new Set(STUDIO_POSES.map((pose) => pose.cat)))];
 
-type Line = { x1: number; y1: number; x2: number; y2: number; color: string };
-
-function hash(id: string) {
-  let n = 0;
-  for (let i = 0; i < id.length; i++) n = (n * 33 + id.charCodeAt(i)) >>> 0;
-  return n;
+export function poseSkeleton(id: string): PoseSkeleton | null {
+  return SKELETONS.get(id) ?? null;
 }
 
-/** Normalized 0–1 stick figure so the pose library is visible without the Lab's PNG pack. */
-export function poseLines(pose: StudioPose): Line[] {
-  const n = hash(pose.id);
-  const lean = ((n % 7) - 3) * 0.02;
-  const arm = 0.08 + (n % 5) * 0.015;
-  const cat = pose.cat;
-  const hipY = cat === "Sitting" || cat === "Chair" || cat === "Couch" || cat === "Lounging" ? 0.62 : cat === "Squat" ? 0.7 : cat === "Reclining" || cat === "In bed" ? 0.48 : 0.52;
-  const headY = hipY - 0.28;
-  const ground = cat === "Reclining" || cat === "In bed" || cat === "All fours" ? 0.72 : 0.9;
-  const cx = 0.5 + lean;
-  const knee = cat === "Sitting" || cat === "Chair" || cat === "Couch" ? 0.78 : ground - 0.12;
-  const footY = ground;
-  const spread = cat === "Dance" ? 0.16 : 0.08;
-  const armY = cat === "Yoga" || cat === "Tease" ? headY - 0.02 : headY + arm;
-  const lines: Line[] = [
-    { x1: cx, y1: headY + 0.06, x2: cx, y2: hipY, color: "#39ff88" },
-    { x1: cx, y1: headY + 0.1, x2: cx - 0.16, y2: armY, color: "#ff4d8d" },
-    { x1: cx - 0.16, y1: armY, x2: cx - 0.22, y2: armY + 0.12, color: "#ff4d8d" },
-    { x1: cx, y1: headY + 0.1, x2: cx + 0.16, y2: armY, color: "#7c5cff" },
-    { x1: cx + 0.16, y1: armY, x2: cx + 0.22, y2: armY + 0.12, color: "#7c5cff" },
-    { x1: cx, y1: hipY, x2: cx - spread, y2: knee, color: "#3ec6ff" },
-    { x1: cx - spread, y1: knee, x2: cx - spread - 0.02, y2: footY, color: "#3ec6ff" },
-    { x1: cx, y1: hipY, x2: cx + spread, y2: knee, color: "#ffe14a" },
-    { x1: cx + spread, y1: knee, x2: cx + spread + 0.02, y2: footY, color: "#ffe14a" },
-  ];
-  if (cat === "All fours" || cat === "From behind") {
-    return [
-      { x1: 0.3, y1: 0.42, x2: 0.62, y2: 0.48, color: "#39ff88" },
-      { x1: 0.3, y1: 0.42, x2: 0.22, y2: 0.62, color: "#ff4d8d" },
-      { x1: 0.4, y1: 0.44, x2: 0.36, y2: 0.66, color: "#7c5cff" },
-      { x1: 0.62, y1: 0.48, x2: 0.58, y2: 0.7, color: "#3ec6ff" },
-      { x1: 0.62, y1: 0.48, x2: 0.74, y2: 0.7, color: "#ffe14a" },
-    ];
-  }
-  return lines;
+export function studioPoseById(id: string | null | undefined): StudioPose | null {
+  if (!id) return null;
+  return STUDIO_POSES.find((pose) => pose.id === id) ?? (SKELETONS.has(id) ? describe(id) : null);
 }
 
+export function paintPose(ctx: CanvasRenderingContext2D, skeleton: PoseSkeleton) {
+  const { width, height, keypoints: points } = skeleton;
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, width, height);
+  const scale = Math.min(width, height) / 832;
+  ctx.lineWidth = Math.max(6, Math.round(12 * scale));
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  const at = (index: number): [number, number] | null => {
+    const point = points[index];
+    if (!point) return null;
+    return [point[0] * width, point[1] * height];
+  };
+  ctx.globalAlpha = 0.6;
+  LIMBS.forEach(([from, to], index) => {
+    const start = at(from);
+    const end = at(to);
+    if (!start || !end) return;
+    ctx.strokeStyle = COLORS[index] ?? "#ffffff";
+    ctx.beginPath();
+    ctx.moveTo(start[0], start[1]);
+    ctx.lineTo(end[0], end[1]);
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+  const radius = Math.max(3, Math.round(5 * scale));
+  points.forEach((point, index) => {
+    if (!point) return;
+    const placed = at(index);
+    if (!placed) return;
+    ctx.fillStyle = COLORS[index] ?? "#ffffff";
+    ctx.beginPath();
+    ctx.arc(placed[0], placed[1], radius, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+/** OpenPose-18 skeleton at the pose's own canvas size (832×1216 or 1216×832). */
 export function renderPosePng(pose: StudioPose): Promise<string> {
+  const skeleton = poseSkeleton(pose.id);
+  if (!skeleton) return Promise.resolve("");
   const canvas = document.createElement("canvas");
-  canvas.width = 832;
-  canvas.height = 1216;
+  canvas.width = skeleton.width;
+  canvas.height = skeleton.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return Promise.resolve("");
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const head = poseLines(pose)[0];
-  ctx.beginPath();
-  ctx.fillStyle = "#f4f4f5";
-  ctx.arc(head.x1 * canvas.width, (head.y1 - 0.08) * canvas.height, 36, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = 16;
-  ctx.lineCap = "round";
-  for (const line of poseLines(pose)) {
-    ctx.strokeStyle = line.color;
-    ctx.beginPath();
-    ctx.moveTo(line.x1 * canvas.width, line.y1 * canvas.height);
-    ctx.lineTo(line.x2 * canvas.width, line.y2 * canvas.height);
-    ctx.stroke();
-  }
+  paintPose(ctx, skeleton);
   return Promise.resolve(canvas.toDataURL("image/png"));
+}
+
+export function renderPosePngForId(id: string): Promise<string> {
+  const pose = studioPoseById(id);
+  if (!pose) return Promise.resolve("");
+  return renderPosePng(pose);
 }

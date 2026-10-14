@@ -1,7 +1,8 @@
-import { useId, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RARITY_TONE, rarityBreathes, rarityShimmers, vaultFrostClass } from "@/lib/vault/art";
+import { nextVaultArtSrc, RARITY_TONE, rarityBreathes, rarityShimmers, vaultFrostClass } from "@/lib/vault/art";
+import { poseThumbUrl } from "@/lib/studio/poseThumbs";
 import type { VaultCategory, VaultRarity } from "@/lib/vault/treasures";
 
 const RARITY_COLOR: Record<VaultRarity, { label: string; from: string; to: string; glow: string; ink: string }> = {
@@ -20,10 +21,24 @@ function artShape(kind: VaultCategory): "lace" | "swim" | "jewel" | "place" | "p
   return "place";
 }
 
-/** Flat fallback used outside the vault grid. The vault itself uses photographed cards. */
-export function TreasureArt({ kind, rarity, hidden }: { kind: VaultCategory; rarity: VaultRarity; hidden?: boolean }) {
+/** Drawn fallback for Style Her and for a vault photo that never arrives. Pose rows use the real keypoint thumb. */
+export function TreasureArt({
+  kind,
+  rarity,
+  hidden,
+  poseId,
+}: {
+  kind: VaultCategory;
+  rarity: VaultRarity;
+  hidden?: boolean;
+  poseId?: string | null;
+}) {
   const tone = RARITY_COLOR[rarity];
   const grad = useId().replace(/:/g, "");
+  const poseSrc = !hidden && poseId ? poseThumbUrl(poseId) : null;
+  if (poseSrc) {
+    return <img src={poseSrc} alt="" className="h-full w-full bg-black object-contain" />;
+  }
   return (
     <svg viewBox="0 0 160 200" className="h-full w-full" aria-hidden>
       <defs>
@@ -103,6 +118,8 @@ export function VaultArt({
   eager,
   frost = "card",
   alt = "",
+  kind = "lingerie",
+  poseId,
 }: {
   src: string;
   locked?: boolean;
@@ -111,19 +128,28 @@ export function VaultArt({
   /** Card blur is 3.5px. Sheet blur is 2px. */
   frost?: "card" | "sheet";
   alt?: string;
+  kind?: VaultCategory;
+  poseId?: string | null;
 }) {
-  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => setAttempt(0), [src]);
+  const full = nextVaultArtSrc(src);
+  const photos = [src, full].filter((url): url is string => Boolean(url));
+  const photo = photos[attempt] ?? "";
+  const drawn = !photo;
   return (
     <div className="relative aspect-[3/4] overflow-hidden bg-[#14090f]">
-      {failed ? null : (
+      {drawn ? (
+        <TreasureArt kind={kind} rarity={rarity} poseId={poseId} />
+      ) : (
         <img
-          src={src}
+          src={photo}
           alt={alt}
-          width={eager ? 512 : 256}
-          height={eager ? 683 : 341}
+          width={eager || attempt > 0 ? 512 : 256}
+          height={eager || attempt > 0 ? 683 : 341}
           loading={eager ? "eager" : "lazy"}
           decoding="async"
-          onError={() => setFailed(true)}
+          onError={() => setAttempt((current) => current + 1)}
           className={cn("absolute inset-0 h-full w-full object-cover", locked && vaultFrostClass(frost))}
         />
       )}
@@ -166,6 +192,8 @@ export function TreasureCard({
   owned,
   thumbUrl,
   isNew,
+  kind = "lingerie",
+  poseId,
   onClick,
 }: {
   name: string;
@@ -173,6 +201,8 @@ export function TreasureCard({
   owned?: boolean;
   thumbUrl: string;
   isNew?: boolean;
+  kind?: VaultCategory;
+  poseId?: string | null;
   onClick?: () => void;
 }) {
   const shimmer = rarityShimmers(rarity, Boolean(owned));
@@ -185,7 +215,7 @@ export function TreasureCard({
     >
       <VaultFrame rarity={rarity} owned={owned}>
         <div className="relative">
-          <VaultArt src={thumbUrl} locked={!owned} rarity={rarity} />
+          <VaultArt src={thumbUrl} locked={!owned} rarity={rarity} kind={kind} poseId={poseId} />
           {shimmer ? <span className="vault-sheen pointer-events-none absolute inset-0" aria-hidden /> : null}
           {isNew ? <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden /> : null}
         </div>

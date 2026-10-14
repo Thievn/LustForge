@@ -16,6 +16,7 @@ export function VaultSheet({
   blurb,
   owned,
   imageUrl,
+  poseId,
   companions,
   preview,
   onClose,
@@ -27,6 +28,7 @@ export function VaultSheet({
   blurb: string;
   owned: boolean;
   imageUrl: string;
+  poseId?: string | null;
   companions: Her[];
   preview: boolean;
   onClose: () => void;
@@ -82,11 +84,11 @@ export function VaultSheet({
         </div>
         <div className="mx-auto w-[168px]">
           <VaultFrame rarity={rarity} owned={owned}>
-            <VaultArt src={imageUrl} locked={!owned} rarity={rarity} eager frost="sheet" />
+            <VaultArt src={imageUrl} locked={!owned} rarity={rarity} eager frost="sheet" kind={kind} poseId={poseId} />
           </VaultFrame>
         </div>
         <h2 id="vault-sheet-title" className="mt-2.5 text-center font-gothic text-lg leading-tight text-white">{name}</h2>
-        <p className="mt-1 truncate text-center text-[12px] text-white/65">{blurb}</p>
+        <p className="mt-1 line-clamp-2 text-center text-[12px] leading-snug text-white/65">{blurb.trim() || `${tone.label} · ${category}`}</p>
         <div className="mt-2 flex items-center justify-center gap-1.5">
           <span className="rounded-full px-2 py-0.5 text-[10px] tracking-wide" style={{ color: tone.border, backgroundColor: tone.tint }}>{tone.label}</span>
           <span className="text-[10px] text-white/45">{category}</span>

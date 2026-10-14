@@ -27,6 +27,14 @@ function clean(value: string | null | undefined): string {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
+/** A missing thumb can still use the full card. Null when `src` is already the full card. */
+export function nextVaultArtSrc(src: string): string | null {
+  const marker = "/thumbs/";
+  const at = src.indexOf(marker);
+  if (at < 0) return null;
+  return `${src.slice(0, at)}/${src.slice(at + marker.length)}`;
+}
+
 export type RarityTone = {
   label: string;
   border: string;

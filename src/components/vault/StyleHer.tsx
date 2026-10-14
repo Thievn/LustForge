@@ -23,6 +23,7 @@ function seedPieces(): VaultPiece[] {
     blurb: item.blurb,
     owned: false,
     isNew: item.isNew,
+    poseId: item.poseId ?? null,
   }));
 }
 
@@ -60,6 +61,7 @@ export function StyleHer({
         blurb: String(item.blurb ?? ""),
         owned: Boolean(item.owned),
         isNew: Boolean(item.isNew),
+        poseId: item.poseId ? String(item.poseId) : null,
       }));
       if (next.length) setPieces(next);
     });
@@ -188,8 +190,8 @@ export function StyleHer({
             onClick={() => void wear(item)}
             className={`overflow-hidden rounded-2xl border text-left ${picks[slot] === item.id ? "border-primary shadow-[0_0_18px_hsl(var(--primary)/0.35)]" : "border-white/10"} ${item.rarity === "forbidden" ? "forbidden-card" : ""} ${item.rarity === "obsession" ? "obsession-card" : ""}`}
           >
-            <div className="aspect-[3/4]">
-              <TreasureArt kind={item.kind as VaultCategory} rarity={item.rarity as VaultRarity} />
+            <div className="aspect-[3/4] bg-black">
+              <TreasureArt kind={item.kind as VaultCategory} rarity={item.rarity as VaultRarity} poseId={item.poseId} />
             </div>
             <p className="px-2 py-2 text-xs leading-tight">{item.name}</p>
           </button>

@@ -364,6 +364,8 @@ export default function VelvetVault() {
                 rarity={item.rarity}
                 owned={item.owned}
                 thumbUrl={item.thumbUrl}
+                kind={item.kind}
+                poseId={item.poseId}
                 isNew={item.isNew}
                 onClick={() => setSelectedId(item.id)}
               />
@@ -383,6 +385,7 @@ export default function VelvetVault() {
           blurb={selected.blurb}
           owned={selected.owned}
           imageUrl={selected.imageUrl}
+          poseId={selected.poseId}
           companions={companions.map((her) => ({ id: her.id, name: her.name }))}
           preview={preview}
           onClose={() => setSelectedId(null)}
@@ -397,6 +400,8 @@ export default function VelvetVault() {
             rarity={reveal.rarity}
             blurb={reveal.blurb}
             imageUrl={reveal.imageUrl}
+            kind={reveal.kind}
+            poseId={reveal.poseId}
             onDone={() => setQueue((current) => current.slice(1))}
           />
         </Suspense>
