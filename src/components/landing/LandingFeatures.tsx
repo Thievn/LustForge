@@ -21,7 +21,7 @@ import {
   Video,
   WandSparkles,
 } from "lucide-react";
-import { LandingCta } from "@/components/landing/LandingCta";
+import { LandingActions } from "@/components/landing/LandingCta";
 import { LandingHeading, Reveal } from "@/components/landing/Reveal";
 import { cn } from "@/lib/utils";
 
@@ -110,9 +110,9 @@ export function LandingFeatures() {
             <Tile key={feature.title} feature={feature} index={index} />
           ))}
         </ul>
-        <p className="mt-8 text-center">
-          <LandingCta location="features">Join the waitlist</LandingCta>
-        </p>
+        <div className="mx-auto mt-10 max-w-xl">
+          <LandingActions location="features" />
+        </div>
       </div>
     </section>
   );

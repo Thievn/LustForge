@@ -65,6 +65,18 @@ describe("landing content", () => {
     expect(blob).not.toMatch(/\+\s?\d+\s?%/);
     expect(blob).not.toMatch(/credit|payment|\bpay\b|charge|embers|forge coin/i);
     expect(blob).toMatch(/Leave your email/);
+    expect(blob).toMatch(/Create your free account/);
+    expect(blob).toMatch(/Make your free account and meet her/);
+    expect(blob).toMatch(/Join the waitlist/);
+    expect(blob).toMatch(/The waitlist is for what/);
+    expect(blob).toMatch(/coming soon/);
+    for (const file of [
+      "src/components/landing/LandingHero.tsx",
+      "src/components/landing/LandingFeatures.tsx",
+      "src/components/WaitlistSection.tsx",
+    ]) {
+      expect(readFileSync(resolve(process.cwd(), file), "utf8")).toContain("LandingActions");
+    }
     expect(blob).not.toMatch(/\bseamless\b|\bleverage\b|unlock the power/i);
     expect(blob).toMatch(/18/);
     expect(blob).toMatch(/21/);
