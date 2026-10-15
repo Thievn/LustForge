@@ -164,7 +164,7 @@ export default function Auth() {
       }
 
       if (session) {
-        navigate("/dashboard");
+        navigate("/plans?welcome=1");
       } else if (signUpData.user) {
         toast.info("Confirm your email, then sign in.", {
           description: "We sent a link to your inbox (check spam). Your username is saved for sign-in after you confirm.",
