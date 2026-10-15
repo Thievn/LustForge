@@ -1,62 +1,37 @@
-import { CREDIT_PACKS, PLANS } from "@/lib/phone/pricing";
 import { LandingCta } from "@/components/landing/LandingCta";
 import { LandingHeading, Reveal } from "@/components/landing/Reveal";
-import { cn } from "@/lib/utils";
+
+const NOTES = [
+  { title: "Credits available", body: "Your account includes credits once you are in." },
+  { title: "Add more credits later", body: "You can add more credits when you want them." },
+  { title: "Waitlist only", body: "This page does not take payment. Leave your email." },
+] as const;
 
 export function LandingPricing() {
   return (
-    <section id="pricing" className="scroll-mt-28 px-4 py-16 sm:px-6 sm:py-24" aria-labelledby="pricing-heading">
+    <section id="pricing" className="scroll-mt-28 px-4 py-14 sm:px-6 sm:py-20" aria-labelledby="pricing-heading">
       <div className="mx-auto max-w-6xl">
         <LandingHeading
           id="pricing-heading"
-          eyebrow="At launch"
-          title="Prices when billing opens"
-          lede="Ember, Blaze, and Inferno, plus credit packs. You cannot buy them on this page. We plan to give early waitlist emails a lower price and bonus credits. Joining the list does not charge you."
+          eyebrow="Early access"
+          title="Credits, when you are in"
+          lede="Credits are available in the app. You can add more credits later. Joining the waitlist does not charge you."
         />
-
-        <ul className="mt-10 grid gap-3 lg:grid-cols-3">
-          {PLANS.map((plan, index) => (
+        <ul className="mt-8 grid gap-3 sm:grid-cols-3">
+          {NOTES.map((note, index) => (
             <Reveal
-              key={plan.id}
+              key={note.title}
               as="li"
-              delay={index * 0.06}
-              className={cn(
-                "relative flex h-full flex-col rounded-[1.4rem] border bg-card/90 p-5",
-                plan.id === "blaze" ? "border-primary/55 shadow-[0_18px_44px_hsl(var(--primary)/0.16)]" : "border-border",
-              )}
+              delay={index * 0.05}
+              className="rounded-[1.3rem] border border-[#f1c45e]/25 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
             >
-              <span className="absolute -top-2.5 right-4 rounded-full border border-primary/40 bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary-foreground">
-                At launch
-              </span>
-              <p className="font-gothic text-2xl text-foreground">{plan.name}</p>
-              <p className="mt-2 font-gothic text-4xl text-foreground">
-                {plan.price}
-                <span className="ml-1 font-sans text-sm text-muted-foreground">/ mo</span>
-              </p>
-              <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
-                <li>{plan.companions}</li>
-                <li>{plan.texts}</li>
-                <li>{plan.pictures}</li>
-                {plan.extras.map((extra) => (
-                  <li key={extra}>{extra}</li>
-                ))}
-              </ul>
+              <p className="font-gothic text-xl text-[#F4EEF2]">{note.title}</p>
+              <p className="mt-2 text-sm leading-relaxed text-[#B8A9BC]">{note.body}</p>
             </Reveal>
           ))}
         </ul>
-
-        <ul className="mt-4 grid gap-3 sm:grid-cols-3">
-          {CREDIT_PACKS.map((pack) => (
-            <li key={pack.id} className="rounded-[1.2rem] border border-border bg-card/70 px-4 py-4">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-primary">At launch · {pack.name}</p>
-              <p className="mt-1 font-gothic text-2xl text-foreground">{pack.price}</p>
-              <p className="text-sm text-muted-foreground">{pack.credits.toLocaleString()} credits · {pack.note}</p>
-            </li>
-          ))}
-        </ul>
-
         <p className="mt-8 text-center">
-          <LandingCta location="pricing">Join for the early price</LandingCta>
+          <LandingCta location="pricing">Join the waitlist</LandingCta>
         </p>
       </div>
     </section>

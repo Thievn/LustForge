@@ -20,37 +20,58 @@ describe("landing content", () => {
     }
   });
 
-  it("hides testimonials until real quotes exist and labels sample texts as examples", () => {
+  it("hides testimonials until real quotes exist and does not disclaim the product as fake samples", () => {
     expect(LANDING_TESTIMONIALS).toEqual([]);
     const testimonials = readFileSync(resolve(process.cwd(), "src/components/landing/LandingTestimonials.tsx"), "utf8");
     expect(testimonials).toContain("LANDING_TESTIMONIALS.length === 0");
     expect(testimonials).toContain("return null");
     expect(LANDING_EXAMPLE_TEXTS.length).toBeGreaterThanOrEqual(3);
     const examples = readFileSync(resolve(process.cwd(), "src/components/landing/LandingExampleTexts.tsx"), "utf8");
-    expect(examples).toMatch(/not quotes from customers/i);
-    expect(examples).not.toMatch(/Maya R\.|Jordan P\.|Elena V\./);
+    const features = readFileSync(resolve(process.cwd(), "src/components/landing/LandingFeatures.tsx"), "utf8");
+    const phones = readFileSync(resolve(process.cwd(), "src/components/landing/LandingPhones.tsx"), "utf8");
+    const page = `${examples}\n${features}\n${phones}`;
+    expect(page).not.toMatch(/not quotes from customers|just samples|not created from users|character style/i);
+    expect(page).not.toMatch(/Maya R\.|Jordan P\.|Elena V\./);
+    expect(page).not.toMatch(/\bGPU\b/);
+    expect(features).toMatch(/Coming soon/);
+    expect(features).toMatch(/Voice calls/);
+    expect(features).toMatch(/Grok Enhance/);
+    expect(features).toMatch(/Velvet Vault/);
+    expect(phones).toMatch(/backgroundColor/);
+    expect(phones).not.toMatch(/absolute inset-0 h-full w-full object-cover/);
   });
 
-  it("previews launch plans in flirty copy and keeps the sample label nearby", () => {
+  it("keeps plan prices in app data and off the public landing page", () => {
+    expect(PLANS.map((plan) => plan.price)).toEqual(["$14.99", "$24.99", "$39.99"]);
+    expect(CREDIT_PACKS.map((pack) => pack.price)).toEqual(["$4.99", "$9.99", "$19.99"]);
     const pricing = readFileSync(resolve(process.cwd(), "src/components/landing/LandingPricing.tsx"), "utf8");
     const story = readFileSync(resolve(process.cwd(), "src/components/landing/LandingStory.tsx"), "utf8");
     const hero = readFileSync(resolve(process.cwd(), "src/components/landing/LandingHero.tsx"), "utf8");
-    const blob = `${pricing}\n${story}\n${hero}`;
-    expect(pricing).toMatch(/At launch/);
-    expect(pricing).toContain("PLANS");
-    expect(pricing).toContain("CREDIT_PACKS");
-    expect(PLANS.map((plan) => plan.price)).toEqual(["$14.99", "$24.99", "$39.99"]);
-    expect(CREDIT_PACKS.map((pack) => pack.price)).toEqual(["$4.99", "$9.99", "$19.99"]);
+    const faq = readFileSync(resolve(process.cwd(), "src/data/landingFaq.ts"), "utf8");
+    const waitlist = readFileSync(resolve(process.cwd(), "src/components/WaitlistSection.tsx"), "utf8");
+    const blob = `${pricing}\n${story}\n${hero}\n${faq}\n${waitlist}`;
+    expect(pricing).toMatch(/credits available/i);
+    expect(pricing).toMatch(/add more credits later/i);
+    expect(pricing).toMatch(/waitlist/i);
+    expect(pricing).not.toContain("PLANS");
+    expect(pricing).not.toContain("CREDIT_PACKS");
+    expect(blob).not.toMatch(/\$\s?\d/);
+    expect(blob).not.toMatch(/\+\s?\d+\s?%/);
+    expect(blob).not.toMatch(/\b\d[\d,]*\s+credits\b/i);
     expect(blob).not.toMatch(/\bseamless\b|\bleverage\b|unlock the power/i);
     expect(blob).toMatch(/18/);
     expect(blob).toMatch(/21/);
   });
 
-  it("answers the basic product questions without invented user counts", () => {
+  it("answers the basic product questions without invented user counts or public prices", () => {
     const blob = LANDING_FAQ.map((item) => `${item.question} ${item.answer}`).join("\n");
     expect(blob).toMatch(/AI companion/);
     expect(blob).toMatch(/18/);
-    expect(blob).toMatch(/Forge Coins/);
+    expect(blob).toMatch(/credits are available/i);
+    expect(blob).toMatch(/add more credits later/i);
+    expect(blob).not.toMatch(/\$\s?\d/);
+    expect(blob).not.toMatch(/\+\s?\d+\s?%/);
+    expect(blob).not.toMatch(/\b\d[\d,]*\s+(credits|FC)\b/i);
     expect(blob).not.toMatch(/\b\d{2,}\s+(users|testers|members)\b/i);
   });
 });

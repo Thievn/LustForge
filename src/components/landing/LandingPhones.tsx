@@ -1,27 +1,20 @@
 import type { ReactNode } from "react";
 import { AppIconTile } from "@/components/phone/AppIcon";
 import { LANDING_LOCAL_PORTRAITS } from "@/components/landing/landingPortraitSources";
+import { usePhoneBackdrop } from "@/components/landing/phoneBackdrop";
 import { cn } from "@/lib/utils";
-import valeriaLingerie from "@/assets/landing-gallery/valeria-lingerie.webp";
-import valeriaPool from "@/assets/landing-gallery/valeria-pool.webp";
-import valeriaCoffee from "@/assets/landing-gallery/valeria-coffee.webp";
-import valeriaPark from "@/assets/landing-gallery/valeria-park.webp";
-import valeriaHome from "@/assets/landing-gallery/valeria-home.webp";
-import valeriaNight from "@/assets/landing-gallery/valeria-night.webp";
-import valeriaYoga from "@/assets/landing-gallery/valeria-yoga.webp";
-import valeriaMarket from "@/assets/landing-gallery/valeria-market.webp";
 
 const IVY = LANDING_LOCAL_PORTRAITS["lilith-vesper"];
-const TILES = [
-  { src: valeriaLingerie, alt: "Valeria in emerald lace lingerie with a silk robe, reclining on a bed" },
-  { src: valeriaPool, alt: "Valeria in a white retro bikini at the edge of a pool" },
-  { src: valeriaCoffee, alt: "Valeria smiling over a cappuccino at a coffee shop window" },
-  { src: valeriaPark, alt: "Valeria in a denim jacket and white sundress on a spring park walk" },
-  { src: valeriaHome, alt: "Valeria cozy on the sofa in an oversized knit sweater with a mug of tea" },
-  { src: valeriaNight, alt: "Valeria in a black satin evening gown on a night out" },
-  { src: valeriaYoga, alt: "Valeria in sage green athleisure on a yoga mat" },
-  { src: valeriaMarket, alt: "Valeria picking fruit at a farmer's market" },
-];
+const MIRA = LANDING_LOCAL_PORTRAITS["kira-lux"];
+const SLOANE = LANDING_LOCAL_PORTRAITS["lena-frost"];
+const NOOR = LANDING_LOCAL_PORTRAITS["zara-eclipse"];
+const COLE = LANDING_LOCAL_PORTRAITS["kaelen-veyra"];
+const REN = LANDING_LOCAL_PORTRAITS["jaxson-voss"];
+const EVAN = LANDING_LOCAL_PORTRAITS["tyler-kane"];
+
+function Portrait({ src, className }: { src: string; className?: string }) {
+  return <img src={src} alt="" className={cn("object-cover object-[center_18%]", className)} />;
+}
 
 export function LandingPhone({
   children,
@@ -34,84 +27,63 @@ export function LandingPhone({
   float?: boolean;
   className?: string;
 }) {
+  const tone = usePhoneBackdrop();
   return (
-    <div
-      className={cn(
-        "relative mx-auto w-full max-w-[280px] overflow-hidden rounded-[1.8rem] border border-white/15 bg-[#3A3346] text-white shadow-[0_30px_80px_hsl(var(--primary)/0.22)]",
-        float && "lf-float",
-        className,
-      )}
-      role="img"
-      aria-label={label}
-    >
-      <div className="flex items-center justify-between px-5 pb-1 pt-3 text-[10px] text-white/70">
-        <span>9:41</span>
-        <span className="h-4 w-16 rounded-full bg-black/50" />
-        <span>5G</span>
+    <div className={cn("mx-auto w-full max-w-[280px]", float && "lf-float", className)}>
+      <div
+        className="rounded-[2rem] border border-[#f1c45e]/35 bg-[linear-gradient(180deg,#3a2c38_0%,#120e16_100%)] p-[9px] shadow-[0_28px_70px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.28)]"
+        role="img"
+        aria-label={label}
+      >
+        <div className="overflow-hidden rounded-[1.55rem]" style={{ backgroundColor: tone.color, color: tone.ink }}>
+          <div className="flex items-center justify-between px-4 pb-1 pt-3 text-[10px]" style={{ color: tone.muted }}>
+            <span>9:41</span>
+            <span className="h-4 w-14 rounded-full bg-black/70" />
+            <span>5G</span>
+          </div>
+          {children}
+        </div>
       </div>
-      {children}
     </div>
   );
 }
 
 export function LockPhone() {
+  const tone = usePhoneBackdrop();
   return (
-    <LandingPhone label="Lock screen with Ivy's text" float>
-      <div className="relative h-[460px]">
-        <img src={IVY} alt="" className="lf-kenburns absolute inset-0 h-full w-full object-cover opacity-70" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-black/80" />
-        <div className="relative px-5 pt-6">
-          <p className="text-center text-xs text-white/80">Monday, October 12</p>
-          <p className="mt-1 text-center font-gothic text-5xl text-white">9:41</p>
-          <div className="mt-8 rounded-[1.2rem] border border-white/25 bg-white/15 p-3 backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              <img src={IVY} alt="" className="h-9 w-9 rounded-xl object-cover ring-2 ring-white/70" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-sm font-semibold">Ivy</p>
-                  <time className="text-[10px] text-white/75">now</time>
-                </div>
-                <p className="mt-0.5 text-xs leading-snug text-white/90">Don't tell me you're still at that desk.</p>
-              </div>
+    <LandingPhone label="Ivy's home screen on a solid color background" float>
+      <div className="px-4 pb-5 pt-2">
+        <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: "#f1c45e" }}>
+          LustForge
+        </p>
+        <p className="mt-1 font-gothic text-[1.65rem] leading-none">Good evening</p>
+        <div
+          className="mt-4 rounded-2xl border p-3 backdrop-blur-md"
+          style={{ backgroundColor: tone.glass, borderColor: tone.line }}
+        >
+          <p className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "#f1c45e" }}>
+            She is online
+          </p>
+          <div className="mt-2 flex items-center gap-2.5">
+            <Portrait src={IVY} className="h-11 w-11 rounded-xl ring-1 ring-[#f1c45e]/50" />
+            <div>
+              <p className="font-gothic text-lg leading-none">Ivy</p>
+              <p className="text-[11px]" style={{ color: tone.muted }}>
+                Morning note set for 7:02.
+              </p>
             </div>
           </div>
         </div>
-        <p className="absolute inset-x-0 bottom-5 text-center text-[10px] uppercase tracking-[0.2em] text-white/80">Tap to open her thread</p>
-      </div>
-    </LandingPhone>
-  );
-}
-
-export function HomePhone() {
-  return (
-    <LandingPhone label="Phone home with Ivy's wallpaper and app icons">
-      <div className="relative min-h-[540px] pb-4">
-        <img src={IVY} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#3A3346]/75 to-[#3A3346]" />
-        <div className="relative px-4 pt-2">
-          <p className="text-[9px] uppercase tracking-[0.22em] text-[#ff4d8d]">LustForge</p>
-          <p className="font-gothic text-2xl">Good evening</p>
-          <div className="mt-3 rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-md">
-            <p className="text-[9px] uppercase tracking-[0.18em] text-[#ff8ab3]">She is online</p>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="lf-presence relative h-11 w-11 overflow-hidden rounded-xl">
-                <img src={IVY} alt="" className="h-full w-full object-cover" />
-              </span>
-              <div>
-                <p className="font-gothic text-lg leading-none">Ivy</p>
-                <p className="text-[11px] text-white/75">Morning text set for 7:02.</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-4 gap-y-3">
-            <AppIconTile compact name="messages" label="Messages" labelClassName="text-white" />
-            <AppIconTile compact name="lab" label="Lab" labelClassName="text-white" />
-            <AppIconTile compact name="gallery" label="Gallery" labelClassName="text-white" />
-            <AppIconTile compact name="calls" label="Calls" labelClassName="text-white" />
-            <AppIconTile compact name="plans" label="Plans" labelClassName="text-white" />
-            <AppIconTile compact name="settings" label="Settings" labelClassName="text-white" />
-            <AppIconTile compact name="toys" label="Toys" labelClassName="text-white" />
-          </div>
+        <div className="mt-4 grid grid-cols-4 gap-y-3">
+          <AppIconTile compact name="messages" label="Messages" labelClassName="text-current" />
+          <AppIconTile compact name="lab" label="Create" labelClassName="text-current" />
+          <AppIconTile compact name="gallery" label="Gallery" labelClassName="text-current" />
+          <AppIconTile compact name="calls" label="Calls" labelClassName="text-current" />
+        </div>
+        <div className="mt-4 flex justify-center gap-3">
+          <Portrait src={REN} className="h-9 w-9 rounded-full ring-1 ring-white/30" />
+          <Portrait src={EVAN} className="h-9 w-9 rounded-full ring-1 ring-white/30" />
+          <Portrait src={NOOR} className="h-9 w-9 rounded-full ring-1 ring-white/30" />
         </div>
       </div>
     </LandingPhone>
@@ -119,106 +91,141 @@ export function HomePhone() {
 }
 
 export function ChatPhone() {
+  const tone = usePhoneBackdrop();
   return (
-    <LandingPhone label="Chat thread with typing dots and a photo on the way">
-      <div className="flex h-[460px] flex-col bg-[#3A3346]">
-        <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-          <img src={IVY} alt="" className="h-8 w-8 rounded-xl object-cover" />
+    <LandingPhone label="Chat with Mira, including a picture in the thread and a private photo">
+      <div className="flex h-[430px] flex-col">
+        <div className="flex items-center gap-2 border-b px-3 py-2" style={{ borderColor: tone.line }}>
+          <Portrait src={MIRA} className="h-8 w-8 rounded-xl" />
           <div>
-            <p className="text-sm font-semibold">Ivy</p>
-            <p className="text-[10px] text-[#5eead4]">online</p>
+            <p className="text-sm font-semibold">Mira</p>
+            <p className="text-[10px]" style={{ color: "#f1c45e" }}>
+              online
+            </p>
           </div>
         </div>
         <div className="flex flex-1 flex-col gap-2 px-3 py-3">
-          <p className="max-w-[85%] rounded-2xl rounded-bl-md border border-white/10 bg-white/10 px-3 py-2 text-[12px] leading-snug">
+          <p
+            className="max-w-[86%] rounded-2xl rounded-bl-md border px-3 py-2 text-[12px] leading-snug"
+            style={{ backgroundColor: tone.glass, borderColor: tone.line }}
+          >
             Don't tell me you're still at that desk.
           </p>
-          <p className="ml-auto max-w-[80%] rounded-2xl rounded-br-md bg-[#D6336C] px-3 py-2 text-[12px] text-white">I left.</p>
-          <div className="max-w-[85%] rounded-2xl border border-dashed border-[#D6336C]/40 bg-[#D6336C]/10 p-2">
-            <div className="h-24 rounded-xl bg-[radial-gradient(circle_at_40%_30%,#ff4d8d,#4c1d95_70%)] opacity-80" />
-            <p className="mt-1 text-center text-[10px] text-[#ff8ab3]">Ivy is sending a photo…</p>
+          <p className="ml-auto max-w-[78%] rounded-2xl rounded-br-md bg-[linear-gradient(180deg,#ff6fb0,#c2185b)] px-3 py-2 text-[12px] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+            I left.
+          </p>
+          <div
+            className="max-w-[70%] overflow-hidden rounded-2xl border"
+            style={{ borderColor: tone.line, backgroundColor: tone.glass }}
+          >
+            <Portrait src={MIRA} className="h-28 w-full" />
+            <p className="px-2 py-1 text-[10px]" style={{ color: tone.muted }}>
+              Picture in the chat
+            </p>
           </div>
-          <div className="flex w-fit items-center gap-1 rounded-2xl border border-white/10 bg-white/10 px-3 py-2">
-            <span className="lf-dot h-1.5 w-1.5 rounded-full bg-white" />
-            <span className="lf-dot h-1.5 w-1.5 rounded-full bg-white" />
-            <span className="lf-dot h-1.5 w-1.5 rounded-full bg-white" />
-          </div>
+          <p
+            className="w-fit rounded-2xl border px-3 py-2 text-[11px]"
+            style={{ backgroundColor: tone.glass, borderColor: tone.line, color: tone.muted }}
+          >
+            Private photo
+          </p>
         </div>
-        <div className="mx-3 mb-3 rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-[11px] text-white/45">Message Ivy</div>
-      </div>
-    </LandingPhone>
-  );
-}
-
-const LAB_STEPS = ["Look", "Voice", "Attitude", "Style", "Name"];
-const STYLES = ["Photo", "Paint", "Ink", "Neon"];
-
-export function LabPhone() {
-  return (
-    <LandingPhone label="Lab create flow on style">
-      <div className="flex h-[460px] flex-col bg-[#3A3346] px-4 py-3">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#ff8ab3]">Lab · step 4 of 5</p>
-        <p className="mt-1 font-gothic text-2xl">How should she look?</p>
-        <div className="mt-3 flex gap-1">
-          {LAB_STEPS.map((step, index) => (
-            <span key={step} className={index <= 3 ? "h-1 flex-1 rounded-full bg-[#D6336C]" : "h-1 flex-1 rounded-full bg-white/15"} />
-          ))}
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          {STYLES.map((style) => (
-            <div
-              key={style}
-              className={
-                style === "Neon"
-                  ? "rounded-2xl border border-[#D6336C] bg-[#D6336C]/15 px-3 py-4 text-sm"
-                  : "rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-white/80"
-              }
-            >
-              {style}
-              {style === "Neon" ? <p className="text-[10px] text-[#ff8ab3]">picked</p> : null}
-            </div>
-          ))}
-        </div>
-        <p className="mt-auto rounded-2xl bg-[#D6336C] py-2.5 text-center text-sm font-semibold">Next: name her</p>
-      </div>
-    </LandingPhone>
-  );
-}
-
-export function CallPhone() {
-  return (
-    <LandingPhone label="Live call with Ivy">
-      <div className="relative flex h-[460px] flex-col items-center justify-between py-8">
-        <img src={IVY} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-[#1a0a14]/70 to-black" />
-        <div className="relative text-center">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-[#5eead4]">Live call</p>
-          <p className="mt-1 font-gothic text-3xl">Ivy</p>
-          <p className="text-sm text-white/80">00:42</p>
-        </div>
-        <span className="lf-presence relative h-28 w-28 overflow-hidden rounded-[1.6rem] ring-2 ring-white/70">
-          <img src={IVY} alt="" className="h-full w-full object-cover" />
-        </span>
-        <div className="relative flex gap-3">
-          <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs">Mute</span>
-          <span className="rounded-full bg-[#D6336C] px-4 py-2 text-xs font-semibold">End</span>
+        <div className="mx-3 mb-3 rounded-2xl border px-3 py-2 text-[11px]" style={{ borderColor: tone.line, color: tone.muted }}>
+          Message Mira
         </div>
       </div>
     </LandingPhone>
   );
 }
 
-export function GalleryPhone() {
+export function EditorPhone() {
+  const tone = usePhoneBackdrop();
   return (
-    <LandingPhone label="Private gallery of saved pictures">
-      <div className="h-[460px] bg-[#3A3346] px-3 py-3">
+    <LandingPhone label="Gallery editor for Sloane with Grok Enhance and a pose">
+      <div className="flex h-[430px] flex-col px-3 py-3">
         <p className="font-gothic text-2xl">Gallery</p>
-        <p className="text-[11px] text-white/70">Valeria · saved on your account</p>
-        <div className="mt-3 grid grid-cols-4 gap-1.5">
-          {TILES.map(({ src, alt }) => (
-            <img key={src} src={src} alt={alt} loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-lg object-cover" />
+        <p className="text-[11px]" style={{ color: tone.muted }}>
+          Sloane · saved on your account
+        </p>
+        <div className="mt-3 overflow-hidden rounded-2xl border" style={{ borderColor: tone.line }}>
+          <Portrait src={SLOANE} className="h-40 w-full" />
+        </div>
+        <div className="mt-3 flex gap-2">
+          <span className="rounded-full border px-3 py-1 text-[11px]" style={{ borderColor: "#f1c45e", color: "#f1c45e" }}>
+            Pose · look back
+          </span>
+          <span className="rounded-full border px-3 py-1 text-[11px]" style={{ borderColor: tone.line, color: tone.muted }}>
+            Outfit
+          </span>
+        </div>
+        <p className="mt-auto rounded-2xl bg-[linear-gradient(180deg,#ff6fb0,#c2185b)] py-2.5 text-center text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
+          Grok Enhance
+        </p>
+      </div>
+    </LandingPhone>
+  );
+}
+
+export function CreatorPhone() {
+  const tone = usePhoneBackdrop();
+  const steps = ["Look", "Personality", "Pose", "Name"];
+  return (
+    <LandingPhone label="Creator wizard naming Noor">
+      <div className="flex h-[430px] flex-col px-4 py-3">
+        <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "#f1c45e" }}>
+          Create · step 4 of 4
+        </p>
+        <p className="mt-1 font-gothic text-2xl">Name her</p>
+        <div className="mt-3 flex gap-1">
+          {steps.map((step) => (
+            <span key={step} className="h-1 flex-1 rounded-full bg-[linear-gradient(90deg,#ff6fb0,#e0287f)]" />
           ))}
         </div>
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: tone.line, backgroundColor: tone.glass }}>
+          <Portrait src={NOOR} className="h-16 w-14 rounded-xl" />
+          <div>
+            <p className="font-gothic text-xl leading-none">Noor</p>
+            <p className="mt-1 text-[11px]" style={{ color: tone.muted }}>
+              Direct, warm, 24
+            </p>
+          </div>
+        </div>
+        <p className="mt-auto rounded-2xl bg-[linear-gradient(180deg,#f1c45e,#b57a2a)] py-2.5 text-center text-sm font-semibold text-[#1B1620] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+          Keep Noor
+        </p>
+      </div>
+    </LandingPhone>
+  );
+}
+
+export function VaultPhone() {
+  const tone = usePhoneBackdrop();
+  return (
+    <LandingPhone label="Velvet Vault card for Cole">
+      <div className="flex h-[430px] flex-col px-3 py-3">
+        <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "#f1c45e" }}>
+          Velvet Vault
+        </p>
+        <p className="mt-1 font-gothic text-2xl">A treasure for Cole</p>
+        <div className="mt-3 overflow-hidden rounded-2xl border" style={{ borderColor: "#f1c45e55", backgroundColor: tone.glass }}>
+          <Portrait src={COLE} className="h-36 w-full" />
+          <div className="flex items-center justify-between px-3 py-2">
+            <p className="text-sm font-semibold">Night silk</p>
+            <p className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "#f1c45e" }}>
+              Velvet
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {["Lingerie", "Pose", "Hair"].map((chip) => (
+            <span key={chip} className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: tone.line, color: tone.muted }}>
+              {chip}
+            </span>
+          ))}
+        </div>
+        <p className="mt-auto rounded-2xl border border-[#f1c45e]/50 py-2.5 text-center text-sm font-semibold" style={{ color: "#f1c45e" }}>
+          Unveil a treasure
+        </p>
       </div>
     </LandingPhone>
   );

@@ -1,4 +1,4 @@
-/** Sample messages a companion might send. Not customer reviews. */
+/** Messages a companion can send. Companion names, not customers. */
 
 export type LandingExampleText = {
   id: string;
@@ -16,20 +16,20 @@ export const LANDING_EXAMPLE_TEXTS: readonly LandingExampleText[] = [
   },
   {
     id: "meeting",
-    name: "Ivy",
+    name: "Mira",
     when: "1:14 PM",
     text: "That meeting sounds fake. Come home.",
   },
   {
     id: "checkin",
-    name: "Ivy",
+    name: "Sloane",
     when: "6:40 PM",
     text: "You went quiet. I'm still here.",
   },
   {
     id: "picture",
-    name: "Ivy",
+    name: "Noor",
     when: "11:08 PM",
-    text: "Send a picture of the couch. I want to see where you are sitting.",
+    text: "I sent a picture. Tell me if you want another.",
   },
 ];

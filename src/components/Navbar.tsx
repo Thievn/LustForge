@@ -7,6 +7,7 @@ import { isPlatformAdmin } from "@/config/auth";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 import { cn } from "@/lib/utils";
+import { FlameMark } from "@/components/landing/FlameMark";
 import { scrollToLandingId, trackLandingCta } from "@/lib/landingScroll";
 
 const ghostNavPill =
@@ -83,7 +84,11 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex items-center justify-between gap-2 min-h-[2.75rem]">
         <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0 touch-manipulation py-1">
-          <Flame className="h-6 w-6 sm:h-7 sm:w-7 shrink-0 text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.45)]" />
+          {landing ? (
+            <FlameMark className="h-8 w-8 sm:h-9 sm:w-9" />
+          ) : (
+            <Flame className="h-6 w-6 sm:h-7 sm:w-7 shrink-0 text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.45)]" />
+          )}
           <span className="font-wordmark truncate text-[21px] leading-none text-[#F4EEF2]">
             Lust<b className="font-wordmark text-[#F57AA3]">Forge</b>
           </span>
@@ -124,6 +129,12 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
             <div className="hidden md:flex items-center gap-4">
               {landing ? (
                 <>
+                  <button type="button" onClick={() => scrollToLandingId("features")} className="hidden text-sm text-[#B8A9BC] transition-colors hover:text-[#F4EEF2] lg:inline-flex lg:min-h-10 lg:items-center">
+                    Features
+                  </button>
+                  <button type="button" onClick={() => scrollToLandingId("faq")} className="hidden text-sm text-[#B8A9BC] transition-colors hover:text-[#F4EEF2] lg:inline-flex lg:min-h-10 lg:items-center">
+                    Questions
+                  </button>
                   <Link
                     to="/auth"
                     className="inline-flex min-h-10 items-center py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -217,6 +228,16 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                   </>
                 ) : (
                   <>
+                    {landing ? (
+                      <>
+                        <button type="button" onClick={() => { close(); scrollToLandingId("features"); }} className={sheetLinkClass}>
+                          Features
+                        </button>
+                        <button type="button" onClick={() => { close(); scrollToLandingId("faq"); }} className={sheetLinkClass}>
+                          Questions
+                        </button>
+                      </>
+                    ) : null}
                     <Link to="/auth" onClick={close} className={sheetLinkClass}>
                       <LogIn className="h-5 w-5 shrink-0 text-primary" />
                       Sign in

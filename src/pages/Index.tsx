@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { LandingAtmosphere } from "@/components/landing/LandingAtmosphere";
+import { LandingPhoneProvider } from "@/components/landing/phoneBackdrop";
 import { LandingFaq } from "@/components/landing/LandingFaq";
+import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingPricing } from "@/components/landing/LandingPricing";
@@ -22,22 +24,25 @@ const Index = () => {
   }, [location.hash]);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
-      <LandingAtmosphere />
-      <div className="relative z-10">
-        <Navbar variant="landing" />
-        <main>
-          <LandingHero />
-          <LandingStory />
-          <LandingExampleTexts />
-          <LandingTestimonials />
-          <LandingPricing />
-          <LandingFaq />
-          <WaitlistSection />
-        </main>
-        <LandingFooter />
+    <LandingPhoneProvider>
+      <div className="relative min-h-screen overflow-x-hidden bg-[#1B1620] text-[#F4EEF2]">
+        <LandingAtmosphere />
+        <div className="relative z-10">
+          <Navbar variant="landing" />
+          <main>
+            <LandingHero />
+            <LandingStory />
+            <LandingFeatures />
+            <LandingExampleTexts />
+            <LandingTestimonials />
+            <LandingPricing />
+            <LandingFaq />
+            <WaitlistSection />
+          </main>
+          <LandingFooter />
+        </div>
       </div>
-    </div>
+    </LandingPhoneProvider>
   );
 };
 

@@ -502,3 +502,24 @@
     opacity: 0.4;
   }
 }
+
+.lf-gradient-text {
+  background-image: linear-gradient(100deg, #ffb0d4 0%, #ff4d9a 42%, #e0287f 78%, #f1c45e 140%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.lf-gloss-btn {
+  background-image: linear-gradient(180deg, #ff8ac4 0%, #e0287f 46%, #9d1458 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    0 12px 28px rgba(224, 40, 127, 0.32);
+}
+
+.lf-gloss-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 16px 34px rgba(224, 40, 127, 0.42);
+}
