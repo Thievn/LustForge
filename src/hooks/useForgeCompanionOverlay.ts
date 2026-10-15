@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { mapSupabaseCustomCharacterRow, type DbCompanion } from "@/hooks/useCompanions";
+import { mapSupabaseCustomCharacterRow, mapSupabaseStockCompanionRow, type DbCompanion } from "@/hooks/useCompanions";
 
 /**
- * `useCompanions()` omits forge rows with `exclude_from_personal_vault` and non–public-approved rows.
- * For `cc-…` routes, fetch the row directly when RLS allows (owner / DB admin).
+ * `useCompanions()` omits forge rows with `exclude_from_personal_vault`, non–public-approved rows,
+ * and anything flagged `hidden_from_dashboard`.
+ * For a direct id (chat, profile, live call), fetch that row with no dashboard filter when RLS allows
+ * (owner, admin, or an existing thread / gallery / relationship).
  */
 export function useForgeCompanionOverlay(
   id: string | undefined,
@@ -24,7 +26,7 @@ export function useForgeCompanionOverlay(
   }, [id]);
 
   useEffect(() => {
-    if (!id?.startsWith("cc-")) {
+    if (!id) {
       setForgeRowFetching(false);
       return;
     }
@@ -37,12 +39,19 @@ export function useForgeCompanionOverlay(
 
     let cancelled = false;
     setForgeRowFetching(true);
-    const uuid = id.slice(3);
     void (async () => {
-      const { data, error } = await supabase.from("custom_characters").select("*").eq("id", uuid).maybeSingle();
-      if (cancelled) return;
-      if (error || !data) setForgeRowOverlay(null);
-      else setForgeRowOverlay(mapSupabaseCustomCharacterRow(data as Record<string, unknown>));
+      if (id.startsWith("cc-")) {
+        const uuid = id.slice(3);
+        const { data, error } = await supabase.from("custom_characters").select("*").eq("id", uuid).maybeSingle();
+        if (cancelled) return;
+        if (error || !data) setForgeRowOverlay(null);
+        else setForgeRowOverlay(mapSupabaseCustomCharacterRow(data as Record<string, unknown>));
+      } else {
+        const { data, error } = await supabase.from("companions").select("*").eq("id", id).maybeSingle();
+        if (cancelled) return;
+        if (error || !data) setForgeRowOverlay(null);
+        else setForgeRowOverlay(mapSupabaseStockCompanionRow(data as Record<string, unknown>));
+      }
       setForgeRowFetching(false);
     })();
     return () => {

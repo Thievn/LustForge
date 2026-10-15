@@ -7,7 +7,8 @@ import { useParams, useNavigate, useLocation, useSearchParams } from "react-rout
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompanions, dbToCompanion, type DbCompanion } from "@/hooks/useCompanions";
+import { useCompanions, dbToCompanion } from "@/hooks/useCompanions";
+import { useForgeCompanionOverlay } from "@/hooks/useForgeCompanionOverlay";
 import { useCompanionRelationship } from "@/hooks/useCompanionRelationship";
 import { buildLiveCallRealtimeInstructions, type LiveCallMoodId } from "@/lib/buildLiveCallRealtimeInstructions";
 import { invokeGrokVoiceClientSecret } from "@/lib/invokeGrokVoiceClientSecret";
@@ -62,7 +63,9 @@ const LiveCallPage = () => {
   const slugFromUrl = searchParams.get("call");
   const callOptionFromState = (location.state as LocationState | null)?.callOption ?? null;
 
-  const { data: dbRows = [], isLoading } = useCompanions();
+  const { data: dbRows = [], isLoading: companionsLoading } = useCompanions();
+  const { dbComp, forgeLookupBusy } = useForgeCompanionOverlay(id, dbRows, companionsLoading);
+  const isLoading = companionsLoading || forgeLookupBusy;
   const [userId, setUserId] = useState<string | null>(null);
   const { data: displayOverride } = useCompanionDisplayOverride(id, userId ?? undefined);
   const { data: vibrationPatterns = [] } = useCompanionVibrationPatterns(id);
@@ -71,11 +74,6 @@ const LiveCallPage = () => {
   useEffect(() => {
     vibrationPatternsRef.current = vibrationPatterns;
   }, [vibrationPatterns]);
-
-  const dbComp: DbCompanion | null = useMemo(() => {
-    if (!id) return null;
-    return dbRows.find((r) => r.id === id) ?? null;
-  }, [dbRows, id]);
 
   const dbCompStripped = useMemo(() => stripDiscoverForgeTemplateCanonicalLoop(dbComp), [dbComp]);
   const dbCompDisplay = useMemo(

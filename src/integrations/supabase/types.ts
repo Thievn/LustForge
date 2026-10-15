@@ -204,6 +204,7 @@ export type Database = {
           image_prompt: string | null
           image_url: string | null
           is_active: boolean
+          hidden_from_dashboard: boolean
           kinks: string[]
           name: string
           orientation: string
@@ -240,6 +241,7 @@ export type Database = {
           image_prompt?: string | null
           image_url?: string | null
           is_active?: boolean
+          hidden_from_dashboard?: boolean
           kinks?: string[]
           name: string
           orientation?: string
@@ -276,6 +278,7 @@ export type Database = {
           image_prompt?: string | null
           image_url?: string | null
           is_active?: boolean
+          hidden_from_dashboard?: boolean
           kinks?: string[]
           name?: string
           orientation?: string
@@ -320,6 +323,7 @@ export type Database = {
           image_url: string | null
           is_nexus_hybrid: boolean
           is_public: boolean
+          hidden_from_dashboard: boolean
           kinks: string[]
           lineage_parent_ids: string[] | null
           lineage_parent_names: string[] | null
@@ -370,6 +374,7 @@ export type Database = {
           image_url?: string | null
           is_nexus_hybrid?: boolean
           is_public?: boolean
+          hidden_from_dashboard?: boolean
           kinks?: string[]
           lineage_parent_ids?: string[] | null
           lineage_parent_names?: string[] | null
@@ -420,6 +425,7 @@ export type Database = {
           image_url?: string | null
           is_nexus_hybrid?: boolean
           is_public?: boolean
+          hidden_from_dashboard?: boolean
           kinks?: string[]
           lineage_parent_ids?: string[] | null
           lineage_parent_names?: string[] | null

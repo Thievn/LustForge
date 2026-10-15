@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { Phone, PhoneOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
-import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
+import { fetchRosterCompanionById, usePhoneRoster, type RosterCompanion } from "@/lib/phone/usePhoneRoster";
 import { DATE_SCENES, searchScenes } from "@/lib/bond/scenes";
 import { STORYLINES, searchStorylines } from "@/lib/bond/storylines";
 import { awardMessageXp, applyStoryChoice, dailyLine, moodFor, nextStreak, tierForXp } from "@/lib/bond/logic";
@@ -47,8 +47,12 @@ export default function CompanionBond() {
   const { id = "" } = useParams();
   const preview = usePhonePreview();
   const navigate = useNavigate();
-  const { companions, user } = usePhoneRoster(preview);
-  const companion = companions.find((item) => item.id === id);
+  const { companions, user, loading: rosterLoading } = usePhoneRoster(preview);
+  const listed = companions.find((item) => item.id === id);
+  const [resolved, setResolved] = useState<RosterCompanion | null>(null);
+  const [resolving, setResolving] = useState(false);
+  const [lookupMiss, setLookupMiss] = useState(false);
+  const companion = listed ?? resolved ?? undefined;
   const [params] = useSearchParams();
   const [tab, setTab] = useState<(typeof TABS)[number]>(params.get("tab") === "style" ? "Style Her" : "Her");
   const [xp, setXp] = useState(0);
@@ -66,6 +70,34 @@ export default function CompanionBond() {
   const [notice, setNotice] = useState<string | null>(null);
   const [storyIndex, setStoryIndex] = useState<Record<string, number>>({});
   const q = preview ? "?preview=1" : "";
+
+  useEffect(() => {
+    if (preview || !id || listed || rosterLoading) {
+      setResolved(null);
+      setResolving(false);
+      setLookupMiss(!preview && !rosterLoading && !id);
+      return;
+    }
+    let cancelled = false;
+    setLookupMiss(false);
+    setResolving(true);
+    void fetchRosterCompanionById(id)
+      .then((row) => {
+        if (cancelled) return;
+        setResolved(row);
+        setLookupMiss(row == null);
+        setResolving(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setResolved(null);
+        setLookupMiss(true);
+        setResolving(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [preview, id, listed, rosterLoading]);
   const tier = tierForXp(xp);
   const mood = moodFor({ hour: new Date().getHours(), streak });
   const stories = useMemo(() => searchStorylines(storyQuery), [storyQuery]);
@@ -227,6 +259,10 @@ export default function CompanionBond() {
     }
     setPosts((current) => [{ id: crypto.randomUUID(), caption: "For you.", image_url: url }, ...current]);
     setNotice("Posted. One credit.");
+  }
+
+  if ((rosterLoading || resolving || !lookupMiss) && !companion && !preview) {
+    return <p className="p-8 text-sm text-muted-foreground">Looking for her…</p>;
   }
 
   if (!companion && !preview) {

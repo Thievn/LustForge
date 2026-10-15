@@ -88,7 +88,8 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
         .from("custom_characters")
         .select("*", { count: "exact", head: true })
         .eq("is_public", true)
-        .eq("approved", true);
+        .eq("approved", true)
+        .eq("hidden_from_dashboard", false);
       if (error) {
         console.error("public forged count:", error);
         return null;
