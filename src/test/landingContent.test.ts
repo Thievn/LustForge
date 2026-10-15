@@ -65,9 +65,11 @@ describe("landing content", () => {
     expect(blob).not.toMatch(/\+\s?\d+\s?%/);
     expect(blob).not.toMatch(/credit|payment|\bpay\b|charge|embers|forge coin/i);
     expect(blob).toMatch(/Leave your email/);
-    expect(blob).toMatch(/Join the waitlist to get your beta key/);
-    expect(blob).toMatch(/Your key unlocks your free account/);
+    expect(blob).toMatch(/Join the waitlist to get your beta access/);
     expect(blob).toMatch(/Join the waitlist/);
+    expect(blob).not.toMatch(/beta key|your key|have a key/i);
+    expect(blob).not.toMatch(/free account/i);
+    expect(blob).not.toMatch(/unlock/i);
     expect(blob).not.toMatch(/Create your free account/);
     expect(blob).not.toMatch(/Make your free account/);
     expect(blob).toMatch(/coming soon/i);
@@ -82,6 +84,7 @@ describe("landing content", () => {
     expect(nav).toMatch(/Sign in/);
     expect(nav).toMatch(/Join the waitlist/);
     expect(nav).not.toMatch(/Create your free account/);
+    expect(nav).not.toMatch(/\bkey\b/i);
     expect(blob).not.toMatch(/\bseamless\b|\bleverage\b|unlock the power/i);
     expect(blob).toMatch(/18/);
     expect(blob).toMatch(/21/);

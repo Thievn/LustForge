@@ -37,12 +37,12 @@ export default function WaitlistSection() {
 
       if (res.status === "duplicate") {
         toast.success("That email is already on the list.", {
-          description: "We'll email you when your beta key is ready.",
+          description: "We'll email you when beta access is ready.",
           duration: 5000,
         });
       } else {
         toast.success("You're on the list.", {
-          description: "We'll email you when your beta key is ready.",
+          description: "We'll email you when beta access is ready.",
           duration: 5000,
         });
       }
@@ -88,7 +88,7 @@ export default function WaitlistSection() {
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle className="h-12 w-12 text-primary" />
               <p className="font-gothic text-2xl text-foreground">You&apos;re on the list.</p>
-              <p className="text-sm text-muted-foreground">We saved your email. We&apos;ll send your beta key when it&apos;s ready.</p>
+              <p className="text-sm text-muted-foreground">We saved your email. We&apos;ll write when beta access is ready.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">

@@ -182,7 +182,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
             <SheetContent side="right" overlayClassName="z-[70] bg-black/60" className={sheetPanelClass}>
               <SheetTitle className="sr-only">Main menu</SheetTitle>
               <SheetDescription className="sr-only">
-                {user ? "Dashboard, account, preferences, and log out." : "Sign in if you already have a key, or join the waitlist."}
+                {user ? "Dashboard, account, preferences, and log out." : "Sign in, or join the waitlist."}
               </SheetDescription>
               <div
                 className="shrink-0 border-b border-border bg-background px-5 pb-4 pr-16"

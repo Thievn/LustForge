@@ -27,7 +27,7 @@ export function LandingCta({
   );
 }
 
-/** One path while LustForge is in beta: the waitlist, framed as a key to a free account. */
+/** One path while LustForge is in beta: join the waitlist. */
 export function LandingActions({
   location,
   align = "center",
@@ -41,16 +41,13 @@ export function LandingActions({
   return (
     <div className={cn("flex flex-col gap-3", start ? "items-stretch sm:items-center lg:items-start" : "items-center")}>
       <p className={cn("text-sm leading-relaxed text-[#B8A9BC]", start ? "text-center lg:text-left" : "text-center")}>
-        Join the waitlist to get your beta key.
+        Join the waitlist to get your beta access.
       </p>
       {showButton ? (
         <LandingCta location={location} className={start ? "lg:w-auto" : undefined}>
           Join the waitlist
         </LandingCta>
       ) : null}
-      <p className={cn("text-xs leading-relaxed text-[#B8A9BC]", start ? "text-center lg:text-left" : "text-center")}>
-        Your key unlocks your free account.
-      </p>
     </div>
   );
 }
