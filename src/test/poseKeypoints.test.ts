@@ -94,6 +94,53 @@ describe("pose skeletons", () => {
     for (const id of CHAT_POSE_IDS) expect(STUDIO_POSES.some((pose) => pose.id === id)).toBe(false);
   });
 
+  /**
+   * Neck-centered, scale-normalized RMS in a shared aspect frame.
+   * 0.06 is the gap below which two stick figures still read as the same pose at thumbnail size.
+   */
+  const MIN_DISTINCT_RMS = 0.06;
+
+  function normalizedPose(pose: PoseSkeleton): Array<[number, number] | null> {
+    const long = Math.max(pose.width, pose.height);
+    const placed = pose.keypoints.map((point) => (point ? ([point[0] * (pose.width / long), point[1] * (pose.height / long)] as [number, number]) : null));
+    const neck = placed[1] ?? placed.find((point): point is [number, number] => Boolean(point));
+    if (!neck) return placed;
+    const centered = placed.map((point) => (point ? ([point[0] - neck[0], point[1] - neck[1]] as [number, number]) : null));
+    const present = centered.filter((point): point is [number, number] => Boolean(point));
+    const scale = Math.sqrt(present.reduce((sum, point) => sum + point[0] ** 2 + point[1] ** 2, 0) / present.length);
+    return centered.map((point) => (point ? ([point[0] / scale, point[1] / scale] as [number, number]) : null));
+  }
+
+  function poseRms(a: Array<[number, number] | null>, b: Array<[number, number] | null>) {
+    let sum = 0;
+    let count = 0;
+    let missing = 0;
+    for (let i = 0; i < a.length; i++) {
+      const left = a[i];
+      const right = b[i];
+      if (!left || !right) {
+        if (Boolean(left) !== Boolean(right)) missing += 1;
+        continue;
+      }
+      sum += (left[0] - right[0]) ** 2 + (left[1] - right[1]) ** 2;
+      count += 1;
+    }
+    return Math.sqrt(sum / Math.max(1, count)) + missing * 0.15;
+  }
+
+  it("rejects poses whose skeletons are too close", () => {
+    const ids = [...POSE_IDS, ...CHAT_POSE_IDS];
+    const shaped = ids.map((id) => ({ id, points: normalizedPose(poseSkeleton(id)!) }));
+    const close: string[] = [];
+    for (let i = 0; i < shaped.length; i++) {
+      for (let j = i + 1; j < shaped.length; j++) {
+        const distance = poseRms(shaped[i].points, shaped[j].points);
+        if (distance < MIN_DISTINCT_RMS) close.push(`${shaped[i].id} vs ${shaped[j].id} (${distance.toFixed(3)})`);
+      }
+    }
+    expect(close).toEqual([]);
+  });
+
   it("keeps seated and kneeling poses bent, with hips above the knees", () => {
     for (const id of UPRIGHT_SEATED) {
       const pose = poseSkeleton(id);

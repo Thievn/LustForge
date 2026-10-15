@@ -123,8 +123,10 @@ function draw(points, width, height) {
   return Buffer.concat([Buffer.from(header), Buffer.from(buf)]);
 }
 
+const only = new Set(process.argv.slice(2));
 let count = 0;
 for (const [id, pose] of Object.entries(file.poses)) {
+  if (only.size && !only.has(id)) continue;
   const ppm = join(scratch, `${id}.ppm`);
   const webp = join(scratch, `${id}.webp`);
   writeFileSync(ppm, draw(pose.points, pose.width, pose.height));
