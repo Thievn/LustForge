@@ -588,6 +588,58 @@ const OVERRIDES = {
     l_knee: [0.7, 0.76],
     l_ankle: [0.8, 0.92],
   }),
+  // Hunched over a controller: one knee up under an elbow, the other knee open.
+  // sit_floor_cross stays the upright cross-legged lap sit.
+  gaming_cross: skeleton(P, T, {
+    nose: [0.46, 0.2],
+    neck: [0.5, 0.32],
+    r_shoulder: [0.34, 0.36],
+    r_elbow: [0.2, 0.48],
+    r_wrist: [0.42, 0.4],
+    l_shoulder: [0.66, 0.38],
+    l_elbow: [0.8, 0.56],
+    l_wrist: [0.56, 0.42],
+    r_hip: [0.4, 0.62],
+    r_knee: [0.18, 0.5],
+    r_ankle: [0.34, 0.88],
+    l_hip: [0.62, 0.64],
+    l_knee: [0.86, 0.74],
+    l_ankle: [0.64, 0.9],
+  }),
+  // Head dropped toward a high, wide elbow; the other arm hangs. Hand stays in the hair.
+  stand_hair: skeleton(P, T, {
+    nose: [0.36, 0.18],
+    neck: [0.5, 0.28],
+    r_shoulder: [0.34, 0.3],
+    r_elbow: [0.12, 0.16],
+    r_wrist: [0.28, 0.1],
+    l_shoulder: [0.66, 0.32],
+    l_elbow: [0.76, 0.52],
+    l_wrist: [0.7, 0.72],
+    r_hip: [0.58, 0.52],
+    r_knee: [0.64, 0.72],
+    r_ankle: [0.7, 0.92],
+    l_hip: [0.4, 0.5],
+    l_knee: [0.26, 0.7],
+    l_ankle: [0.38, 0.92],
+  }),
+  // Opposite head tilt, chin up, wink hand on the other side, free arm down, ankles crossed.
+  t_wink: skeleton(P, T, {
+    nose: [0.64, 0.08],
+    neck: [0.48, 0.22],
+    r_shoulder: [0.32, 0.26],
+    r_elbow: [0.18, 0.42],
+    r_wrist: [0.12, 0.6],
+    l_shoulder: [0.66, 0.22],
+    l_elbow: [0.84, 0.1],
+    l_wrist: [0.66, 0.08],
+    r_hip: [0.42, 0.5],
+    r_knee: [0.36, 0.7],
+    r_ankle: [0.54, 0.9],
+    l_hip: [0.58, 0.52],
+    l_knee: [0.66, 0.72],
+    l_ankle: [0.58, 0.92],
+  }),
 };
 
 const path = new URL("../src/lib/studio/poseKeypoints.json", import.meta.url);
