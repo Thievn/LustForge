@@ -96,9 +96,9 @@ describe("pose skeletons", () => {
 
   /**
    * Neck-centered, scale-normalized RMS in a shared aspect frame.
-   * 0.06 is the gap below which two stick figures still read as the same pose at thumbnail size.
+   * 0.10 is a limb-or-lean change you can see at thumbnail size. The closest allowed pair must clear it.
    */
-  const MIN_DISTINCT_RMS = 0.06;
+  const MIN_DISTINCT_RMS = 0.1;
 
   function normalizedPose(pose: PoseSkeleton): Array<[number, number] | null> {
     const long = Math.max(pose.width, pose.height);
