@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
         }, status);
       }
       if (!Object.keys(assigned.slots).length) {
-        return json({ error: "She has nothing to wear yet. Crack the vault, or tap Wear this." }, 400);
+        return json({ error: "She has nothing to wear yet. Unveil a Treasure, or tap Wear this." }, 400);
       }
       const composed = composeLookSlots(
         Object.fromEntries(LOOK_SLOTS.map((slot) => {
@@ -361,7 +361,7 @@ Deno.serve(async (req) => {
         p_skip_charge: admin,
       });
       if (committed.error) {
-        const message = committed.error.message || "Could not open the bundle";
+        const message = committed.error.message || "Could not unveil the bundle";
         const code = /NEED_CREDITS/.test(message) ? "NEED_CREDITS" : /ALREADY_OWNED/.test(message) ? "ALREADY_OWNED" : /PITY_DUE/.test(message) ? "PITY_DUE" : "VAULT_FAILED";
         return json({
           error: code === "NEED_CREDITS" ? `A bundle of ${bundleSize} takes ${bundleCost} credits.` : message,
@@ -389,9 +389,9 @@ Deno.serve(async (req) => {
       p_skip_charge: admin,
     });
     if (committed.error) {
-      const message = committed.error.message || "Could not open the vault";
+      const message = committed.error.message || "Could not unveil the vault";
       const code = /NEED_CREDITS/.test(message) ? "NEED_CREDITS" : /ALREADY_OWNED/.test(message) ? "ALREADY_OWNED" : /PITY_DUE/.test(message) ? "PITY_DUE" : "VAULT_FAILED";
-      return json({ error: code === "NEED_CREDITS" ? `Cracking the vault takes ${cost} credits.` : message, code }, code === "NEED_CREDITS" ? 402 : 409);
+      return json({ error: code === "NEED_CREDITS" ? `Unveiling a Treasure takes ${cost} credits.` : message, code }, code === "NEED_CREDITS" ? 402 : 409);
     }
     return json({
       item: pool.find((item) => item.id === drawn.id) ?? drawn,

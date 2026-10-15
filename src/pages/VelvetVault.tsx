@@ -176,8 +176,8 @@ export default function VelvetVault() {
   const selected = selectedId ? items.find((item) => item.id === selectedId) ?? null : null;
   const progress = items.length ? (owned / items.length) * 100 : 0;
   const pityLeft = Math.max(0, PITY_EVERY - pity);
-  const crackLabel = cost <= 0 ? "On the house" : `${cost} credits`;
-  const bundleLabel = bundleCost <= 0 ? "On the house" : `${bundleSize} for ${bundleCost}`;
+  const unveilCost = cost <= 0 ? "On the house" : `${cost} credits`;
+  const bundlePrice = bundleCost <= 0 ? `x${bundleSize} on the house` : `x${bundleSize} for ${bundleCost}`;
 
   async function open(kind: "crack" | "bundle") {
     if (preview) {
@@ -241,14 +241,14 @@ export default function VelvetVault() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <p className="truncate text-[11px] text-muted-foreground">{crackLabel}</p>
+          <p className="truncate text-[11px] text-muted-foreground">{unveilCost} · {bundlePrice}</p>
           <button
             type="button"
             disabled={Boolean(busy) || all || remaining < bundleSize || (!server && !preview)}
             onClick={() => void open("bundle")}
             className="shrink-0 text-[11px] text-foreground/80 underline-offset-2 hover:text-primary disabled:opacity-40"
           >
-            {busy === "bundle" ? "Opening" : bundleLabel}
+            {busy === "bundle" ? "Unveiling" : `Unveil x${bundleSize}`}
           </button>
           <span className="min-w-2 flex-1" />
           <p className="shrink-0 text-[11px] tabular-nums text-foreground/80" aria-label={`${owned} of ${total} collected`}>{loaded ? `${owned}/${total}` : "—"}</p>
@@ -258,7 +258,7 @@ export default function VelvetVault() {
             onClick={() => void open("crack")}
             className="h-12 shrink-0 rounded-[14px] bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-40"
           >
-            {all ? "Collected" : busy === "crack" ? "Cracking" : "Crack"}
+            {all ? "Collected" : busy === "crack" ? "Unveiling" : "Unveil a Treasure"}
           </button>
         </div>
         <div className="mt-1.5 h-px overflow-hidden rounded-full bg-white/10" aria-hidden>
@@ -315,8 +315,7 @@ export default function VelvetVault() {
             ))}
             <div className="pt-1">
               <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                <span>Pity · Velvet or better</span>
-                <span className="tabular-nums">{pityLeft} left</span>
+                <span>{pityLeft} {pityLeft === 1 ? "unveil" : "unveils"} until a Velvet or better</span>
               </div>
               <div className="mt-1 h-px overflow-hidden rounded-full bg-white/10">
                 <div className="h-full bg-[#9f1239]" style={{ width: `${Math.min(100, (pity / PITY_EVERY) * 100)}%` }} />

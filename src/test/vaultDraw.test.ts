@@ -65,7 +65,7 @@ describe("velvet vault", () => {
     expect(bundle.every((item) => item.rarity !== "silk")).toBe(true);
   });
 
-  it("refunds a failed crack and phrases a neutral garment for her art style", () => {
+  it("refunds a failed unveil and phrases a neutral garment for her art style", () => {
     expect(settleVaultCharge({ admin: false, cost: 3, ok: false })).toEqual({ kept: 0, refunded: 3 });
     expect(settleVaultCharge({ admin: false, cost: 3, ok: true })).toEqual({ kept: 3, refunded: 0 });
     expect(settleVaultCharge({ admin: true, cost: 3, ok: true })).toEqual({ kept: 0, refunded: 0 });
