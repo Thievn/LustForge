@@ -128,7 +128,7 @@ export function ChatVoiceSettingsSheet({
             />
           </div>
 
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-[#00ffd4]/20 bg-[#00ffd4]/[0.05] px-3.5 py-3">
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-[#E0457B]/20 bg-[#E0457B]/[0.05] px-3.5 py-3">
             <div className="min-w-0 space-y-0.5">
               <Label htmlFor="live-voice-tts" className="text-sm font-medium leading-snug text-foreground">
                 Live Voice: play her lines automatically
@@ -142,7 +142,7 @@ export function ChatVoiceSettingsSheet({
               id="live-voice-tts"
               checked={liveVoiceTtsAutoplay}
               onCheckedChange={onLiveVoiceTtsAutoplayChange}
-              className="shrink-0 data-[state=checked]:bg-[#00ffd4] data-[state=checked]:text-black"
+              className="shrink-0 data-[state=checked]:bg-[#E0457B] data-[state=checked]:text-black"
             />
           </div>
         </div>

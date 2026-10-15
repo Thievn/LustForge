@@ -72,7 +72,7 @@ const emptyCompanion: Omit<DbCompanion, "created_at" | "updated_at"> = {
   system_prompt: "",
   fantasy_starters: [],
   gradient_from: "#7B2D8E",
-  gradient_to: "#FF2D7B",
+  gradient_to: "#D6336C",
   image_url: null,
   image_prompt: null,
   is_active: true,
@@ -1296,7 +1296,7 @@ const CompanionManager = () => {
         fantasy_starters,
         gradient_from:
           typeof fields.gradient_from === "string" && fields.gradient_from ? fields.gradient_from : "#7B2D8E",
-        gradient_to: typeof fields.gradient_to === "string" && fields.gradient_to ? fields.gradient_to : "#FF2D7B",
+        gradient_to: typeof fields.gradient_to === "string" && fields.gradient_to ? fields.gradient_to : "#D6336C",
         image_prompt: fields.image_prompt != null ? String(fields.image_prompt).slice(0, 8000) : null,
         image_url: null,
         is_active: true,
@@ -1357,7 +1357,7 @@ const CompanionManager = () => {
           updated.fantasy_starters = normalizeFantasyStartersFromFields(fields.fantasy_starters);
         }
         if (fields.gradient_from && prev.gradient_from === "#7B2D8E") updated.gradient_from = fields.gradient_from;
-        if (fields.gradient_to && prev.gradient_to === "#FF2D7B") updated.gradient_to = fields.gradient_to;
+        if (fields.gradient_to && prev.gradient_to === "#D6336C") updated.gradient_to = fields.gradient_to;
         if (fields.image_prompt && !prev.image_prompt) updated.image_prompt = fields.image_prompt;
         // Auto-generate an ID from name if still default
         if (fields.name && prev.id.startsWith("custom-")) {
@@ -2169,7 +2169,7 @@ const CompanionManager = () => {
               const frRarity = normalizeCompanionRarity(typeof fr.rarity === "string" ? fr.rarity : undefined);
               const frGf =
                 typeof fr.gradient_from === "string" && fr.gradient_from.trim() ? fr.gradient_from : "#7B2D8E";
-              const frGt = typeof fr.gradient_to === "string" && fr.gradient_to.trim() ? fr.gradient_to : "#FF2D7B";
+              const frGt = typeof fr.gradient_to === "string" && fr.gradient_to.trim() ? fr.gradient_to : "#D6336C";
               const frOb =
                 typeof fr.rarity_border_overlay_url === "string" && fr.rarity_border_overlay_url.trim()
                   ? fr.rarity_border_overlay_url

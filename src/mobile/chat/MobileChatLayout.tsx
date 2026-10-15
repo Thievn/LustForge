@@ -335,7 +335,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
 
         <div
           className={cn(
-            "z-20 shrink-0 bg-gradient-to-t from-[#030208]/95 to-transparent px-2",
+            "z-20 shrink-0 bg-gradient-to-t from-[#1B1620]/95 to-transparent px-2",
             sessionMode === "live_voice" ? "pb-0" : "pb-0.5",
           )}
         >
@@ -382,7 +382,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
 
         <div
           className={cn(
-            "z-20 shrink-0 border-t border-fuchsia-500/10 bg-gradient-to-t from-[#030208] via-[#050308]/95 to-transparent",
+            "z-20 shrink-0 border-t border-fuchsia-500/10 bg-gradient-to-t from-[#1B1620] via-[#050308]/95 to-transparent",
             sessionMode === "live_voice" ? "pt-1 pb-[max(0.35rem,env(safe-area-inset-bottom))]" : "pt-1.5 pb-[max(0.45rem,env(safe-area-inset-bottom))]",
           )}
         >

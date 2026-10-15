@@ -7,7 +7,7 @@ const base = {
   kinks: [],
   fantasyStarters: [],
   gradientFrom: "#7B2D8E",
-  gradientTo: "#FF2D7B",
+  gradientTo: "#D6336C",
   systemPrompt: "You are a fictional consenting adult, 21 or older.",
   appearanceReference: null,
   characterReference: null,
@@ -26,7 +26,7 @@ export const PREVIEW_COMPANIONS: Companion[] = [
     bio: "She texts like she is already in the room.",
     backstory: "You met closing the bookshop. She still keeps the spare key.",
     gradientFrom: "#7B2D8E",
-    gradientTo: "#FF2D7B",
+    gradientTo: "#D6336C",
   },
   {
     ...base,

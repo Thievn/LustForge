@@ -37,7 +37,7 @@ function RitualPortrait({
       />
       <div
         className={cn(
-          "relative h-[5.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-full ring-2 ring-offset-2 ring-offset-[#030208] sm:h-28 sm:w-28",
+          "relative h-[5.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-full ring-2 ring-offset-2 ring-offset-[#1B1620] sm:h-28 sm:w-28",
           ring,
         )}
       >

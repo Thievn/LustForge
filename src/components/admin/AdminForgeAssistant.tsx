@@ -18,7 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getEdgeFunctionInvokeMessage } from "@/lib/edgeFunction";
 import { cn } from "@/lib/utils";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 const STORAGE_KEY = "lustforge-forge-assistant-v1";
 
 type ChatMessage = {
@@ -186,7 +186,7 @@ export default function AdminForgeAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ type: "spring", stiffness: 380, damping: 28 }}
-            className="pointer-events-auto w-[min(100vw-1.25rem-env(safe-area-inset-left)-env(safe-area-inset-right),420px)] max-w-[calc(100vw-1rem-env(safe-area-inset-left)-env(safe-area-inset-right))] h-[min(72dvh,560px)] rounded-2xl border border-[#FF2D7B]/35 bg-[hsl(240_14%_6%)]/95 backdrop-blur-2xl shadow-[0_0_60px_rgba(255,45,123,0.18),0_24px_80px_rgba(0,0,0,0.55)] flex flex-col overflow-hidden ring-1 ring-white/[0.06]"
+            className="pointer-events-auto w-[min(100vw-1.25rem-env(safe-area-inset-left)-env(safe-area-inset-right),420px)] max-w-[calc(100vw-1rem-env(safe-area-inset-left)-env(safe-area-inset-right))] h-[min(72dvh,560px)] rounded-2xl border border-[#D6336C]/35 bg-[hsl(240_14%_6%)]/95 backdrop-blur-2xl shadow-[0_0_60px_rgba(214,51,108,0.18),0_24px_80px_rgba(0,0,0,0.55)] flex flex-col overflow-hidden ring-1 ring-white/[0.06]"
           >
             <div
               className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0"
@@ -195,7 +195,7 @@ export default function AdminForgeAssistant() {
               }}
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="h-9 w-9 rounded-xl bg-black/40 border border-[#FF2D7B]/40 flex items-center justify-center shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-black/40 border border-[#D6336C]/40 flex items-center justify-center shrink-0">
                   <Sparkles className="h-4 w-4 text-white" style={{ filter: `drop-shadow(0 0 8px ${NEON})` }} />
                 </div>
                 <div className="min-w-0">
@@ -257,7 +257,7 @@ export default function AdminForgeAssistant() {
                     className={cn(
                       "max-w-[90%] rounded-xl px-3 py-2.5 text-sm shadow-md",
                       msg.role === "user"
-                        ? "bg-gradient-to-br from-[#FF2D7B] to-purple-900/90 text-white border border-white/10"
+                        ? "bg-gradient-to-br from-[#D6336C] to-purple-900/90 text-white border border-white/10"
                         : "bg-black/50 text-foreground border border-white/10",
                     )}
                   >
@@ -320,7 +320,7 @@ export default function AdminForgeAssistant() {
                   }}
                   rows={2}
                   placeholder="Shift+Enter newline · Enter send — tell Forge Assistant what to change…"
-                  className="flex-1 min-h-[44px] max-h-28 px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-foreground text-sm focus:outline-none focus:border-[#FF2D7B]/45 focus:ring-1 focus:ring-[#FF2D7B]/20 resize-y"
+                  className="flex-1 min-h-[44px] max-h-28 px-3 py-2 rounded-xl bg-black/50 border border-white/10 text-foreground text-sm focus:outline-none focus:border-[#D6336C]/45 focus:ring-1 focus:ring-[#D6336C]/20 resize-y"
                 />
                 <button
                   type="button"
@@ -345,7 +345,7 @@ export default function AdminForgeAssistant() {
         aria-label={panelOpen ? "Minimize Forge Assistant" : "Open Forge Assistant"}
         onClick={() => setPanelOpen((o) => !o)}
         className={cn(
-          "pointer-events-auto relative h-16 w-16 rounded-full flex items-center justify-center text-white border-2 border-[#FF2D7B]/50 shadow-[0_0_40px_rgba(255,45,123,0.35)]",
+          "pointer-events-auto relative h-16 w-16 rounded-full flex items-center justify-center text-white border-2 border-[#D6336C]/50 shadow-[0_0_40px_rgba(214,51,108,0.35)]",
           panelOpen && "ring-2 ring-[hsl(170_100%_50%)]/40",
         )}
         style={{

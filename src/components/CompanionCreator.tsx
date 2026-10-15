@@ -214,7 +214,7 @@ import {
 import { ForgeThemeControls } from "@/components/forge/ForgeThemeControls";
 import { pickRandomBodyTypeForForgeTab } from "@/lib/forgeTabBodyAffinity";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 const PREVIEW_COST = FORGE_PREVIEW_FC;
 const FINAL_COST_PER = FORGE_CREATE_COMPANION_FC;
 
@@ -229,7 +229,7 @@ const FORGE_TAB_BUTTON_ACCENT: Record<ForgeThemeTabId, string> = {
   realistic_craving: "border-amber-400/38 bg-gradient-to-br from-amber-950/35 to-black/35",
   dark_fantasy: "border-indigo-400/45 bg-gradient-to-br from-indigo-950/50 to-black/40",
   hyper_degenerate:
-    "border-[#FF2D7B]/55 bg-gradient-to-br from-[#FF2D7B]/22 via-purple-950/35 to-black/35 shadow-[0_0_22px_rgba(255,45,123,0.18)]",
+    "border-[#D6336C]/55 bg-gradient-to-br from-[#D6336C]/22 via-purple-950/35 to-black/35 shadow-[0_0_22px_rgba(214,51,108,0.18)]",
   ...Object.fromEntries(FORGE_EXTENDED_THEME_TAB_IDS.map((id) => [id, FORGE_EXTENDED_TAB_ACCENT])),
 } as Record<ForgeThemeTabId, string>;
 
@@ -2823,7 +2823,7 @@ User flavor notes: ${extraNotes || "none"}`;
   );
 
   const panelClass =
-    "rounded-2xl border border-white/[0.08] bg-black/45 backdrop-blur-2xl shadow-[0_0_60px_rgba(255,45,123,0.06),inset_0_1px_0_rgba(255,255,255,0.05)]";
+    "rounded-2xl border border-white/[0.08] bg-black/45 backdrop-blur-2xl shadow-[0_0_60px_rgba(214,51,108,0.06),inset_0_1px_0_rgba(255,255,255,0.05)]";
 
   const PillGroup = ({
     label,
@@ -2854,7 +2854,7 @@ User flavor notes: ${extraNotes || "none"}`;
             className={cn(
               "rounded-xl border px-2.5 py-2.5 text-left text-xs sm:text-sm transition-all duration-200",
               value === opt
-                ? "text-white border-[#FF2D7B]/50 bg-[#FF2D7B]/[0.12]"
+                ? "text-white border-[#D6336C]/50 bg-[#D6336C]/[0.12]"
                 : "border-white/10 bg-black/35 text-muted-foreground hover:border-white/20 hover:text-foreground",
             )}
             style={
@@ -3062,7 +3062,7 @@ User flavor notes: ${extraNotes || "none"}`;
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-[min(100vw-2rem,20rem)] max-h-[min(70vh,22rem)] overflow-y-auto border border-white/12 bg-[#0c0a10] text-white"
+            className="w-[min(100vw-2rem,20rem)] max-h-[min(70vh,22rem)] overflow-y-auto border border-white/12 bg-[#262030] text-white"
           >
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
               {isAdmin ? "Local + account backup" : "Device + account backup"}
@@ -3206,7 +3206,7 @@ User flavor notes: ${extraNotes || "none"}`;
         embedded
           ? "min-h-0 flex flex-1 flex-col bg-transparent"
           : cn(
-              "min-h-screen bg-[#050508]",
+              "min-h-screen bg-[#1B1620]",
               !lgBreakpointUp &&
                 "max-lg:flex max-lg:h-[100dvh] max-lg:min-h-0 max-lg:flex-col max-lg:overflow-hidden",
             ),
@@ -3238,7 +3238,7 @@ User flavor notes: ${extraNotes || "none"}`;
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mb-4 md:mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-[#FF2D7B] transition-colors"
+            className="mb-4 md:mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-[#D6336C] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Step back
@@ -3272,7 +3272,7 @@ User flavor notes: ${extraNotes || "none"}`;
             >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#FF2D7B]/90 mb-2">Forge Studio</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#D6336C]/90 mb-2">Forge Studio</p>
                 <h1 className="font-gothic text-3xl md:text-4xl text-white tracking-wide flex flex-wrap items-center gap-x-3 gap-y-2">
                   <Sparkles
                     className="h-8 w-8 shrink-0 motion-safe:animate-lf-drift"
@@ -3291,7 +3291,7 @@ User flavor notes: ${extraNotes || "none"}`;
               </div>
               {!isAdmin && (
                 <div
-                  className="flex items-center gap-2.5 rounded-2xl border border-[#FF2D7B]/25 bg-black/50 px-5 py-3 backdrop-blur-md"
+                  className="flex items-center gap-2.5 rounded-2xl border border-[#D6336C]/25 bg-black/50 px-5 py-3 backdrop-blur-md"
                   style={{ boxShadow: `0 0 28px ${NEON}15` }}
                 >
                   <Coins className="h-5 w-5" style={{ color: NEON }} />
@@ -3375,7 +3375,7 @@ User flavor notes: ${extraNotes || "none"}`;
                     <button
                       type="button"
                       onClick={() => deepRandomizeForgeFocusTab({ wildChaos: true })}
-                      className="inline-flex items-center gap-2 rounded-lg border border-[#FF2D7B]/45 bg-[#FF2D7B]/12 px-3 py-1.5 text-[11px] font-medium text-[#ffb3d1] hover:bg-[#FF2D7B]/20"
+                      className="inline-flex items-center gap-2 rounded-lg border border-[#D6336C]/45 bg-[#D6336C]/12 px-3 py-1.5 text-[11px] font-medium text-[#F57AA3] hover:bg-[#D6336C]/20"
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       Wild roll (all tabs + lab)
@@ -3699,7 +3699,7 @@ User flavor notes: ${extraNotes || "none"}`;
                       value={identityAnatomyDetail || "_none"}
                       onValueChange={(v) => setIdentityAnatomyDetail((v === "_none" ? "" : v) as IdentityAnatomyDetail)}
                     >
-                      <SelectTrigger className="w-full max-w-md border-white/12 bg-black/40 text-white focus:ring-[#FF2D7B]/35">
+                      <SelectTrigger className="w-full max-w-md border-white/12 bg-black/40 text-white focus:ring-[#D6336C]/35">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,18rem)]">
@@ -3738,7 +3738,7 @@ User flavor notes: ${extraNotes || "none"}`;
                       value={ethnicitySelectValue}
                       onValueChange={(v) => setEthnicity(normalizeForgeEthnicity(v))}
                     >
-                      <SelectTrigger className="w-full max-w-md border-white/12 bg-black/40 text-white focus:ring-[#FF2D7B]/35">
+                      <SelectTrigger className="w-full max-w-md border-white/12 bg-black/40 text-white focus:ring-[#D6336C]/35">
                         <SelectValue placeholder="Choose a visual seed" />
                       </SelectTrigger>
                       <SelectContent className="border-white/10 bg-[hsl(280_25%_10%)] text-white max-h-[min(70vh,22rem)]">
@@ -3781,7 +3781,7 @@ User flavor notes: ${extraNotes || "none"}`;
                     transition={{ duration: 0.25 }}
                     className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/50 to-[#1a0a14]/80 p-4 sm:p-5 space-y-2"
                   >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff7eb3]/85">Shared look lab</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#F57AA3]/85">Shared look lab</p>
                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
                       Breast size, curves, hair, eyes, skin, height, and accents apply on <strong>every</strong> forge tab. The{" "}
                       <strong>Forge focus tab</strong> above adds theme DNA; silhouette and art style live here too.
@@ -3951,8 +3951,8 @@ User flavor notes: ${extraNotes || "none"}`;
                 subtitle={FORGE_SECTION_SOUL_STORY_SUBCOPY}
                 className={!isAdmin && creatorStepValue !== "soulStory" ? "hidden" : undefined}
               >
-                  <div className="rounded-2xl border border-[#FF2D7B]/20 bg-gradient-to-br from-[#1a0a12]/90 to-black/50 p-4 sm:p-5 space-y-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff7eb3]/90">Personality &amp; voice</p>
+                  <div className="rounded-2xl border border-[#D6336C]/20 bg-gradient-to-br from-[#2F2839]/90 to-black/50 p-4 sm:p-5 space-y-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#F57AA3]/90">Personality &amp; voice</p>
                     <h3 className="font-gothic text-xl sm:text-2xl text-white leading-tight">Personalities</h3>
                     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-2xl">
                       Voice, flirt cadence, and relationship frame — separate from silhouette and wardrobe. Feeds chat personality and
@@ -4028,7 +4028,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         onChange={(e) => setNarrativeAppearance(e.target.value)}
                         rows={5}
                         placeholder="Flowing description — not a tag list…"
-                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                       />
                     </div>
                     <div>
@@ -4038,7 +4038,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         onChange={(e) => setHookBio(e.target.value)}
                         rows={3}
                         placeholder="Short elevator hook…"
-                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                       />
                     </div>
                     <div>
@@ -4050,7 +4050,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         onChange={(e) => setChronicleBackstory(e.target.value)}
                         rows={8}
                         placeholder="3–4 paragraphs of premium lore…"
-                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                       />
                     </div>
                     <div>
@@ -4063,7 +4063,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         onChange={(e) => setPackshotPrompt(e.target.value)}
                         rows={4}
                         placeholder="Dense cinematic portrait brief…"
-                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                       />
                     </div>
                     <div>
@@ -4075,7 +4075,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         onChange={(e) => setCharterSystemPrompt(e.target.value)}
                         rows={6}
                         placeholder={isAdmin ? "Full persona rules (xAI / chat pipeline)…" : "Full persona rules for their chat voice…"}
-                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-y focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                       />
                     </div>
                     {fantasyStartersVault.length > 0 && (
@@ -4286,7 +4286,7 @@ User flavor notes: ${extraNotes || "none"}`;
                       onChange={(e) => setReferenceNotes(e.target.value)}
                       rows={2}
                       placeholder="e.g. same rim light as ref, colder shadows, more latex sheen…"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                     />
                   </div>
 
@@ -4299,7 +4299,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder={isAdmin ? "Companion name (optional — auto if empty)" : "Companion name"}
-                        className="w-full min-w-0 flex-1 rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                        className="w-full min-w-0 flex-1 rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                       />
                       <button
                         type="button"
@@ -4309,7 +4309,7 @@ User flavor notes: ${extraNotes || "none"}`;
                           "shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-all",
                           nameGenBusy
                             ? "border-white/10 bg-black/30 text-muted-foreground pointer-events-none opacity-60"
-                            : "border-[#FF2D7B]/40 bg-[#FF2D7B]/10 text-white hover:border-[#FF2D7B]/60 hover:bg-[#FF2D7B]/15",
+                            : "border-[#D6336C]/40 bg-[#D6336C]/10 text-white hover:border-[#D6336C]/60 hover:bg-[#D6336C]/15",
                         )}
                       >
                         {nameGenBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" style={{ color: NEON }} />}
@@ -4326,7 +4326,7 @@ User flavor notes: ${extraNotes || "none"}`;
                       value={namePrefix}
                       onChange={(e) => setNamePrefix(e.target.value)}
                       placeholder="Optional prefix (title / clan)"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                     />
                   </div>
                   <div>
@@ -4335,7 +4335,7 @@ User flavor notes: ${extraNotes || "none"}`;
                       value={tagline}
                       onChange={(e) => setTagline(e.target.value)}
                       placeholder="Short hook for cards"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                     />
                   </div>
                   <div>
@@ -4351,7 +4351,7 @@ User flavor notes: ${extraNotes || "none"}`;
                           className={cn(
                             "rounded-xl border px-4 py-2.5 text-sm font-medium transition-all",
                             batchPreset === n
-                              ? "border-[#FF2D7B]/50 bg-[#FF2D7B]/10 text-white"
+                              ? "border-[#D6336C]/50 bg-[#D6336C]/10 text-white"
                               : "border-white/10 bg-black/40 text-muted-foreground hover:border-white/20",
                           )}
                         >
@@ -4379,7 +4379,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         value={batchCustom}
                         onChange={(e) => setBatchCustom(e.target.value)}
                         placeholder="1–25"
-                        className="mt-2 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#FF2D7B]/40"
+                        className="mt-2 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm focus:outline-none focus:border-[#D6336C]/40"
                       />
                     )}
                   </div>
@@ -4392,7 +4392,7 @@ User flavor notes: ${extraNotes || "none"}`;
                       onChange={(e) => setExtraNotes(e.target.value)}
                       rows={3}
                       placeholder="Voice tics, limits, favorite scenarios…"
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#FF2D7B]/40 focus:ring-2 focus:ring-[#FF2D7B]/15"
+                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#D6336C]/40 focus:ring-2 focus:ring-[#D6336C]/15"
                     />
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/40 p-4 space-y-3">
@@ -4407,7 +4407,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         className={cn(
                           "rounded-xl border px-3 py-3 text-left text-xs transition-all flex items-start gap-2",
                           saveVisibility === "private"
-                            ? "border-[#FF2D7B]/50 bg-[#FF2D7B]/10 text-white"
+                            ? "border-[#D6336C]/50 bg-[#D6336C]/10 text-white"
                             : "border-white/10 bg-black/30 text-muted-foreground hover:border-white/20",
                         )}
                       >
@@ -4448,7 +4448,7 @@ User flavor notes: ${extraNotes || "none"}`;
                           type="checkbox"
                           checked={creditUsername}
                           onChange={(e) => setCreditUsername(e.target.checked)}
-                          className="accent-[#FF2D7B] h-4 w-4 shrink-0"
+                          className="accent-[#D6336C] h-4 w-4 shrink-0"
                         />
                       </label>
                     )}
@@ -4479,7 +4479,7 @@ User flavor notes: ${extraNotes || "none"}`;
             ) : null}
 
             {isAdmin && (
-              <div className="rounded-2xl border border-[#FF2D7B]/25 bg-gradient-to-br from-[#2a0a18]/80 to-black/50 px-4 py-4 space-y-3">
+              <div className="rounded-2xl border border-[#D6336C]/25 bg-gradient-to-br from-[#2F2839]/80 to-black/50 px-4 py-4 space-y-3">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/90">Admin · Discover card tier</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Forge is published to Discover. It stays out of your personal vault until you open the profile and save it
@@ -4508,7 +4508,7 @@ User flavor notes: ${extraNotes || "none"}`;
                       type="checkbox"
                       checked={adminAbyssalForge}
                       onChange={(e) => setAdminAbyssalForge(e.target.checked)}
-                      className="accent-[#FF2D7B] mt-0.5 h-4 w-4 shrink-0"
+                      className="accent-[#D6336C] mt-0.5 h-4 w-4 shrink-0"
                     />
                     <span className="text-xs text-muted-foreground leading-snug">
                       <span className="font-semibold text-foreground/90 block">Abyssal (super ultra rare)</span>
@@ -4594,13 +4594,13 @@ User flavor notes: ${extraNotes || "none"}`;
             <div
               className={cn(
                 panelClass,
-                "overflow-hidden motion-safe:transition-[box-shadow,transform] motion-safe:duration-500 motion-safe:ease-out motion-safe:hover:shadow-[0_0_72px_rgba(255,45,123,0.09)]",
+                "overflow-hidden motion-safe:transition-[box-shadow,transform] motion-safe:duration-500 motion-safe:ease-out motion-safe:hover:shadow-[0_0_72px_rgba(214,51,108,0.09)]",
               )}
             >
               <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-white/10 bg-white/[0.03] backdrop-blur-md">
                 <span className="flex items-center gap-2 min-w-0">
                   <span
-                    className="motion-safe:animate-lf-sway flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#FF2D7B]/35 bg-gradient-to-br from-[#FF2D7B]/25 to-purple-900/40"
+                    className="motion-safe:animate-lf-sway flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#D6336C]/35 bg-gradient-to-br from-[#D6336C]/25 to-purple-900/40"
                     style={{ boxShadow: `0 0 20px ${NEON}22` }}
                   >
                     <ScanEye className="h-4 w-4 text-white" aria-hidden />
@@ -4681,7 +4681,7 @@ User flavor notes: ${extraNotes || "none"}`;
                         >
                           <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_30%_20%,white,transparent_45%)]" />
                           <p className="text-[8px] uppercase tracking-[0.28em] text-white/55 mb-1 relative">Spec sheet</p>
-                          <h2 className="font-gothic text-lg sm:text-xl text-white relative leading-tight drop-shadow-[0_0_16px_rgba(255,45,123,0.35)] line-clamp-2">
+                          <h2 className="font-gothic text-lg sm:text-xl text-white relative leading-tight drop-shadow-[0_0_16px_rgba(214,51,108,0.35)] line-clamp-2">
                             {name || "Unnamed desire"}
                           </h2>
                           <p className="text-[11px] text-white/75 italic mt-1 relative line-clamp-2">{tagline || "Your fantasy, forged live."}</p>
@@ -4719,7 +4719,7 @@ User flavor notes: ${extraNotes || "none"}`;
                 <div className="mt-3 rounded-xl border border-white/[0.12] bg-black/55 px-3 py-3 space-y-2">
                   <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Profile preview</p>
                   <p className="font-gothic text-lg sm:text-xl text-white leading-snug line-clamp-3">{name.trim() || "—"}</p>
-                  <p className="text-[12px] sm:text-sm text-[#ffb8d9]/90 line-clamp-3">{tagline.trim() || "—"}</p>
+                  <p className="text-[12px] sm:text-sm text-[#F57AA3]/90 line-clamp-3">{tagline.trim() || "—"}</p>
                   <p className="text-[11px] sm:text-xs text-white/70 leading-relaxed line-clamp-8 whitespace-pre-wrap">
                     {profilePreviewBlurb}
                   </p>
@@ -4893,7 +4893,7 @@ User flavor notes: ${extraNotes || "none"}`;
 
         {!lgBreakpointUp ? (
           <nav
-            className="lg:hidden pointer-events-none fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.08] bg-[#050508]/95 px-3 pt-2 pb-[max(0.35rem,env(safe-area-inset-bottom,0px))] backdrop-blur-xl"
+            className="lg:hidden pointer-events-none fixed inset-x-0 bottom-0 z-[60] border-t border-white/[0.08] bg-[#1B1620]/95 px-3 pt-2 pb-[max(0.35rem,env(safe-area-inset-bottom,0px))] backdrop-blur-xl"
             aria-label="Forge view"
           >
             <div className="pointer-events-auto mx-auto flex max-w-lg gap-2">
@@ -4945,7 +4945,7 @@ User flavor notes: ${extraNotes || "none"}`;
               </div>
               <div className="rounded-xl border border-white/10 bg-black/40 p-3 space-y-2">
                 <p className="font-gothic text-xl text-white">{name.trim() || "—"}</p>
-                <p className="text-sm text-[#ffb8d9]/90">{tagline.trim() || "—"}</p>
+                <p className="text-sm text-[#F57AA3]/90">{tagline.trim() || "—"}</p>
                 <p className="text-xs text-white/75 leading-relaxed whitespace-pre-wrap">{profilePreviewBlurb}</p>
               </div>
             </div>

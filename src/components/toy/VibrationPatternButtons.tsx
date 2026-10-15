@@ -84,10 +84,10 @@ export function VibrationPatternButtons({
               blocked
                 ? "border-white/[0.06] bg-white/[0.02] text-muted-foreground/60 cursor-pointer hover:border-white/10"
                 : isLive
-                  ? "border-[#00ffd4]/55 bg-[#00ffd4]/[0.14] text-white shadow-[0_0_32px_rgba(0,255,212,0.22)] ring-1 ring-[#00ffd4]/40"
+                  ? "border-[#E0457B]/55 bg-[#E0457B]/[0.14] text-white shadow-[0_0_32px_rgba(0,255,212,0.22)] ring-1 ring-[#E0457B]/40"
                   : isSig
-                    ? "border-[#ff2d7b]/45 bg-gradient-to-br from-[#ff2d7b]/[0.12] via-fuchsia-950/30 to-[#00ffd4]/[0.08] text-white shadow-[0_0_28px_rgba(255,45,123,0.18)] hover:border-[#ff2d7b]/65 hover:shadow-[0_0_36px_rgba(255,45,123,0.28)]"
-                    : "border-white/[0.1] bg-gradient-to-br from-black/50 to-black/30 text-foreground/95 hover:border-primary/40 hover:bg-primary/[0.08] hover:shadow-[0_0_24px_rgba(255,45,123,0.12)]",
+                    ? "border-[#D6336C]/45 bg-gradient-to-br from-[#D6336C]/[0.12] via-fuchsia-950/30 to-[#E0457B]/[0.08] text-white shadow-[0_0_28px_rgba(214,51,108,0.18)] hover:border-[#D6336C]/65 hover:shadow-[0_0_36px_rgba(214,51,108,0.28)]"
+                    : "border-white/[0.1] bg-gradient-to-br from-black/50 to-black/30 text-foreground/95 hover:border-primary/40 hover:bg-primary/[0.08] hover:shadow-[0_0_24px_rgba(214,51,108,0.12)]",
             )}
           >
             <span
@@ -95,39 +95,39 @@ export function VibrationPatternButtons({
                 "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
                 !blocked &&
                   !isLive &&
-                  "bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(255,45,123,0.22),transparent_55%)]",
+                  "bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(214,51,108,0.22),transparent_55%)]",
               )}
             />
             <span className="relative flex items-center gap-2 min-w-0">
               {busy ? (
                 <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
               ) : isLive ? (
-                <Square className="h-3.5 w-3.5 shrink-0 text-[#00ffd4]" />
+                <Square className="h-3.5 w-3.5 shrink-0 text-[#E0457B]" />
               ) : (
                 <Zap
                   className={cn(
                     "shrink-0",
                     isChat ? "h-3.5 w-3.5" : "h-4 w-4",
-                    isSig ? "text-[#ff2d7b]" : "text-primary/90",
+                    isSig ? "text-[#D6336C]" : "text-primary/90",
                   )}
                 />
               )}
               <span
                 className={cn(
                   "font-semibold tracking-tight truncate",
-                  isSig && !isLive && "font-gothic bg-gradient-to-r from-white via-[#ffc8e8] to-[#00ffd4] bg-clip-text text-transparent",
+                  isSig && !isLive && "font-gothic bg-gradient-to-r from-white via-[#ffc8e8] to-[#E0457B] bg-clip-text text-transparent",
                 )}
               >
                 {row.display_name}
               </span>
               {isLive ? (
-                <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-[#00ffd4]/90 shrink-0">
+                <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-[#E0457B]/90 shrink-0">
                   On
                 </span>
               ) : null}
             </span>
             {isSig && !isChat ? (
-              <span className="relative mt-1 block text-[10px] uppercase tracking-[0.2em] text-[#ff2d7b]/80">
+              <span className="relative mt-1 block text-[10px] uppercase tracking-[0.2em] text-[#D6336C]/80">
                 Signature
               </span>
             ) : null}

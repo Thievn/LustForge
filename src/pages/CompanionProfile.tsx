@@ -178,7 +178,7 @@ const RARITY_BADGE: Record<
     label: "Abyssal",
     sub: "0.1% forge",
     className:
-      "border-[#ff2d7b]/70 bg-gradient-to-r from-[#ff2d7b]/25 via-fuchsia-600/30 to-[#00ffd4]/20 text-white shadow-[0_0_40px_rgba(255,45,123,0.45),0_0_70px_rgba(168,85,247,0.25)]",
+      "border-[#D6336C]/70 bg-gradient-to-r from-[#D6336C]/25 via-fuchsia-600/30 to-[#E0457B]/20 text-white shadow-[0_0_40px_rgba(214,51,108,0.45),0_0_70px_rgba(168,85,247,0.25)]",
   },
 };
 
@@ -1046,7 +1046,7 @@ const CompanionProfile = () => {
               </PortraitViewLightbox>
             </TierHaloPortraitFrame>
             {consumeFeatureLocked && !sampleLook ? (
-              <div className="mt-4 rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/15 via-black/40 to-fuchsia-950/25 px-4 py-3 space-y-2 shadow-[0_0_28px_rgba(255,45,123,0.12)]">
+              <div className="mt-4 rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/15 via-black/40 to-fuchsia-950/25 px-4 py-3 space-y-2 shadow-[0_0_28px_rgba(214,51,108,0.12)]">
                 <p className="text-[11px] text-muted-foreground leading-relaxed">{lockedPreviewBannerText}</p>
                 {vaultLocked && !isOwnForge ? (
                   <motion.button
@@ -1500,14 +1500,14 @@ const CompanionProfile = () => {
             ) : null}
 
             {id && vibrationPatterns.length > 0 ? (
-              <div className="rounded-[1.35rem] border border-[#ff2d7b]/25 bg-gradient-to-br from-black/55 via-[hsl(280_28%_9%)]/95 to-black/50 p-5 sm:p-6 shadow-[0_0_48px_rgba(255,45,123,0.08),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
+              <div className="rounded-[1.35rem] border border-[#D6336C]/25 bg-gradient-to-br from-black/55 via-[hsl(280_28%_9%)]/95 to-black/50 p-5 sm:p-6 shadow-[0_0_48px_rgba(214,51,108,0.08),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                   <div>
-                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#ff2d7b]/80">
+                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6336C]/80">
                       Haptic signature
                     </h3>
                     <p className="mt-1 font-gothic text-xl text-white flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-[#00ffd4] shrink-0 drop-shadow-[0_0_10px_rgba(0,255,212,0.35)]" />
+                      <Zap className="h-5 w-5 text-[#E0457B] shrink-0 drop-shadow-[0_0_10px_rgba(0,255,212,0.35)]" />
                       Lovense patterns
                     </p>
                     <p className="text-xs text-muted-foreground mt-1 max-w-sm">
@@ -1533,7 +1533,7 @@ const CompanionProfile = () => {
                       Pair toy
                     </button>
                   ) : (
-                    <span className="rounded-full border border-[#00ffd4]/30 bg-[#00ffd4]/10 px-2.5 py-1 text-[10px] font-medium text-[#00ffd4]">
+                    <span className="rounded-full border border-[#E0457B]/30 bg-[#E0457B]/10 px-2.5 py-1 text-[10px] font-medium text-[#E0457B]">
                       Linked
                     </span>
                   )}
@@ -1601,7 +1601,7 @@ const CompanionProfile = () => {
                       ? "cursor-not-allowed opacity-65"
                       : consumeFeatureLocked
                         ? "opacity-80 hover:border-primary/35"
-                        : "hover:border-primary/45 hover:shadow-[0_0_36px_rgba(255,45,123,0.18)]",
+                        : "hover:border-primary/45 hover:shadow-[0_0_36px_rgba(214,51,108,0.18)]",
                   )}
                 >
                   <div

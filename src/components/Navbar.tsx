@@ -6,7 +6,6 @@ import type { Session, User } from "@supabase/supabase-js";
 import { isPlatformAdmin } from "@/config/auth";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { scrollToLandingId, trackLandingCta } from "@/lib/landingScroll";
 
@@ -14,7 +13,7 @@ const ghostNavPill =
   "inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 min-h-10 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.07] hover:border-white/15 transition-all";
 
 const accountNavPill =
-  "inline-flex items-center gap-1.5 rounded-xl border border-[#FF2D7B]/35 bg-[#FF2D7B]/[0.08] px-3 py-2 min-h-10 text-sm font-medium text-[#FF2D7B] hover:bg-[#FF2D7B]/15 hover:border-[#FF2D7B]/55 transition-all shadow-[0_0_16px_rgba(255,45,123,0.12)]";
+  "inline-flex items-center gap-1.5 rounded-xl border border-[#D6336C]/35 bg-[#D6336C]/[0.08] px-3 py-2 min-h-10 text-sm font-medium text-[#D6336C] hover:bg-[#D6336C]/15 hover:border-[#D6336C]/55 transition-all shadow-[0_0_16px_rgba(214,51,108,0.12)]";
 
 const sheetLinkClass =
   "flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-base font-medium text-foreground transition-colors hover:bg-muted active:bg-muted/80 touch-manipulation";
@@ -79,19 +78,18 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 border-b border-border/80 bg-background/90 shadow-[0_8px_32px_rgba(80,30,50,0.06)] backdrop-blur-xl dark:bg-background/94 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+      className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[rgba(27,22,32,0.62)] shadow-none backdrop-blur-[18px]"
       style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex items-center justify-between gap-2 min-h-[2.75rem]">
         <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 min-w-0 touch-manipulation py-1">
           <Flame className="h-6 w-6 sm:h-7 sm:w-7 shrink-0 text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.45)]" />
-          <span className="font-gothic text-xl sm:text-2xl font-bold leading-none tracking-tight truncate">
-            <span className="gradient-vice-text">LustForge</span>
+          <span className="font-wordmark truncate text-[21px] leading-none text-[#F4EEF2]">
+            Lust<b className="font-wordmark text-[#F57AA3]">Forge</b>
           </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm shrink-0">
-          <ThemeToggle />
           {!user && !landing ? <ShopSyncableToysButton /> : null}
           {user ? (
             <>
@@ -107,7 +105,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                 {isAdmin ? (
                   <Link
                     to="/admin"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-[hsl(280_50%_35%)] to-[#FF2D7B] text-white font-medium hover:scale-[1.02] transition-transform shadow-md shadow-[#FF2D7B]/20 border border-white/10 text-sm min-h-10"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-[hsl(280_50%_35%)] to-[#D6336C] text-white font-medium hover:scale-[1.02] transition-transform shadow-md shadow-[#D6336C]/20 border border-white/10 text-sm min-h-10"
                   >
                     <Shield className="h-4 w-4 shrink-0" />
                     Admin
@@ -142,15 +140,15 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                 </>
               ) : (
                 <>
-                  <Link to="/" className="text-muted-foreground hover:text-[#FF2D7B] transition-colors py-2 min-h-10 inline-flex items-center">
+                  <Link to="/" className="text-muted-foreground hover:text-[#D6336C] transition-colors py-2 min-h-10 inline-flex items-center">
                     Home
                   </Link>
                   <Link
                     to="/auth"
                     className="px-4 py-2 sm:px-5 sm:py-2 rounded-xl font-semibold text-white text-xs sm:text-sm transition-transform hover:scale-[1.02] border border-white/10 min-h-10 inline-flex items-center"
                     style={{
-                      background: "linear-gradient(135deg, #FF2D7B, hsl(280 48% 40%))",
-                      boxShadow: "0 0 20px rgba(255,45,123,0.28)",
+                      background: "linear-gradient(135deg, #D6336C, hsl(280 48% 40%))",
+                      boxShadow: "0 0 20px rgba(214,51,108,0.28)",
                     }}
                   >
                     Sign In
@@ -179,8 +177,8 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                 className="shrink-0 border-b border-border bg-background px-5 pb-4 pr-16"
                 style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
               >
-                <p className="font-gothic text-xl leading-none text-foreground">
-                  <span className="gradient-vice-text">LustForge</span>
+                <p className="font-wordmark text-[21px] leading-none text-[#F4EEF2]">
+                  Lust<b className="text-[#F57AA3]">Forge</b>
                 </p>
                 {user?.email ? <p className="mt-2 truncate text-xs text-muted-foreground">{user.email}</p> : null}
               </div>

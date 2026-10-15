@@ -26,7 +26,7 @@ export type VaultPiece = {
   poseId?: string | null;
 };
 
-const SLOT_COLUMN: Record<TreasureSlot, keyof LookRow> = {
+const SLOT_COLUMN: Record<Exclude<TreasureSlot, "vibration">, keyof LookRow> = {
   outfit: "outfit_id",
   accessory: "accessory_id",
   scene: "scene_id",
@@ -36,6 +36,7 @@ const SLOT_COLUMN: Record<TreasureSlot, keyof LookRow> = {
 };
 
 export function lookSlotId(look: LookRow, slot: TreasureSlot): string | null {
+  if (slot === "vibration") return null;
   const value = look[SLOT_COLUMN[slot]];
   return typeof value === "string" && value ? value : null;
 }

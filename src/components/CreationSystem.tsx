@@ -119,7 +119,7 @@ export default function CreationSystem() {
           {PATHS.map(({ icon: Icon, title, desc }) => (
             <div
               key={title}
-              className="rounded-2xl border border-white/[0.07] bg-card/80 backdrop-blur-md p-6 shadow-lg shadow-black/20 hover:border-primary/40 transition-all duration-300 hover:glow-pink hover:shadow-[0_12px_40px_rgba(255,45,123,0.08)] ring-1 ring-white/[0.03]"
+              className="rounded-2xl border border-white/[0.07] bg-card/80 backdrop-blur-md p-6 shadow-lg shadow-black/20 hover:border-primary/40 transition-all duration-300 hover:glow-pink hover:shadow-[0_12px_40px_rgba(214,51,108,0.08)] ring-1 ring-white/[0.03]"
             >
               <div className="text-primary mb-4">
                 <Icon className="h-6 w-6" />

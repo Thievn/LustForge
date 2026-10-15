@@ -44,7 +44,7 @@ export function normalizeCompanionRarity(raw: string | null | undefined): Compan
 export function defaultProfileGradientForRarity(rarity: CompanionRarity | string): { from: string; to: string } {
   const r = normalizeCompanionRarity(rarity);
   if (r === "common") {
-    return { from: "#7B2D8E", to: "#FF2D7B" };
+    return { from: "#7B2D8E", to: "#D6336C" };
   }
   const n = RARITY_NEON[r];
   return { from: n.from, to: n.to };

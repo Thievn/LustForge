@@ -30,9 +30,9 @@ export default function PlansView() {
           </p>
         </div>
 
-        <article className="rounded-[1.4rem] border border-border bg-card/80 p-4">
-          <h2 className="font-gothic text-xl text-foreground">Free</h2>
-          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+        <article className="rounded-2xl border border-[rgba(42,32,48,0.1)] bg-[#EADFD6] p-7 text-[#2A2030]">
+          <h2 className="text-xl font-semibold">Free</h2>
+          <ul className="mt-2 space-y-1 text-sm text-[#665670]">
             <li>{FREE_TIER.companions} companion</li>
             <li>{FREE_TIER.textsPerDay} texts a day</li>
             <li>Pictures stay blurred</li>
@@ -43,13 +43,14 @@ export default function PlansView() {
           <article
             key={plan.id}
             className={cn(
-              "rounded-[1.4rem] border bg-card/90 p-4",
-              limits.plan === plan.id ? "border-primary shadow-[0_18px_44px_hsl(var(--primary)/0.16)]" : "border-border",
+              "rounded-2xl border bg-[#EADFD6] p-7 text-[#2A2030]",
+              plan.id === "blaze" ? "border-2 border-[#D4AF37] shadow-[0_12px_40px_rgba(212,175,55,0.15)]" : "border-[rgba(42,32,48,0.1)]",
+              limits.plan === plan.id && "ring-2 ring-[#D6336C]",
             )}
           >
-            <p className="text-[11px] uppercase tracking-[0.2em] text-primary">{plan.name}</p>
-            <p className="mt-1 font-gothic text-4xl text-foreground">{plan.price}</p>
-            <ul className="mt-3 space-y-1.5 text-sm text-foreground/90">
+            <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#665670]">{plan.name}</p>
+            <p className="mt-1 text-4xl font-semibold">{plan.price}</p>
+            <ul className="mt-3 space-y-1.5 text-[15px]">
               {[plan.companions, plan.texts, plan.pictures, ...plan.extras].map((line) => (
                 <li key={line} className="flex gap-2">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -57,7 +58,7 @@ export default function PlansView() {
                 </li>
               ))}
             </ul>
-            <button type="button" disabled className="mt-4 w-full rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground">
+            <button type="button" disabled className="mt-4 h-12 w-full rounded-[14px] border border-[rgba(42,32,48,0.28)] px-3 text-sm font-semibold text-[#2A2030] disabled:opacity-70">
               Checkout is not enabled
             </button>
           </article>
@@ -65,10 +66,10 @@ export default function PlansView() {
 
         <h2 className="font-gothic text-xl text-foreground">Credit packs</h2>
         {CREDIT_PACKS.map((pack) => (
-          <article key={pack.id} className="rounded-[1.4rem] border border-border bg-card/80 p-4">
+          <article key={pack.id} className="rounded-2xl border border-white/[0.08] bg-card p-6 text-center">
             <div className="flex items-baseline justify-between">
               <p className="font-semibold text-foreground">{pack.name}</p>
-              <p className="font-gothic text-2xl text-foreground">{pack.price}</p>
+              <p className="text-2xl font-semibold text-foreground">{pack.price}</p>
             </div>
             <p className="text-sm text-muted-foreground">{pack.credits} credits · {pack.note}</p>
             <button type="button" disabled className="mt-3 w-full rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground">

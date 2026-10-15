@@ -37,6 +37,7 @@ const PILL: Record<VaultCategory, string> = {
   pose: "Poses",
   hair: "Hair",
   mood: "Mood",
+  vibration: "Vibrations",
 };
 
 const EMPTY_TIERS: Record<VaultRarity, number> = { silk: 53, satin: 27, velvet: 13, forbidden: 5, obsession: 2 };
@@ -144,7 +145,7 @@ export default function VelvetVault() {
   }, [load]);
 
   const owned = items.filter((item) => item.owned).length;
-  const total = items.length || 150;
+  const total = items.length || 162;
   const remaining = items.length - owned;
   const all = items.length > 0 && owned === items.length;
   const visible = useMemo(
@@ -175,8 +176,8 @@ export default function VelvetVault() {
   const selected = selectedId ? items.find((item) => item.id === selectedId) ?? null : null;
   const progress = items.length ? (owned / items.length) * 100 : 0;
   const pityLeft = Math.max(0, PITY_EVERY - pity);
-  const crackLabel = cost <= 0 ? "On the house" : `${cost} credits`;
-  const bundleLabel = bundleCost <= 0 ? "On the house" : `${bundleSize} for ${bundleCost}`;
+  const unveilCost = cost <= 0 ? "On the house" : `${cost} credits`;
+  const bundlePrice = bundleCost <= 0 ? `x${bundleSize} on the house` : `x${bundleSize} for ${bundleCost}`;
 
   async function open(kind: "crack" | "bundle") {
     if (preview) {
@@ -220,7 +221,10 @@ export default function VelvetVault() {
       await load();
       return;
     }
-    setItems((current) => current.map((item) => (won.some((next) => next.id === item.id) ? { ...item, ...next, owned: true, percent: 0 } : item)));
+    setItems((current) => current.map((item) => {
+      const hit = won.find((next) => next.id === item.id);
+      return hit ? { ...item, ...hit, owned: true, percent: 0 } : item;
+    }));
     setSelectedId(null);
     setQueue(won);
     void load();
@@ -228,18 +232,23 @@ export default function VelvetVault() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1176px] flex-col gap-3 px-4 pb-24 pt-3 lg:px-6 lg:pb-8 lg:pt-5">
-      <section className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <h1 className="font-gothic text-[15px] leading-none tracking-wide text-foreground">Vault</h1>
-          <p className="truncate text-[11px] text-muted-foreground">{crackLabel}</p>
+    <div className="mx-auto flex w-full max-w-[1176px] flex-col gap-5 px-4 pb-36 pt-6 lg:px-8 lg:pb-12 lg:pt-8">
+      <section className="rounded-2xl border border-white/[0.08] bg-card px-5 py-5">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-[30px] font-semibold leading-tight text-foreground">Velvet Vault</h1>
+            <p className="mt-1 text-[15px] text-[#B8A9BC]">Collect Treasures to dress and delight your companions.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="truncate text-[11px] text-muted-foreground">{unveilCost} · {bundlePrice}</p>
           <button
             type="button"
             disabled={Boolean(busy) || all || remaining < bundleSize || (!server && !preview)}
             onClick={() => void open("bundle")}
             className="shrink-0 text-[11px] text-foreground/80 underline-offset-2 hover:text-primary disabled:opacity-40"
           >
-            {busy === "bundle" ? "Opening" : bundleLabel}
+            {busy === "bundle" ? "Unveiling" : `Unveil x${bundleSize}`}
           </button>
           <span className="min-w-2 flex-1" />
           <p className="shrink-0 text-[11px] tabular-nums text-foreground/80" aria-label={`${owned} of ${total} collected`}>{loaded ? `${owned}/${total}` : "—"}</p>
@@ -247,9 +256,9 @@ export default function VelvetVault() {
             type="button"
             disabled={Boolean(busy) || all || (!server && !preview)}
             onClick={() => void open("crack")}
-            className="h-8 shrink-0 rounded-full bg-primary px-3.5 text-xs font-medium text-primary-foreground disabled:opacity-40"
+            className="h-12 shrink-0 rounded-[14px] bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-40"
           >
-            {all ? "Collected" : busy === "crack" ? "Cracking" : "Crack"}
+            {all ? "Collected" : busy === "crack" ? "Unveiling" : "Unveil a Treasure"}
           </button>
         </div>
         <div className="mt-1.5 h-px overflow-hidden rounded-full bg-white/10" aria-hidden>
@@ -286,7 +295,7 @@ export default function VelvetVault() {
           </span>
           <span className="mt-1 flex justify-between text-[9px] tabular-nums">
             {RARITY_ORDER.map((rarity) => (
-              <span key={rarity} style={{ color: RARITY_TONE[rarity].border }}>{formatPct(tiers[rarity])}</span>
+              <span key={rarity} style={{ color: RARITY_TONE[rarity].caption }}>{formatPct(tiers[rarity])}</span>
             ))}
           </span>
 
@@ -296,7 +305,7 @@ export default function VelvetVault() {
               <div key={rarity} className="flex items-center justify-between gap-3 text-[11px]">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: RARITY_TONE[rarity].border }} />
-                  <span style={{ color: RARITY_TONE[rarity].border }}>{RARITY_TONE[rarity].label}</span>
+                  <span style={{ color: RARITY_TONE[rarity].caption }}>{RARITY_TONE[rarity].label}</span>
                 </span>
                 <span className="tabular-nums text-muted-foreground">
                   {formatPct(tiers[rarity])}
@@ -306,8 +315,7 @@ export default function VelvetVault() {
             ))}
             <div className="pt-1">
               <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                <span>Pity · Velvet or better</span>
-                <span className="tabular-nums">{pityLeft} left</span>
+                <span>{pityLeft} {pityLeft === 1 ? "unveil" : "unveils"} until a Velvet or better</span>
               </div>
               <div className="mt-1 h-px overflow-hidden rounded-full bg-white/10">
                 <div className="h-full bg-[#9f1239]" style={{ width: `${Math.min(100, (pity / PITY_EVERY) * 100)}%` }} />
@@ -335,7 +343,7 @@ export default function VelvetVault() {
       <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <FilterChip active={rarityFilter === "all"} onClick={() => setRarityFilter("all")}>Any</FilterChip>
         {RARITY_ORDER.map((rarity) => (
-          <FilterChip key={rarity} active={rarityFilter === rarity} tone={RARITY_TONE[rarity].border} onClick={() => setRarityFilter(rarity)}>
+          <FilterChip key={rarity} active={rarityFilter === rarity} tone={RARITY_TONE[rarity].caption} onClick={() => setRarityFilter(rarity)}>
             {RARITY_TONE[rarity].label}
           </FilterChip>
         ))}
@@ -416,8 +424,8 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       className={cn(
-        "h-6 shrink-0 rounded-full px-2.5 text-[11px]",
-        active ? "bg-white/10 text-foreground" : "text-muted-foreground",
+        "h-11 shrink-0 rounded-full border px-4 text-sm font-medium",
+        active ? "border-[#D6336C] bg-[#D6336C] text-white" : "border-white/[0.08] bg-[#2F2839] text-[#B8A9BC]",
       )}
     >
       {children}

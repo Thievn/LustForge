@@ -4,8 +4,13 @@ import { nextVaultArtSrc, resolveVaultArt, vaultFrostClass, vaultImageUrl, vault
 
 describe("vault card art", () => {
   it("derives the public card and thumb from the treasure id", () => {
-    expect(TREASURES).toHaveLength(150);
+    expect(TREASURES).toHaveLength(162);
     for (const item of TREASURES) {
+      if (item.id.startsWith("vib-")) {
+        expect(vaultImageUrl(item.id)).toBe(`/vault-art/${item.id}.webp`);
+        expect(vaultThumbUrl(item.id)).toBe(`/vault-art/thumbs/${item.id}.webp`);
+        continue;
+      }
       expect(vaultImageUrl(item.id)).toBe(
         `https://tyaplrrlirlbqrfjqryo.supabase.co/storage/v1/object/public/vault-art/${item.id}.webp`,
       );
@@ -36,9 +41,9 @@ describe("vault card art", () => {
   });
 
   it("keeps locked frost light enough to read the garment", () => {
-    expect(vaultFrostClass("card")).toContain("blur-[3.5px]");
-    expect(vaultFrostClass("card")).toContain("brightness-[0.55]");
-    expect(vaultFrostClass("sheet")).toContain("blur-[2px]");
+    expect(vaultFrostClass("card")).toContain("blur-[2px]");
+    expect(vaultFrostClass("card")).toContain("brightness-[1.02]");
+    expect(vaultFrostClass("sheet")).toContain("blur-[1.5px]");
     expect(vaultFrostClass("sheet")).not.toContain("blur-[10px]");
   });
 });

@@ -98,7 +98,7 @@ export const ImageViewer = ({
             {/* Image stage: centered, full width, no “stuck to the right” */}
             <div className="relative flex min-h-[min(52vh,420px)] flex-1 flex-col bg-black sm:min-h-[min(58vh,520px)]">
               <div
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,45,123,0.08)_0%,transparent_55%)]"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(214,51,108,0.08)_0%,transparent_55%)]"
                 aria-hidden
               />
               <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 py-10 sm:px-6 sm:py-12">

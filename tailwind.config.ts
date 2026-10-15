@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        gothic: ['"Cinzel Decorative"', 'cursive'],
-        sans: ['Inter', 'sans-serif'],
+        gothic: ["Inter", "system-ui", "sans-serif"],
+        wordmark: ['"Cinzel Decorative"', "serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

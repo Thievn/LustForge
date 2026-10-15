@@ -66,7 +66,7 @@ export default function CompanionCard({ companion, index, imageOverride, gallery
           ) : null}
           <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
           {isCommunity && (
-            <span className="absolute top-2 left-2 z-[3] text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-black/60 border border-[#FF2D7B]/40 text-[#FF2D7B]">
+            <span className="absolute top-2 left-2 z-[3] text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-black/60 border border-[#D6336C]/40 text-[#D6336C]">
               Forged
             </span>
           )}

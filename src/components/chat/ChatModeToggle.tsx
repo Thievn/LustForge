@@ -41,7 +41,7 @@ export function ChatModeToggle({ mode, onChange, disabled, className }: Props) {
         className={cn(
           "rounded-[10px] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors min-h-[36px] touch-manipulation",
           mode === "live_voice"
-            ? "bg-[#00ffd4]/90 text-black shadow-sm"
+            ? "bg-[#E0457B]/90 text-black shadow-sm"
             : "text-muted-foreground hover:text-foreground",
         )}
       >

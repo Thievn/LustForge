@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Hammer, Orbit, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const NEON_PINK = "#FF2D7B";
+const NEON_PINK = "#D6336C";
 const NEON_TEAL = "hsl(170 100% 50%)";
 
 type Props = {
@@ -25,7 +25,7 @@ function ActionIconBadge({
       className={cn(
         "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 transition-transform duration-300 group-hover:scale-105",
         isForge
-          ? "bg-white/15 ring-white/25 shadow-[0_0_22px_rgba(255,45,123,0.45)]"
+          ? "bg-white/15 ring-white/25 shadow-[0_0_22px_rgba(214,51,108,0.45)]"
           : "bg-teal-400/10 ring-teal-300/30 shadow-[0_0_22px_rgba(0,255,200,0.25)]",
       )}
     >
@@ -58,7 +58,7 @@ export function DashboardHeroActions({ onCreate, onOpenNexus, className }: Props
           whileHover={{ scale: 1.015, y: -2 }}
           whileTap={{ scale: 0.985 }}
           onClick={onCreate}
-          className="group relative overflow-hidden rounded-2xl p-[1px] text-left shadow-[0_12px_40px_rgba(255,45,123,0.22)] transition-shadow hover:shadow-[0_16px_48px_rgba(255,45,123,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group relative overflow-hidden rounded-2xl p-[1px] text-left shadow-[0_12px_40px_rgba(214,51,108,0.22)] transition-shadow hover:shadow-[0_16px_48px_rgba(214,51,108,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           style={{
             background: `linear-gradient(135deg, ${NEON_PINK}, hsl(280 55% 42%), hsl(330 90% 48%))`,
           }}

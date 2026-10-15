@@ -30,7 +30,7 @@ import {
 import { useProfileWallet, invalidateProfileWallet } from "@/hooks/useProfileWallet";
 import { applyWalletBalanceFromServer } from "@/lib/profileWalletSync";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 
 function statusTone(status: FcOrderRow["payment_status"]) {
   if (status === "completed") return "text-emerald-300 border-emerald-400/30 bg-emerald-500/10";
@@ -197,22 +197,22 @@ export default function BuyCredits() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-foreground relative overflow-hidden">
+    <div className="min-h-screen bg-[#1B1620] text-foreground relative overflow-hidden">
       <ParticleBackground />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#FF2D7B]/[0.08] via-transparent to-[#0a1620]/90" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#D6336C]/[0.08] via-transparent to-[#0a1620]/90" />
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-8 md:py-10 pb-mobile-nav space-y-6">
         <div className="flex items-center justify-between">
           <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white">
             <ArrowLeft className="h-4 w-4" />
             Back to dashboard
           </Link>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#FF2D7B]/35 bg-[#FF2D7B]/10 px-4 py-1.5 text-sm">
-            <Coins className="h-4 w-4 text-[#FF2D7B]" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#D6336C]/35 bg-[#D6336C]/10 px-4 py-1.5 text-sm">
+            <Coins className="h-4 w-4 text-[#D6336C]" />
             <span className="font-semibold tabular-nums">{balance.toLocaleString()} FC</span>
           </div>
         </div>
 
-        <section className="rounded-3xl border border-white/10 bg-black/45 backdrop-blur-xl p-6 md:p-8 shadow-[0_0_80px_rgba(255,45,123,0.15)]">
+        <section className="rounded-3xl border border-white/10 bg-black/45 backdrop-blur-xl p-6 md:p-8 shadow-[0_0_80px_rgba(214,51,108,0.15)]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.32em] text-muted-foreground">Forge Coin Store</p>
@@ -227,13 +227,13 @@ export default function BuyCredits() {
                   type="button"
                   className={cn(
                     "shrink-0 inline-flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all touch-manipulation",
-                    "border-[#FF2D7B]/55 bg-[#FF2D7B]/18 text-[#ffc8e0] shadow-[0_0_18px_rgba(255,45,123,0.45),0_0_36px_rgba(255,45,123,0.2),inset_0_1px_0_rgba(255,255,255,0.12)]",
-                    "hover:border-[#FF2D7B]/80 hover:bg-[#FF2D7B]/28 hover:text-white hover:shadow-[0_0_22px_rgba(255,45,123,0.55),0_0_48px_rgba(255,45,123,0.28)]",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF2D7B]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050508]",
+                    "border-[#D6336C]/55 bg-[#D6336C]/18 text-[#ffc8e0] shadow-[0_0_18px_rgba(214,51,108,0.45),0_0_36px_rgba(214,51,108,0.2),inset_0_1px_0_rgba(255,255,255,0.12)]",
+                    "hover:border-[#D6336C]/80 hover:bg-[#D6336C]/28 hover:text-white hover:shadow-[0_0_22px_rgba(214,51,108,0.55),0_0_48px_rgba(214,51,108,0.28)]",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D6336C]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B1620]",
                   )}
                   aria-label="Forge Coin pricing and perks"
                 >
-                  <Info className="h-5 w-5 drop-shadow-[0_0_6px_rgba(255,45,123,0.9)]" strokeWidth={2.25} />
+                  <Info className="h-5 w-5 drop-shadow-[0_0_6px_rgba(214,51,108,0.9)]" strokeWidth={2.25} />
                 </button>
               </PopoverTrigger>
               <PopoverContent
@@ -249,7 +249,7 @@ export default function BuyCredits() {
                   <p className="font-gothic text-lg tracking-wide text-white uppercase">What FC covers</p>
                   <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
                     Classic chat with companions in <strong className="text-white/90">your collection</strong> stays{" "}
-                    <strong className="text-[#FF2D7B]">free</strong> — text replies and toy patterns triggered from compatible
+                    <strong className="text-[#D6336C]">free</strong> — text replies and toy patterns triggered from compatible
                     messages keep working even at <strong className="text-white/90">0 FC</strong>. Top up for live modes,
                     visuals, and forge.
                   </p>
@@ -304,7 +304,7 @@ export default function BuyCredits() {
                     className={cn(
                       "text-left rounded-2xl border p-4 transition-all",
                       selected
-                        ? "border-[#FF2D7B]/50 bg-[#FF2D7B]/12 shadow-[0_0_36px_rgba(255,45,123,0.2)]"
+                        ? "border-[#D6336C]/50 bg-[#D6336C]/12 shadow-[0_0_36px_rgba(214,51,108,0.2)]"
                         : "border-white/10 bg-black/30 hover:border-white/25",
                     )}
                   >
@@ -324,7 +324,7 @@ export default function BuyCredits() {
                       ) : null}
                     </div>
                     {pack.name ? (
-                      <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-[#FF2D7B]/90">{pack.name}</p>
+                      <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-[#D6336C]/90">{pack.name}</p>
                     ) : null}
                     <p className="mt-1 text-sm text-white/90">{pack.fc.toLocaleString()} FC</p>
                     <p className="mt-1 text-xs text-muted-foreground leading-snug">
@@ -354,7 +354,7 @@ export default function BuyCredits() {
                   }}
                   className={cn(
                     "rounded-xl border px-3 py-2 text-sm flex items-center justify-center gap-2",
-                    paymentMethod === "card" ? "border-[#FF2D7B]/50 bg-[#FF2D7B]/12" : "border-white/10 bg-black/30",
+                    paymentMethod === "card" ? "border-[#D6336C]/50 bg-[#D6336C]/12" : "border-white/10 bg-black/30",
                   )}
                 >
                   <CreditCard className="h-4 w-4" />
@@ -368,7 +368,7 @@ export default function BuyCredits() {
                   }}
                   className={cn(
                     "rounded-xl border px-3 py-2 text-sm flex items-center justify-center gap-2",
-                    paymentMethod === "crypto" ? "border-[#FF2D7B]/50 bg-[#FF2D7B]/12" : "border-white/10 bg-black/30",
+                    paymentMethod === "crypto" ? "border-[#D6336C]/50 bg-[#D6336C]/12" : "border-white/10 bg-black/30",
                   )}
                 >
                   <Wallet className="h-4 w-4" />

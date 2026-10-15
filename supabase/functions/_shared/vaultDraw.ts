@@ -19,7 +19,7 @@ export const TIER_ODDS: Record<VaultRarity, number> = {
   obsession: 2,
 };
 
-/** A crack that lands on one of these clears the pity counter. */
+/** An unveil that lands on one of these clears the pity counter. */
 export const PITY_RARITIES: VaultRarity[] = ["velvet", "forbidden", "obsession"];
 export const PITY_EVERY = 15;
 
@@ -92,7 +92,7 @@ export function nextPity(cracksSinceVelvet: number, rarity: VaultRarity): number
   return Math.max(0, Math.floor(cracksSinceVelvet)) + 1;
 }
 
-/** On the 15th crack since a Velvet-or-better pull, the pool is only those tiers. */
+/** On the 15th unveil since a Velvet-or-better pull, the pool is only those tiers. */
 export function poolForPity<T extends { rarity: VaultRarity }>(
   items: T[],
   cracksSinceVelvet: number,

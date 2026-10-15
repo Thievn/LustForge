@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, AlertOctagon, Flame, Heart, Images } from "lucide-react";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Link } from "react-router-dom";
 import { normalizeCompanionRarity } from "@/lib/companionRarity";
 import type { Companion } from "@/data/companions";
@@ -88,8 +87,6 @@ export function ChatPremiumHeader({
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <ThemeToggle className="h-9 w-9" />
-
           <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/40">
             {companionImageUrl ? (
               <img src={companionImageUrl} alt="" className="h-full w-full object-cover object-top" width={36} height={36} />
@@ -270,7 +267,7 @@ export function ChatPremiumHeader({
                   className={cn(
                     "h-4 w-4 sm:h-5 sm:w-5",
                     filled
-                      ? "fill-primary text-primary drop-shadow-[0_0_10px_rgba(255,45,123,0.45)]"
+                      ? "fill-primary text-primary drop-shadow-[0_0_10px_rgba(214,51,108,0.45)]"
                       : "text-white/15",
                   )}
                   strokeWidth={filled ? 0 : 1.5}
@@ -297,7 +294,7 @@ export function ChatPremiumHeader({
           title="Bond"
         >
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary/90 to-fuchsia-500/95 shadow-[0_0_12px_rgba(255,45,123,0.35)]"
+            className="h-full rounded-full bg-gradient-to-r from-primary/90 to-fuchsia-500/95 shadow-[0_0_12px_rgba(214,51,108,0.35)]"
             initial={false}
             animate={{ width: `${pct}%` }}
             transition={{ type: "spring", stiffness: 120, damping: 22 }}

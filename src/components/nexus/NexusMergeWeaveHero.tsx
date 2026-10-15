@@ -4,7 +4,7 @@ import type { DbCompanion } from "@/hooks/useCompanions";
 import { galleryStaticPortraitUrl } from "@/lib/companionMedia";
 import { cn } from "@/lib/utils";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 
 function OrbitGlyph({ className, style }: { className?: string; style?: CSSProperties }) {
   return (
@@ -62,7 +62,7 @@ function MergeAnchor({ who, side }: { who: DbCompanion; side: "alpha" | "omega" 
     >
       <div
         className={cn(
-          "relative aspect-[3/4] w-full overflow-hidden rounded-2xl ring-2 ring-offset-[3px] ring-offset-[#030208] sm:rounded-3xl sm:ring-[3px] sm:ring-offset-4",
+          "relative aspect-[3/4] w-full overflow-hidden rounded-2xl ring-2 ring-offset-[3px] ring-offset-[#1B1620] sm:rounded-3xl sm:ring-[3px] sm:ring-offset-4",
           ring,
         )}
       >

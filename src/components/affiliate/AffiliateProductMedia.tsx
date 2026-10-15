@@ -102,7 +102,7 @@ export function AffiliateProductMedia({
               className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-50 saturate-125"
             />
             <div
-              className="absolute inset-0 bg-gradient-to-b from-[#050508]/40 via-[#050508]/20 to-[#050508]/55"
+              className="absolute inset-0 bg-gradient-to-b from-[#1B1620]/40 via-[#1B1620]/20 to-[#1B1620]/55"
               aria-hidden
             />
             <img
@@ -135,7 +135,7 @@ export function AffiliateProductMedia({
       )}
 
       {badge ? (
-        <span className="absolute left-3 top-3 z-[2] rounded-full border border-[#FF2D7B]/40 bg-[#050508]/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#FF2D7B] backdrop-blur-sm">
+        <span className="absolute left-3 top-3 z-[2] rounded-full border border-[#D6336C]/40 bg-[#1B1620]/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#D6336C] backdrop-blur-sm">
           {badge}
         </span>
       ) : null}

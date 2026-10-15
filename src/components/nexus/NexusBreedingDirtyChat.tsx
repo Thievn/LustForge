@@ -272,7 +272,7 @@ export function NexusBreedingDirtyChat({
             className={cn(
               "truncate text-[11px] font-semibold",
               isRitual && "text-fuchsia-200/90",
-              !isRitual && !isMergeWeave && "text-[#FF2D7B]",
+              !isRitual && !isMergeWeave && "text-[#D6336C]",
               isMergeWeave && "text-cyan-100/90",
             )}
           >

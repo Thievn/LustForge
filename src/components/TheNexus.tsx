@@ -75,7 +75,7 @@ function parseMergeStatsNexus(raw: Record<string, unknown> | null | undefined): 
   };
 }
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 const NEXUS_PENDING_MERGE_KEY = "lustforge:nexus:pending-merge";
 const NEXUS_LAST_REVEAL_KEY = "lustforge:nexus:last-reveal";
 const NEXUS_AWAITING_REVEAL_KEY = "lustforge:nexus:awaiting-reveal";
@@ -179,7 +179,7 @@ function NexusCard({
       className={cn(
         "group relative rounded-2xl border overflow-visible text-left transition-all aspect-[2/3] w-full p-0 m-0.5 max-sm:m-0",
         orderMark === 1 &&
-          "border-primary ring-2 ring-primary/50 shadow-[0_0_32px_rgba(255,45,123,0.38)] z-[1] scale-[1.02]",
+          "border-primary ring-2 ring-primary/50 shadow-[0_0_32px_rgba(214,51,108,0.38)] z-[1] scale-[1.02]",
         orderMark === 2 &&
           "border-accent ring-2 ring-accent/45 shadow-[0_0_28px_rgba(45,212,191,0.22)] z-[1] scale-[1.02]",
         orderMark === 0 && "border-white/[0.08] hover:border-primary/35 hover:shadow-lg hover:shadow-black/40",
@@ -316,7 +316,7 @@ function NexusRevealPanel({
                 overlayUrl={companionUi.rarityBorderOverlayUrl}
                 aspectClassName="aspect-[2/3] w-full"
                 rarityFrameBleed
-                className="w-full shadow-[0_0_48px_rgba(255,45,123,0.22)]"
+                className="w-full shadow-[0_0_48px_rgba(214,51,108,0.22)]"
               >
                 <video
                   src={animUrl}
@@ -1230,7 +1230,7 @@ export default function TheNexus({
                   <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-white/10 bg-black/30 p-4 hover:border-primary/30 transition-colors">
                     <input
                       type="checkbox"
-                      className="mt-1 h-4 w-4 rounded border-border accent-[#FF2D7B]"
+                      className="mt-1 h-4 w-4 rounded border-border accent-[#D6336C]"
                       checked={infuse}
                       onChange={(e) => setInfuse(e.target.checked)}
                     />
@@ -1262,7 +1262,7 @@ export default function TheNexus({
                               name="favor"
                               checked={favorParent === v}
                               onChange={() => setFavorParent(v)}
-                              className="accent-[#FF2D7B]"
+                              className="accent-[#D6336C]"
                             />
                             <span>{label}</span>
                           </label>
@@ -1290,7 +1290,7 @@ export default function TheNexus({
                             name="variance-strength"
                             checked={varianceStrength === v}
                             onChange={() => setVarianceStrength(v)}
-                            className="accent-[#FF2D7B]"
+                            className="accent-[#D6336C]"
                           />
                           <span>{label}</span>
                         </label>
@@ -1314,7 +1314,7 @@ export default function TheNexus({
                       : `Awaken in The Nexus — ${totalCost} FC`}
                   </motion.button>
                   <AlertDialog open={mergeConfirmOpen} onOpenChange={setMergeConfirmOpen}>
-                    <AlertDialogContent className="border-white/10 bg-[#0a0812]/95 text-foreground shadow-[0_24px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:max-w-md">
+                    <AlertDialogContent className="border-white/10 bg-[#262030]/95 text-foreground shadow-[0_24px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:max-w-md">
                       <AlertDialogHeader>
                         <AlertDialogTitle className="font-gothic text-xl tracking-wide">
                           Confirm Nexus merge

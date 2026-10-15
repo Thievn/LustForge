@@ -395,7 +395,7 @@ export function CompanionGalleryGrid({
       {scrollShell}
 
       <AlertDialog open={Boolean(pendingDelete)} onOpenChange={(open) => !open && setPendingDelete(null)}>
-        <AlertDialogContent className="border-white/10 bg-[#0c0a10]">
+        <AlertDialogContent className="border-white/10 bg-[#262030]">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-gothic text-lg">Delete gallery item?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">{deleteWarning}</AlertDialogDescription>

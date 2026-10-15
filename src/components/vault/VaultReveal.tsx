@@ -49,7 +49,7 @@ export function VaultReveal({
         </div>
         <div className="vault-reveal-card relative w-[min(100%,200px)]">
           <VaultFrame rarity={rarity} owned>
-            <div className="relative aspect-[3/4] overflow-hidden bg-[#14090f]">
+            <div className="relative aspect-[3/4] overflow-hidden bg-[#3A3346]">
               {artFailed || !imageUrl ? (
                 <TreasureArt kind={kind} rarity={rarity} poseId={poseId} />
               ) : (
@@ -64,7 +64,7 @@ export function VaultReveal({
               ) : null}
             </div>
           </VaultFrame>
-          <p className="mt-2 text-center text-[10px] uppercase tracking-[0.16em]" style={{ color: tone.border }}>{tone.label}</p>
+          <p className="mt-2 text-center text-[10px] uppercase tracking-[0.16em]" style={{ color: tone.caption }}>{tone.label}</p>
           <h2 className="mt-0.5 text-center font-gothic text-lg leading-tight text-white">{name}</h2>
           <p className="mt-1 line-clamp-2 text-center text-[12px] leading-snug text-white/70">{line}</p>
           <button type="button" className="mt-3 h-8 w-full rounded-full bg-primary text-xs font-medium text-primary-foreground" onClick={onDone}>

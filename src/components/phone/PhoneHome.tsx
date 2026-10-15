@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { AppIconTile } from "@/components/phone/AppIcon";
 import { CompanionAvatar } from "@/components/phone/CompanionAvatar";
 import { HomeWallpaper } from "@/components/phone/HomeWallpaper";
@@ -84,7 +83,6 @@ export default function PhoneHome() {
           <h1 className="font-gothic text-3xl leading-none text-foreground">{hello}</h1>
           <p className="mt-1 text-sm text-white/80 drop-shadow-sm">{limits.displayName}</p>
         </div>
-        <ThemeToggle />
       </header>
 
       <div className="relative z-10 flex-1 space-y-5 overflow-y-auto px-4 pb-[max(6.5rem,env(safe-area-inset-bottom))]">

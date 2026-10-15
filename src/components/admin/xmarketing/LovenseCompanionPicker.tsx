@@ -32,7 +32,7 @@ function CompanionAvatar({ companion, size = "sm" }: { companion: DbCompanion; s
     <span
       className={cn(
         dim,
-        "shrink-0 rounded-full border border-white/10 bg-gradient-to-br from-[#FF2D7B]/30 to-purple-900/40 flex items-center justify-center text-[10px] font-bold text-white/70",
+        "shrink-0 rounded-full border border-white/10 bg-gradient-to-br from-[#D6336C]/30 to-purple-900/40 flex items-center justify-center text-[10px] font-bold text-white/70",
       )}
     >
       {companion.name.charAt(0).toUpperCase()}

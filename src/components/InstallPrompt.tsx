@@ -134,15 +134,15 @@ export default function InstallPrompt() {
           style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
           <div
-            className="pointer-events-auto w-full max-w-md rounded-t-3xl border border-[#FF2D7B]/40 bg-[#050508]/[0.97] px-4 pb-4 pt-3 shadow-[0_-8px_48px_rgba(255,45,123,0.35)] backdrop-blur-xl sm:rounded-3xl sm:border sm:shadow-[0_0_48px_rgba(255,45,123,0.28)]"
+            className="pointer-events-auto w-full max-w-md rounded-t-3xl border border-[#D6336C]/40 bg-[#1B1620]/[0.97] px-4 pb-4 pt-3 shadow-[0_-8px_48px_rgba(214,51,108,0.35)] backdrop-blur-xl sm:rounded-3xl sm:border sm:shadow-[0_0_48px_rgba(214,51,108,0.28)]"
             role="dialog"
             aria-labelledby="lf-install-title"
           >
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-white/20 sm:hidden" aria-hidden />
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF2D7B]/35 to-[#00E5C8]/25 border border-white/10">
-                  <Download className="h-5 w-5 text-[#FF2D7B]" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#D6336C]/35 to-[#00E5C8]/25 border border-white/10">
+                  <Download className="h-5 w-5 text-[#D6336C]" />
                 </div>
                 <div className="min-w-0">
                   <p id="lf-install-title" className="font-gothic text-base text-white tracking-wide">
@@ -166,7 +166,7 @@ export default function InstallPrompt() {
               <button
                 type="button"
                 onClick={() => void install()}
-                className="w-full rounded-xl py-3.5 text-sm font-bold text-white bg-gradient-to-r from-[#FF2D7B] via-[#7B2D8E] to-[#00b89a] shadow-lg shadow-[#FF2D7B]/25 active:scale-[0.98] transition-transform"
+                className="w-full rounded-xl py-3.5 text-sm font-bold text-white bg-gradient-to-r from-[#D6336C] via-[#7B2D8E] to-[#00b89a] shadow-lg shadow-[#D6336C]/25 active:scale-[0.98] transition-transform"
               >
                 Add to home screen
               </button>

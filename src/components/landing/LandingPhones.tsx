@@ -37,7 +37,7 @@ export function LandingPhone({
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[280px] overflow-hidden rounded-[1.8rem] border border-white/15 bg-[#120910] text-white shadow-[0_30px_80px_hsl(var(--primary)/0.22)]",
+        "relative mx-auto w-full max-w-[280px] overflow-hidden rounded-[1.8rem] border border-white/15 bg-[#3A3346] text-white shadow-[0_30px_80px_hsl(var(--primary)/0.22)]",
         float && "lf-float",
         className,
       )}
@@ -87,7 +87,7 @@ export function HomePhone() {
     <LandingPhone label="Phone home with Ivy's wallpaper and app icons">
       <div className="relative min-h-[540px] pb-4">
         <img src={IVY} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#120910]/75 to-[#120910]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-[#3A3346]/75 to-[#3A3346]" />
         <div className="relative px-4 pt-2">
           <p className="text-[9px] uppercase tracking-[0.22em] text-[#ff4d8d]">LustForge</p>
           <p className="font-gothic text-2xl">Good evening</p>
@@ -121,7 +121,7 @@ export function HomePhone() {
 export function ChatPhone() {
   return (
     <LandingPhone label="Chat thread with typing dots and a photo on the way">
-      <div className="flex h-[460px] flex-col bg-[#140910]">
+      <div className="flex h-[460px] flex-col bg-[#3A3346]">
         <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
           <img src={IVY} alt="" className="h-8 w-8 rounded-xl object-cover" />
           <div>
@@ -133,8 +133,8 @@ export function ChatPhone() {
           <p className="max-w-[85%] rounded-2xl rounded-bl-md border border-white/10 bg-white/10 px-3 py-2 text-[12px] leading-snug">
             Don't tell me you're still at that desk.
           </p>
-          <p className="ml-auto max-w-[80%] rounded-2xl rounded-br-md bg-[#ff2d7b] px-3 py-2 text-[12px] text-white">I left.</p>
-          <div className="max-w-[85%] rounded-2xl border border-dashed border-[#ff2d7b]/40 bg-[#ff2d7b]/10 p-2">
+          <p className="ml-auto max-w-[80%] rounded-2xl rounded-br-md bg-[#D6336C] px-3 py-2 text-[12px] text-white">I left.</p>
+          <div className="max-w-[85%] rounded-2xl border border-dashed border-[#D6336C]/40 bg-[#D6336C]/10 p-2">
             <div className="h-24 rounded-xl bg-[radial-gradient(circle_at_40%_30%,#ff4d8d,#4c1d95_70%)] opacity-80" />
             <p className="mt-1 text-center text-[10px] text-[#ff8ab3]">Ivy is sending a photo…</p>
           </div>
@@ -156,12 +156,12 @@ const STYLES = ["Photo", "Paint", "Ink", "Neon"];
 export function LabPhone() {
   return (
     <LandingPhone label="Lab create flow on style">
-      <div className="flex h-[460px] flex-col bg-[#140910] px-4 py-3">
+      <div className="flex h-[460px] flex-col bg-[#3A3346] px-4 py-3">
         <p className="text-[10px] uppercase tracking-[0.2em] text-[#ff8ab3]">Lab · step 4 of 5</p>
         <p className="mt-1 font-gothic text-2xl">How should she look?</p>
         <div className="mt-3 flex gap-1">
           {LAB_STEPS.map((step, index) => (
-            <span key={step} className={index <= 3 ? "h-1 flex-1 rounded-full bg-[#ff2d7b]" : "h-1 flex-1 rounded-full bg-white/15"} />
+            <span key={step} className={index <= 3 ? "h-1 flex-1 rounded-full bg-[#D6336C]" : "h-1 flex-1 rounded-full bg-white/15"} />
           ))}
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
@@ -170,7 +170,7 @@ export function LabPhone() {
               key={style}
               className={
                 style === "Neon"
-                  ? "rounded-2xl border border-[#ff2d7b] bg-[#ff2d7b]/15 px-3 py-4 text-sm"
+                  ? "rounded-2xl border border-[#D6336C] bg-[#D6336C]/15 px-3 py-4 text-sm"
                   : "rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-white/80"
               }
             >
@@ -179,7 +179,7 @@ export function LabPhone() {
             </div>
           ))}
         </div>
-        <p className="mt-auto rounded-2xl bg-[#ff2d7b] py-2.5 text-center text-sm font-semibold">Next: name her</p>
+        <p className="mt-auto rounded-2xl bg-[#D6336C] py-2.5 text-center text-sm font-semibold">Next: name her</p>
       </div>
     </LandingPhone>
   );
@@ -201,7 +201,7 @@ export function CallPhone() {
         </span>
         <div className="relative flex gap-3">
           <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs">Mute</span>
-          <span className="rounded-full bg-[#ff2d7b] px-4 py-2 text-xs font-semibold">End</span>
+          <span className="rounded-full bg-[#D6336C] px-4 py-2 text-xs font-semibold">End</span>
         </div>
       </div>
     </LandingPhone>
@@ -211,7 +211,7 @@ export function CallPhone() {
 export function GalleryPhone() {
   return (
     <LandingPhone label="Private gallery of saved pictures">
-      <div className="h-[460px] bg-[#140910] px-3 py-3">
+      <div className="h-[460px] bg-[#3A3346] px-3 py-3">
         <p className="font-gothic text-2xl">Gallery</p>
         <p className="text-[11px] text-white/70">Valeria · saved on your account</p>
         <div className="mt-3 grid grid-cols-4 gap-1.5">

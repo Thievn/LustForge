@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 const TEAL = "hsl(170 100% 42%)";
 
 /**

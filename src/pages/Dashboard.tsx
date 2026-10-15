@@ -25,7 +25,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getToys } from "@/lib/lovense";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import ParticleBackground from "@/components/ParticleBackground";
 import DiscoverCompanionsGallery from "@/components/DiscoverCompanionsGallery";
 import TheNexus from "@/components/TheNexus";
@@ -57,12 +56,12 @@ import {
 import { DashboardChatQuotaChip } from "@/components/dashboard/DashboardChatQuotaChip";
 import { DashboardHeroActions } from "@/components/dashboard/DashboardHeroActions";
 
-const NEON_PINK = "#FF2D7B";
+const NEON_PINK = "#D6336C";
 
 const DASHBOARD_STAT_DEFS = [
   { key: "companions", label: "Companions", accent: "text-primary" },
   { key: "hybrids", label: "Nexus-born", accent: "text-accent" },
-  { key: "toySyncs", label: "Toy syncs", accent: "text-[#FF2D7B]" },
+  { key: "toySyncs", label: "Toy syncs", accent: "text-[#D6336C]" },
   { key: "messages", label: "Messages", accent: "text-primary/80" },
 ] as const;
 
@@ -426,17 +425,14 @@ export default function Dashboard() {
         <aside className="hidden md:flex w-[260px] shrink-0 flex-col border-r border-border/80 bg-card/80 backdrop-blur-xl py-8 px-5">
           <div className="mb-10 w-full flex justify-center px-1">
             <div className="flex w-full max-w-[14rem] flex-col items-center gap-3 text-center">
-              <div className="flex w-full items-center justify-end">
-                <ThemeToggle />
-              </div>
               <Link to="/" className="group flex flex-col items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/35 rounded-xl px-2 py-1">
                 <Flame
-                  className="h-8 w-8 shrink-0 drop-shadow-[0_0_12px_rgba(255,45,123,0.5)] transition-transform group-hover:scale-[1.05]"
+                  className="h-8 w-8 shrink-0 drop-shadow-[0_0_12px_rgba(214,51,108,0.5)] transition-transform group-hover:scale-[1.05]"
                   style={{ color: NEON_PINK }}
                   aria-hidden
                 />
-                <span className="font-gothic text-xl font-bold leading-tight tracking-tight">
-                  <span className="gradient-vice-text">LustForge</span>
+                <span className="font-wordmark text-[21px] leading-none text-[#F4EEF2]">
+                  Lust<b className="text-[#F57AA3]">Forge</b>
                 </span>
               </Link>
               <div className="w-full border-t border-border/50 pt-3">
@@ -456,11 +452,11 @@ export default function Dashboard() {
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition-all border border-transparent",
                   activeNav === id && !settingsOpen
-                    ? "bg-primary/10 text-primary border-primary/25 shadow-[0_0_20px_rgba(255,45,123,0.12)]"
+                    ? "bg-primary/10 text-primary border-primary/25 shadow-[0_0_20px_rgba(214,51,108,0.12)]"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/5 hover:border-border/60",
                 )}
               >
-                <Icon className={cn("h-5 w-5 shrink-0", activeNav === id && !settingsOpen && "text-[#FF2D7B]")} />
+                <Icon className={cn("h-5 w-5 shrink-0", activeNav === id && !settingsOpen && "text-[#D6336C]")} />
                 {label}
               </button>
             ))}
@@ -654,7 +650,7 @@ export default function Dashboard() {
                             <Link
                               to="/settings#device-connection"
                               onClick={() => setProfileOpen(false)}
-                              className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-foreground hover:bg-[#00ffd4]/10 hover:text-[#00ffd4] transition-colors"
+                              className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-foreground hover:bg-[#E0457B]/10 hover:text-[#E0457B] transition-colors"
                             >
                               <Gamepad2 className="h-4 w-4" />
                               Connect Lovense
@@ -888,7 +884,7 @@ function ToggleRow({
       </span>
       <input
         type="checkbox"
-        className="mt-1 h-4 w-4 rounded border-border accent-[#FF2D7B]"
+        className="mt-1 h-4 w-4 rounded border-border accent-[#D6336C]"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
       />

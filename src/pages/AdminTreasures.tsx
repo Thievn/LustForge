@@ -69,7 +69,7 @@ export default function AdminTreasures() {
         bundle_size: Math.max(2, Math.min(10, bundleSize)),
       })
       .eq("id", 1);
-    setNotice(error ? error.message : `A crack is ${cost} credits.`);
+    setNotice(error ? error.message : `An unveil is ${cost} credits.`);
   }
 
   async function add() {
@@ -89,7 +89,7 @@ export default function AdminTreasures() {
       {notice ? <p className="mt-3 text-sm" role="status">{notice}</p> : null}
       <div className="mt-4 flex items-end gap-3">
         <label className="text-xs text-muted-foreground">
-          Credits per crack
+          Credits per unveil
           <input type="number" min={1} max={50} value={cost} onChange={(event) => setCost(Number(event.target.value))} className="mt-1 block h-11 w-28 rounded-xl border border-border bg-card px-3 text-sm text-foreground" />
         </label>
         <label className="text-xs text-muted-foreground">

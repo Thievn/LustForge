@@ -22,7 +22,7 @@ import { discoverCardPriceFc } from "@/lib/forgeEconomy";
 import { purchaseDiscoverCompanion } from "@/lib/forgeCoinsClient";
 import { DiscoverPurchaseConfirmDialog, tierGlowForDiscoverCard } from "@/components/discover/DiscoverPurchaseConfirmDialog";
 
-const NEON_PINK = "#FF2D7B";
+const NEON_PINK = "#D6336C";
 
 export type CommunityGalleryRow = Companion & {
   rarity: CompanionRarity;
@@ -202,7 +202,7 @@ export default function DiscoverCompanionsGallery() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-7xl space-y-8 overflow-x-hidden pb-8">
-      <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-black/40 backdrop-blur-2xl px-5 py-6 sm:px-8 sm:py-8 shadow-[0_0_60px_rgba(255,45,123,0.08),inset_0_1px_0_rgba(255,255,255,0.06)]">
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-black/40 backdrop-blur-2xl px-5 py-6 sm:px-8 sm:py-8 shadow-[0_0_60px_rgba(214,51,108,0.08),inset_0_1px_0_rgba(255,255,255,0.06)]">
         <div
           className="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full blur-[100px] opacity-50"
           style={{ background: `radial-gradient(circle, ${NEON_PINK}66, transparent 70%)` }}
@@ -232,7 +232,7 @@ export default function DiscoverCompanionsGallery() {
       {!hideWelcomeGiftStripe && (
       <div
         id="discover-free-common-cta"
-        className="relative overflow-hidden rounded-[1.5rem] border border-white/[0.1] bg-gradient-to-br from-fuchsia-950/45 via-black/55 to-cyan-950/25 px-5 py-5 sm:px-7 sm:py-6 shadow-[0_0_48px_rgba(255,45,123,0.14),inset_0_1px_0_rgba(255,255,255,0.06)]"
+        className="relative overflow-hidden rounded-[1.5rem] border border-white/[0.1] bg-gradient-to-br from-fuchsia-950/45 via-black/55 to-cyan-950/25 px-5 py-5 sm:px-7 sm:py-6 shadow-[0_0_48px_rgba(214,51,108,0.14),inset_0_1px_0_rgba(255,255,255,0.06)]"
       >
         <div
           className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full blur-[90px] opacity-60"
@@ -253,7 +253,7 @@ export default function DiscoverCompanionsGallery() {
               <button
                 type="button"
                 onClick={() => navigate("/auth", { state: { from: `${location.pathname}${location.search}` } })}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/50 bg-gradient-to-r from-primary via-fuchsia-600 to-primary px-5 py-3.5 text-sm font-bold text-primary-foreground shadow-[0_0_32px_rgba(255,45,123,0.35)] hover:brightness-110 transition-[filter] touch-manipulation"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/50 bg-gradient-to-r from-primary via-fuchsia-600 to-primary px-5 py-3.5 text-sm font-bold text-primary-foreground shadow-[0_0_32px_rgba(214,51,108,0.35)] hover:brightness-110 transition-[filter] touch-manipulation"
               >
                 <Gift className="h-4 w-4 shrink-0" aria-hidden />
                 Claim Free Common Card
@@ -296,7 +296,7 @@ export default function DiscoverCompanionsGallery() {
                     document.getElementById("discover-card-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
                   });
                 }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/50 bg-gradient-to-r from-primary via-fuchsia-600 to-primary px-5 py-3.5 text-sm font-bold text-primary-foreground shadow-[0_0_32px_rgba(255,45,123,0.35)] hover:brightness-110 transition-[filter] touch-manipulation"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/50 bg-gradient-to-r from-primary via-fuchsia-600 to-primary px-5 py-3.5 text-sm font-bold text-primary-foreground shadow-[0_0_32px_rgba(214,51,108,0.35)] hover:brightness-110 transition-[filter] touch-manipulation"
               >
                 <Gift className="h-4 w-4 shrink-0" aria-hidden />
                 Claim Free Common Card
@@ -483,7 +483,7 @@ export default function DiscoverCompanionsGallery() {
                 }}
               />
               <div className="relative max-w-md mx-auto space-y-4">
-                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-[0_0_30px_rgba(255,45,123,0.2)]">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-[0_0_30px_rgba(214,51,108,0.2)]">
                   <Sparkles className="h-7 w-7 text-primary" style={{ color: NEON_PINK }} />
                 </div>
                 <h3 className="font-gothic text-2xl sm:text-3xl gradient-vice-text">Nothing matched that hunger</h3>
@@ -543,7 +543,7 @@ export default function DiscoverCompanionsGallery() {
                     transition={{ delay: Math.min(i * 0.03, 0.35), type: "spring", stiffness: 300, damping: 30 }}
                     whileHover={{ y: -2, scale: 1.01 }}
                     className={cn(
-                      "relative text-left rounded-2xl border border-transparent bg-card/50 backdrop-blur-md overflow-visible group shadow-lg shadow-black/30 transition-all hover:shadow-[0_0_28px_rgba(255,45,123,0.15)] p-1.5 max-md:p-1",
+                      "relative text-left rounded-2xl border border-transparent bg-card/50 backdrop-blur-md overflow-visible group shadow-lg shadow-black/30 transition-all hover:shadow-[0_0_28px_rgba(214,51,108,0.15)] p-1.5 max-md:p-1",
                       acquired &&
                         "ring-1 ring-emerald-400/40 shadow-[0_0_40px_rgba(52,211,153,0.16),0_10px_30px_rgba(0,0,0,0.32)] hover:shadow-[0_0_36px_rgba(52,211,153,0.22)]",
                     )}

@@ -8,10 +8,11 @@ import { STORYLINES } from "@/lib/bond/storylines";
 describe("velvet vault", () => {
   it("seeds a full pool and never repeats an owned treasure", () => {
     assertTreasureCatalog();
-    expect(TREASURES.length).toBe(150);
+    expect(TREASURES.length).toBe(162);
     const counts = { silk: 0, satin: 0, velvet: 0, forbidden: 0, obsession: 0 };
     for (const item of TREASURES) counts[item.rarity] += 1;
-    expect(counts).toEqual({ silk: 63, satin: 43, velvet: 18, forbidden: 16, obsession: 10 });
+    expect(counts).toEqual({ silk: 68, satin: 46, velvet: 20, forbidden: 17, obsession: 11 });
+    expect(TREASURES.filter((item) => item.kind === "vibration")).toHaveLength(12);
     const full = tierOdds(TREASURES);
     expect(full.silk).toBeCloseTo(53, 5);
     expect(full.satin).toBeCloseTo(27, 5);
@@ -64,7 +65,7 @@ describe("velvet vault", () => {
     expect(bundle.every((item) => item.rarity !== "silk")).toBe(true);
   });
 
-  it("refunds a failed crack and phrases a neutral garment for her art style", () => {
+  it("refunds a failed unveil and phrases a neutral garment for her art style", () => {
     expect(settleVaultCharge({ admin: false, cost: 3, ok: false })).toEqual({ kept: 0, refunded: 3 });
     expect(settleVaultCharge({ admin: false, cost: 3, ok: true })).toEqual({ kept: 3, refunded: 0 });
     expect(settleVaultCharge({ admin: true, cost: 3, ok: true })).toEqual({ kept: 0, refunded: 0 });

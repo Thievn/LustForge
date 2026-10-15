@@ -15,7 +15,7 @@ export function VibeTraitProfilePanel({ traits, isNexus }: Props) {
   return (
     <section
       className={cn(
-        "rounded-[1.35rem] border p-5 sm:p-7 shadow-[0_0_40px_rgba(255,45,123,0.06)] ring-1 ring-white/[0.05] backdrop-blur-xl",
+        "rounded-[1.35rem] border p-5 sm:p-7 shadow-[0_0_40px_rgba(214,51,108,0.06)] ring-1 ring-white/[0.05] backdrop-blur-xl",
         isNexus
           ? "border-fuchsia-500/25 bg-gradient-to-br from-black/55 via-fuchsia-950/15 to-black/50"
           : "border-primary/20 bg-gradient-to-br from-black/50 via-[hsl(280_22%_8%)]/90 to-black/45",

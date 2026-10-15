@@ -86,7 +86,7 @@ export function LiveCallPhoneShell({
   onDeclineIncoming,
 }: Props) {
   const gFrom = companion.gradientFrom || "#7B2D8E";
-  const gTo = companion.gradientTo || "#FF2D7B";
+  const gTo = companion.gradientTo || "#D6336C";
   const ringing = phase === "ringing";
   const live = phase === "live";
   const [pickerOpen, setPickerOpen] = useState(false);

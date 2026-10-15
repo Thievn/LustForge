@@ -30,7 +30,7 @@ export function ChatGallerySheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[88vh] rounded-t-3xl border-t border-white/10 bg-[#050508]/98 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 overflow-y-auto"
+        className="max-h-[88vh] rounded-t-3xl border-t border-white/10 bg-[#1B1620]/98 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 overflow-y-auto"
       >
         <SheetHeader className="text-left pb-2 space-y-1">
           <SheetTitle className="font-gothic text-xl text-foreground">{companionName}&apos;s gallery</SheetTitle>

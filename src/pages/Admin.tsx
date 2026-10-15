@@ -70,7 +70,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { isPlatformAdmin, platformAdminEmailDisplay } from "@/config/auth";
 import { getEdgeFunctionInvokeMessage } from "@/lib/edgeFunction";
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 
 const adminQueryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60 * 1000 } },
@@ -803,7 +803,7 @@ function AdminShell() {
       />
 
       {/* Sidebar */}
-      <aside className="relative z-20 hidden min-h-0 w-[280px] shrink-0 flex-col border-r border-border/80 bg-black/55 backdrop-blur-xl lg:flex">
+      <aside className="relative z-20 hidden min-h-0 w-[280px] shrink-0 flex-col border-r border-white/[0.08] bg-[#1B1620] lg:flex">
         <div className="p-6 border-b border-border/60">
           <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-primary text-xs mb-4 transition-colors">
             <ChevronRight className="h-3 w-3 rotate-180" />
@@ -828,7 +828,7 @@ function AdminShell() {
               className={cn(
                 "w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition-all border",
                 section === id
-                  ? "border-primary/40 bg-primary/10 text-primary shadow-[0_0_24px_rgba(255,45,123,0.12)]"
+                  ? "border-primary/40 bg-primary/10 text-primary shadow-[0_0_24px_rgba(214,51,108,0.12)]"
                   : "border-transparent text-muted-foreground hover:bg-white/5 hover:text-foreground",
               )}
             >
@@ -912,7 +912,7 @@ function AdminShell() {
             />
           )}
           {section === "creator" && (
-            <div className="relative flex flex-col overflow-x-hidden rounded-[1.75rem] border border-white/[0.09] bg-[#050508] font-sans text-foreground shadow-[0_0_60px_rgba(255,45,123,0.12),inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <div className="relative flex flex-col overflow-x-hidden rounded-[1.75rem] border border-white/[0.09] bg-[#1B1620] font-sans text-foreground shadow-[0_0_60px_rgba(214,51,108,0.12),inset_0_1px_0_rgba(255,255,255,0.05)]">
               <ParticleBackground contain />
               <div
                 className="pointer-events-none absolute inset-0 z-[1]"
@@ -1331,7 +1331,7 @@ function OverviewSection({
             transition={{ delay: i * 0.04 }}
             className={cn(
               "rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 relative overflow-hidden",
-              c.glow && "shadow-[0_0_40px_rgba(255,45,123,0.06)]",
+              c.glow && "shadow-[0_0_40px_rgba(214,51,108,0.06)]",
             )}
           >
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">{c.label}</p>
@@ -2131,7 +2131,7 @@ function AnalyticsSection({
                 className={cn(
                   "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all",
                   range === r
-                    ? "bg-primary/25 text-primary shadow-[0_0_20px_rgba(255,45,123,0.2)]"
+                    ? "bg-primary/25 text-primary shadow-[0_0_20px_rgba(214,51,108,0.2)]"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -2158,7 +2158,7 @@ function AnalyticsSection({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05, type: "spring", stiffness: 320, damping: 28 }}
-            className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-card/60 via-black/40 to-[#120818]/90 p-5 backdrop-blur-md shadow-[0_0_40px_rgba(255,45,123,0.06)]"
+            className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-card/60 via-black/40 to-[#120818]/90 p-5 backdrop-blur-md shadow-[0_0_40px_rgba(214,51,108,0.06)]"
           >
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">{x.k}</p>
             <p className="font-gothic text-2xl md:text-3xl mt-2 text-accent break-words">{loading ? "…" : x.v}</p>
@@ -2282,7 +2282,7 @@ function AnalyticsSection({
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(280 20% 18%)" />
               <XAxis dataKey="name" stroke="hsl(240 5% 45%)" tick={{ fontSize: 10 }} />
               <YAxis stroke="hsl(240 5% 45%)" tick={{ fontSize: 10 }} width={40} />
-              <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: "rgba(255,45,123,0.06)" }} />
+              <Tooltip contentStyle={chartTooltipStyle} cursor={{ fill: "rgba(214,51,108,0.06)" }} />
               <Bar dataKey="value" radius={[10, 10, 0, 0]} animationDuration={900}>
                 {barFromTrend.map((_, i) => (
                   <Cell key={i} fill={ANALYTICS_BAR_COLORS[i % ANALYTICS_BAR_COLORS.length]} />

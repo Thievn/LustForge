@@ -4,10 +4,12 @@ import type { VaultRarity } from "../../../supabase/functions/_shared/vaultDraw"
 export const VAULT_ART_BASE = "https://tyaplrrlirlbqrfjqryo.supabase.co/storage/v1/object/public/vault-art";
 
 export function vaultImageUrl(id: string): string {
+  if (id.startsWith("vib-")) return `/vault-art/${id}.webp`;
   return `${VAULT_ART_BASE}/${id}.webp`;
 }
 
 export function vaultThumbUrl(id: string): string {
+  if (id.startsWith("vib-")) return `/vault-art/thumbs/${id}.webp`;
   return `${VAULT_ART_BASE}/thumbs/${id}.webp`;
 }
 
@@ -38,6 +40,8 @@ export function nextVaultArtSrc(src: string): string | null {
 export type RarityTone = {
   label: string;
   border: string;
+  /** Label ink on dark card captions and the vault page. Always ≥4.5:1 on #1B1620. */
+  caption: string;
   tint: string;
   /** Low-opacity color for the locked-card wash. Bottom edge only. */
   wash: string;
@@ -50,6 +54,7 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
   silk: {
     label: "Silk",
     border: "#f0c2d6",
+    caption: "#f0c2d6",
     tint: "rgba(240, 194, 214, 0.2)",
     wash: "rgba(240, 194, 214, 0.32)",
     glow: "rgba(240, 194, 214, 0.34)",
@@ -58,6 +63,7 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
   satin: {
     label: "Satin",
     border: "#a78bfa",
+    caption: "#c4b5fd",
     tint: "rgba(139, 92, 246, 0.2)",
     wash: "rgba(139, 92, 246, 0.3)",
     glow: "rgba(167, 139, 250, 0.42)",
@@ -65,15 +71,17 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
   },
   velvet: {
     label: "Velvet",
-    border: "#9f1239",
-    tint: "rgba(159, 18, 57, 0.22)",
-    wash: "rgba(159, 18, 57, 0.34)",
-    glow: "rgba(159, 18, 57, 0.5)",
-    light: "rgba(176, 36, 68, 0.52)",
+    border: "#C2255C",
+    caption: "#E192AE",
+    tint: "rgba(194, 37, 92, 0.22)",
+    wash: "rgba(255, 214, 224, 0.28)",
+    glow: "rgba(194, 37, 92, 0.45)",
+    light: "rgba(255, 214, 224, 0.5)",
   },
   forbidden: {
     label: "Forbidden",
     border: "#e0c072",
+    caption: "#e0c072",
     tint: "rgba(224, 192, 114, 0.18)",
     wash: "rgba(224, 192, 114, 0.28)",
     glow: "rgba(224, 192, 114, 0.46)",
@@ -82,6 +90,7 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
   obsession: {
     label: "Obsession",
     border: "#e7d4f2",
+    caption: "#e7d4f2",
     tint: "rgba(196, 170, 230, 0.2)",
     wash: "rgba(196, 170, 230, 0.3)",
     glow: "rgba(214, 186, 232, 0.5)",
@@ -89,11 +98,11 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
   },
 };
 
-/** Grid frost stays soft enough to read the garment. The sheet is a step clearer. */
+/** Light frost: the treasure stays readable, the lock says it is not yours yet. */
 export function vaultFrostClass(frost: "card" | "sheet" = "card"): string {
   return frost === "sheet"
-    ? "scale-[1.03] blur-[2px] brightness-[0.55]"
-    : "scale-[1.05] blur-[3.5px] brightness-[0.55]";
+    ? "scale-[1.02] blur-[1.5px] brightness-[1.04] saturate-[0.92]"
+    : "scale-[1.03] blur-[2px] brightness-[1.02] saturate-[0.9]";
 }
 
 export function rarityBreathes(rarity: VaultRarity, owned: boolean): boolean {

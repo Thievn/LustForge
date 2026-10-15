@@ -47,7 +47,7 @@ function fallbackFromAssets(): HeroCard[] {
       role: staticC?.role ?? "Catalog",
       img: url,
       rarity: getStaticRarityForCatalog(id),
-      gradientFrom: staticC?.gradientFrom ?? "#FF2D7B",
+      gradientFrom: staticC?.gradientFrom ?? "#D6336C",
       gradientTo: staticC?.gradientTo ?? "#00b89a",
       rarityBorderOverlayUrl: null,
     };
@@ -144,7 +144,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
 
       <div className="relative z-10 text-center max-w-3xl mx-auto w-full">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3 sm:mb-4">
-          <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-primary/35 bg-primary/[0.14] backdrop-blur-md text-primary text-[11px] sm:text-xs font-medium shadow-[0_0_24px_rgba(255,45,123,0.12)]">
+          <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-primary/35 bg-primary/[0.14] backdrop-blur-md text-primary text-[11px] sm:text-xs font-medium shadow-[0_0_24px_rgba(214,51,108,0.12)]">
             <Flame className="h-3 w-3 shrink-0" /> Strictly 18+ · AI-Powered Companions
           </span>
         </motion.div>
@@ -153,9 +153,9 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 280, damping: 22 }}
-          className="font-gothic text-3xl sm:text-5xl md:text-6xl font-bold mb-3 sm:mb-4 leading-tight px-1"
+          className="font-wordmark mb-3 px-1 text-4xl leading-tight text-[#F4EEF2] sm:mb-4 sm:text-6xl md:text-7xl"
         >
-          <span className="gradient-vice-text">LustForge</span>
+          Lust<b className="text-[#F57AA3]">Forge</b>
         </motion.h1>
 
         <motion.p
@@ -240,7 +240,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 360, damping: 20 }}
-            className="absolute top-1 sm:-top-4 -right-2 sm:-right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-primary/25 bg-black/35 backdrop-blur-md text-primary/90 hover:bg-primary/14 hover:border-primary/45 transition-colors touch-manipulation shadow-[0_0_14px_rgba(255,45,123,0.12)]"
+            className="absolute top-1 sm:-top-4 -right-2 sm:-right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-primary/25 bg-black/35 backdrop-blur-md text-primary/90 hover:bg-primary/14 hover:border-primary/45 transition-colors touch-manipulation shadow-[0_0_14px_rgba(214,51,108,0.12)]"
             aria-label="Shuffle companions"
           >
             <motion.span

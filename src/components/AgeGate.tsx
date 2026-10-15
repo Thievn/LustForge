@@ -1,10 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Flame } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
-
-const NEON = "#FF2D7B";
 
 interface AgeGateProps {
   onConfirm: () => void;
@@ -35,88 +31,53 @@ export default function AgeGate({ onConfirm }: AgeGateProps) {
   if (!showModal) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-sans antialiased"
-      style={{ WebkitFontSmoothing: "antialiased" }}
-    >
-      <div className="absolute inset-0 bg-[#020203] backdrop-blur-xl" aria-hidden />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-5 font-sans">
+      <div className="absolute inset-0 bg-[rgba(15,10,18,0.55)] backdrop-blur-[14px]" aria-hidden />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.32]"
-        style={{
-          backgroundImage: `radial-gradient(circle at 20% 30%, ${NEON}20 0%, transparent 45%),
-            radial-gradient(circle at 80% 70%, hsl(280 60% 40% / 0.18) 0%, transparent 40%),
-            radial-gradient(circle at 50% 100%, hsl(170 80% 35% / 0.1) 0%, transparent 50%)`,
-        }}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.35] bg-[radial-gradient(circle_at_1px_1px,rgba(255,45,123,0.05)_1px,transparent_1px)] [background-size:40px_40px]"
-        aria-hidden
-      />
-
-      <div
-        className={cn(
-          "relative w-full max-w-md overflow-hidden rounded-3xl border border-white/[0.12]",
-          "bg-black/75 p-8 text-center shadow-2xl md:p-10",
-          "isolate contain-layout",
-        )}
-        style={{ boxShadow: `0 0 64px ${NEON}12, inset 0 1px 0 rgba(255,255,255,0.07)` }}
+        className="relative w-full max-w-md rounded-[20px] border border-[rgba(42,32,48,0.1)] bg-[#EADFD6] p-8 text-center text-[#2A2030] shadow-[0_30px_80px_rgba(0,0,0,0.5)] md:p-10"
         role="dialog"
         aria-modal="true"
         aria-labelledby="age-gate-title"
         aria-describedby="age-gate-desc"
       >
-        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-[#FF2D7B]/25 to-[hsl(280_45%_25%)]/45 shadow-[0_0_28px_rgba(255,45,123,0.22)]">
-          <Flame className="h-7 w-7 text-white" style={{ filter: `drop-shadow(0 0 6px ${NEON})` }} aria-hidden />
-        </div>
-
-        <p className="mb-3 font-gothic text-[10px] uppercase tracking-[0.22em] text-[#FF2D7B]/95">
-          Restricted entry
+        <p className="font-wordmark text-[21px] text-[#2A2030]">
+          Lust<b className="text-[#D6336C]">Forge</b>
         </p>
-        <h1
-          id="age-gate-title"
-          className="mb-3 font-gothic text-4xl tabular-nums text-white md:text-5xl"
-          style={{ textShadow: `0 0 28px ${NEON}33` }}
-        >
+        <p className="mb-3 mt-6 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#665670]">Restricted entry</p>
+        <h1 id="age-gate-title" className="mb-3 text-5xl font-semibold tabular-nums text-[#2A2030]">
           18+
         </h1>
-        <p id="age-gate-desc" className="mx-auto mb-8 max-w-sm text-pretty text-sm leading-relaxed text-white/85">
+        <p id="age-gate-desc" className="mx-auto mb-8 max-w-sm text-pretty text-[15px] leading-relaxed text-[#665670]">
           This experience contains mature themes, AI companions, and optional intimate hardware integration. You must be{" "}
-          <span className="font-semibold text-white">18 or older</span> to continue. Every companion is a fictional consenting adult, 21 or older.
+          <span className="font-semibold text-[#2A2030]">18 or older</span> to continue. Every companion is a fictional consenting adult, 21 or older.
         </p>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             type="button"
             onClick={confirm}
-            className="min-h-[48px] flex-1 rounded-2xl px-6 py-3 text-sm font-semibold text-white transition-[filter,box-shadow] hover:brightness-110 active:brightness-95 sm:flex-none sm:min-w-[168px] touch-manipulation"
-            style={{
-              background: `linear-gradient(135deg, ${NEON}, hsl(280 48% 42%))`,
-              boxShadow: `0 0 28px ${NEON}35, inset 0 1px 0 rgba(255,255,255,0.18)`,
-            }}
+            className="min-h-12 flex-1 rounded-[14px] bg-[#D6336C] px-6 text-[15px] font-semibold text-white hover:bg-[#E0457B] sm:flex-none sm:min-w-[168px]"
           >
             Enter — I am 18+
           </button>
           <button
             type="button"
             onClick={handleDeny}
-            className="min-h-[48px] flex-1 rounded-2xl border border-white/30 bg-white/[0.08] px-6 py-3 text-sm font-medium text-white transition-colors hover:border-[hsl(170_80%_45%)]/45 hover:bg-[hsl(170_80%_45%)]/10 sm:flex-none sm:min-w-[168px] touch-manipulation"
+            className="min-h-12 flex-1 rounded-[14px] border border-[rgba(42,32,48,0.28)] bg-transparent px-6 text-[15px] font-medium text-[#2A2030] hover:bg-[rgba(42,32,48,0.06)] sm:flex-none sm:min-w-[168px]"
           >
             Leave — under 18
           </button>
         </div>
-
-        <p className="mt-8 text-[11px] leading-relaxed text-white/80">
+        <p className="mt-8 text-[12px] leading-relaxed text-[#665670]">
           By entering you acknowledge our{" "}
-          <Link to="/terms-of-service" className="text-[#FF2D7B] underline-offset-2 hover:underline">
+          <Link to="/terms-of-service" className="font-semibold text-[#2A2030] underline-offset-2 hover:underline">
             Terms
           </Link>
           ,{" "}
-          <Link to="/privacy-policy" className="text-[hsl(170_100%_42%)] underline-offset-2 hover:underline">
+          <Link to="/privacy-policy" className="font-semibold text-[#2A2030] underline-offset-2 hover:underline">
             Privacy
           </Link>
           , and{" "}
-          <Link to="/18-plus-disclaimer" className="text-[hsl(280_60%_65%)] underline-offset-2 hover:underline">
+          <Link to="/18-plus-disclaimer" className="font-semibold text-[#2A2030] underline-offset-2 hover:underline">
             18+ disclaimer
           </Link>
           .

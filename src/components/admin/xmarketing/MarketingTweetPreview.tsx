@@ -85,7 +85,7 @@ export function MarketingTweetPreview({
     <div className="rounded-2xl border overflow-hidden text-left shadow-xl bg-black border-[#2f3336]">
       <div className="px-4 pt-3 pb-2 flex gap-3">
         <div
-          className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-[#FF2D7B] to-[#5b21b6] flex items-center justify-center text-xs font-black text-white border border-white/10"
+          className="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-[#D6336C] to-[#5b21b6] flex items-center justify-center text-xs font-black text-white border border-white/10"
           aria-hidden
         >
           LF

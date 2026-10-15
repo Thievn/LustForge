@@ -105,9 +105,9 @@ export function ChatMediaRequestBar({
               onSelect={(e) => e.preventDefault()}
               onClick={() => onRequest("selfie_video")}
             >
-              <Video className="h-3.5 w-3.5 text-[#00ffd4]" />
+              <Video className="h-3.5 w-3.5 text-[#E0457B]" />
               Selfie video
-              <span className="ml-auto text-[10px] text-[#00ffd4]/80">{videoCostLabel}</span>
+              <span className="ml-auto text-[10px] text-[#E0457B]/80">{videoCostLabel}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -144,9 +144,9 @@ export function ChatMediaRequestBar({
               onSelect={(e) => e.preventDefault()}
               onClick={() => onRequest("lewd_video")}
             >
-              <Video className="h-3.5 w-3.5 text-[#00ffd4]" />
+              <Video className="h-3.5 w-3.5 text-[#E0457B]" />
               Lewd video
-              <span className="ml-auto text-[10px] text-[#00ffd4]/80">{videoCostLabel}</span>
+              <span className="ml-auto text-[10px] text-[#E0457B]/80">{videoCostLabel}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

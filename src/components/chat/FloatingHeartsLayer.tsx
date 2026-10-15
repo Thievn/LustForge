@@ -24,7 +24,7 @@ export function FloatingHeartsLayer({ bursts }: { bursts: Burst[] }) {
             }}
             exit={{ opacity: 0 }}
             transition={{ duration: 2.8, ease: [0.22, 0.9, 0.36, 1] }}
-            className="absolute bottom-8 flex select-none drop-shadow-[0_0_24px_rgba(255,45,123,0.5)]"
+            className="absolute bottom-8 flex select-none drop-shadow-[0_0_24px_rgba(214,51,108,0.5)]"
             style={{ left: b.x }}
           >
             <Heart

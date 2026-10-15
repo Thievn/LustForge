@@ -13,7 +13,7 @@ export function AbyssalProfileParticles() {
         delay: (i % 12) * 0.12,
         duration: 4 + (i % 5) * 0.9,
         size: 1 + (i % 3),
-        hue: i % 2 === 0 ? "rgba(255,45,123," : "rgba(0,255,212,",
+        hue: i % 2 === 0 ? "rgba(214,51,108," : "rgba(0,255,212,",
       })),
     [],
   );
