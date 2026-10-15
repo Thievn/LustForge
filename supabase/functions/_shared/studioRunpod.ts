@@ -1,4 +1,5 @@
 import { bytesFromImageUrl } from "./storageArchive.ts";
+import { runpodReadResult } from "./studioJobOutcome.ts";
 
 function endpoint() {
   return Deno.env.get("RUNPOD_ENDPOINT_ID")?.trim() || "knag1yvb1tlqk3";
@@ -45,8 +46,7 @@ export async function readRunpod(jobId: string): Promise<{ status: string; outpu
     headers: { Authorization: `Bearer ${key}` },
   });
   const body = (await res.json().catch(() => null)) as { status?: string; output?: unknown; error?: string } | null;
-  if (!res.ok) throw new Error(body?.error || `Runpod status failed (${res.status})`);
-  return { status: body?.status ?? "IN_QUEUE", output: body?.output, error: body?.error };
+  return runpodReadResult(res.status, body);
 }
 
 function pickImagePayload(output: unknown): string | null {

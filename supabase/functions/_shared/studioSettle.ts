@@ -1,4 +1,5 @@
 import { refundOne } from "./studioBilling.ts";
+import { isRunpodMissingMessage, STUDIO_JOB_FAILED_LINE, studioJobExpired } from "./studioJobOutcome.ts";
 import { sendStudioPush } from "./studioPush.ts";
 import { bytesFromRunpodOutput, readRunpod } from "./studioRunpod.ts";
 import { isSourceTag } from "./studioSafety.ts";
@@ -83,7 +84,22 @@ export async function settleStudioJob(
     return jobView(job, { subjectUrl, status: TERMINAL_FAIL.has(String(job.status)) ? String(job.status) : String(job.status || "FAILED") });
   }
 
-  const remoteStatus = remote ?? await readRunpod(String(job.runpod_id));
+  if (!remote && studioJobExpired(job.created_at)) {
+    console.error(`studio job ${id} marked failed: open longer than 30 minutes`);
+    return failAndRefund(svc, job, "FAILED", STUDIO_JOB_FAILED_LINE);
+  }
+
+  let remoteStatus = remote;
+  if (!remoteStatus) {
+    try {
+      remoteStatus = await readRunpod(String(job.runpod_id));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!isRunpodMissingMessage(message)) throw err;
+      console.error(`studio job ${id} marked failed: runpod 404`);
+      return failAndRefund(svc, job, "FAILED", STUDIO_JOB_FAILED_LINE);
+    }
+  }
   if (remoteStatus.status === "COMPLETED") {
     try {
       const bytes = await bytesFromRunpodOutput(remoteStatus.output);
@@ -138,22 +154,26 @@ export async function settleStudioJob(
   }
 
   if (remoteStatus.status === "FAILED" || remoteStatus.status === "CANCELLED" || remoteStatus.status === "TIMED_OUT") {
-    if (!job.refunded) await refundOne(svc, String(job.user_id), String(job.charge_mode ?? ""));
-    const error = remoteStatus.error || remoteStatus.status;
-    await svc.from("studio_jobs").update({
-      status: remoteStatus.status,
-      error,
-      refunded: true,
-      updated_at: new Date().toISOString(),
-    }).eq("id", id);
-    const subjectUrl = await presentUrl(svc, job.subject_url);
-    return jobView(job, { status: remoteStatus.status, error, subjectUrl });
+    return failAndRefund(svc, job, remoteStatus.status, remoteStatus.error || remoteStatus.status);
   }
 
   const status = remoteStatus.status === "IN_PROGRESS" ? "IN_PROGRESS" : "IN_QUEUE";
   await svc.from("studio_jobs").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
   const subjectUrl = await presentUrl(svc, job.subject_url);
   return jobView(job, { status, subjectUrl });
+}
+
+async function failAndRefund(svc: Svc, job: Record<string, unknown>, status: string, error: string): Promise<SettledJob> {
+  const id = String(job.id);
+  if (!job.refunded) await refundOne(svc, String(job.user_id), String(job.charge_mode ?? ""));
+  await svc.from("studio_jobs").update({
+    status,
+    error: error.slice(0, 300),
+    refunded: true,
+    updated_at: new Date().toISOString(),
+  }).eq("id", id);
+  const subjectUrl = await presentUrl(svc, job.subject_url);
+  return jobView(job, { status, error, subjectUrl });
 }
 
 export async function listUserStudioJobs(svc: Svc, userId: string): Promise<SettledJob[]> {
@@ -166,7 +186,13 @@ export async function listUserStudioJobs(svc: Svc, userId: string): Promise<Sett
   if (error) throw new Error(error.message);
   const jobs: SettledJob[] = [];
   for (const job of data ?? []) {
-    jobs.push(await settleStudioJob(svc, job as Record<string, unknown>));
+    try {
+      jobs.push(await settleStudioJob(svc, job as Record<string, unknown>));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`studio status skipped ${String((job as Record<string, unknown>).id)}: ${message}`);
+      jobs.push(jobView(job as Record<string, unknown>));
+    }
   }
   return jobs;
 }
@@ -181,8 +207,13 @@ export async function sweepOpenStudioJobs(svc: Svc, limit = 12): Promise<number>
   if (error) throw new Error(error.message);
   let n = 0;
   for (const job of data ?? []) {
-    await settleStudioJob(svc, job as Record<string, unknown>);
-    n += 1;
+    try {
+      await settleStudioJob(svc, job as Record<string, unknown>);
+      n += 1;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`studio sweep skipped ${String((job as Record<string, unknown>).id)}: ${message}`);
+    }
   }
   return n;
 }
