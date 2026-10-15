@@ -8,7 +8,6 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from 
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
 import { cn } from "@/lib/utils";
 import { FlameMark } from "@/components/landing/FlameMark";
-import { LandingAccountLink } from "@/components/landing/LandingCta";
 import { scrollToLandingId, trackLandingCta } from "@/lib/landingScroll";
 
 const ghostNavPill =
@@ -136,20 +135,19 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                   <button type="button" onClick={() => scrollToLandingId("faq")} className="hidden text-sm text-[#B8A9BC] transition-colors hover:text-[#F4EEF2] lg:inline-flex lg:min-h-10 lg:items-center">
                     Questions
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => joinList("nav")}
-                    className="inline-flex min-h-10 items-center text-sm text-[#B8A9BC] transition-colors hover:text-[#F4EEF2]"
-                  >
-                    Join the waitlist
-                  </button>
                   <Link
                     to="/auth"
                     className="inline-flex min-h-10 items-center py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Sign in
                   </Link>
-                  <LandingAccountLink location="nav_account" className="w-auto" />
+                  <button
+                    type="button"
+                    onClick={() => joinList("nav")}
+                    className="lf-gloss-btn inline-flex min-h-10 items-center rounded-xl px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    Join the waitlist
+                  </button>
                 </>
               ) : (
                 <>
@@ -184,7 +182,7 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
             <SheetContent side="right" overlayClassName="z-[70] bg-black/60" className={sheetPanelClass}>
               <SheetTitle className="sr-only">Main menu</SheetTitle>
               <SheetDescription className="sr-only">
-                {user ? "Dashboard, account, preferences, and log out." : "Create a free account, sign in, or join the waitlist."}
+                {user ? "Dashboard, account, preferences, and log out." : "Sign in if you already have a key, or join the waitlist."}
               </SheetDescription>
               <div
                 className="shrink-0 border-b border-border bg-background px-5 pb-4 pr-16"
@@ -240,7 +238,6 @@ const Navbar = ({ variant = "default" }: { variant?: "default" | "landing" }) =>
                         </button>
                       </>
                     ) : null}
-                    <LandingAccountLink location="nav_mobile_account" onClick={close} className="w-full sm:w-full" />
                     <Link to="/auth" onClick={close} className={sheetLinkClass}>
                       <LogIn className="h-5 w-5 shrink-0 text-primary" />
                       Sign in

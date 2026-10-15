@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,12 +43,9 @@ type SignInFormData = z.infer<typeof signInSchema>;
 
 export default function Auth() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const publicSignup = isPublicSignUpEnabled();
   const signUpOffered = isSignUpOfferedInAuthUi();
-  const [mode, setMode] = useState<"signIn" | "signUp">(
-    searchParams.get("mode") === "signup" ? "signUp" : "signIn",
-  );
+  const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);

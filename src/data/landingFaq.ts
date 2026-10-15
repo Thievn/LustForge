@@ -21,7 +21,7 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
     id: "access",
     question: "How do I get in?",
     answer:
-      "Make your free account and meet her. Join the waitlist with your email if you want a note when what's coming soon is ready.",
+      "Join the waitlist to get your beta key. Your key unlocks your free account. Sign in is for people who already have a key.",
   },
   {
     id: "voice",

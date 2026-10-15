@@ -37,12 +37,12 @@ export default function WaitlistSection() {
 
       if (res.status === "duplicate") {
         toast.success("That email is already on the list.", {
-          description: "We'll email you when you can sign up.",
+          description: "We'll email you when your beta key is ready.",
           duration: 5000,
         });
       } else {
         toast.success("You're on the list.", {
-          description: "We'll email you when you can sign up.",
+          description: "We'll email you when your beta key is ready.",
           duration: 5000,
         });
       }
@@ -68,31 +68,27 @@ export default function WaitlistSection() {
   };
 
   return (
-    <section className="relative px-4 py-16 sm:py-20" aria-labelledby="come-in-heading">
+    <section id="waitlist" className="relative scroll-mt-28 px-4 py-16 sm:py-20" aria-labelledby="waitlist-heading">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#e0287f]/10 to-transparent" aria-hidden />
-      <div className="relative z-10 mx-auto max-w-xl space-y-5">
+      <div className="relative z-10 mx-auto max-w-xl">
         <div className="rounded-[1.75rem] border border-[#f1c45e]/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(27,22,32,0.4))] px-6 py-10 text-center shadow-[0_24px_60px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.16)] md:px-12">
-          <h2 id="come-in-heading" className="mb-4 font-gothic text-2xl font-bold text-[#F4EEF2] md:text-3xl">
-            Come <span className="lf-gradient-text">meet her</span>
-          </h2>
-          <LandingActions location="close" />
-        </div>
-        <div id="waitlist" className="scroll-mt-28 rounded-[1.75rem] border border-[#f1c45e]/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(27,22,32,0.4))] px-6 py-10 text-center shadow-[0_24px_60px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.16)] md:px-12">
           <Mail className="mx-auto mb-4 h-8 w-8 text-[#ff8ac4]" />
 
-          <h2 className="mb-2 font-gothic text-2xl font-bold text-[#F4EEF2] md:text-3xl">
+          <h2 id="waitlist-heading" className="mb-4 font-gothic text-2xl font-bold text-[#F4EEF2] md:text-3xl">
             Join the <span className="lf-gradient-text">waitlist</span>
           </h2>
 
-          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-            Adults 18+ only. Leave your email for what&apos;s coming soon.
+          <LandingActions location="close" showButton={false} />
+
+          <p className="mb-6 mt-4 text-sm leading-relaxed text-muted-foreground">
+            Adults 18+ only. Leave your email.
           </p>
 
           {isSuccess ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle className="h-12 w-12 text-primary" />
               <p className="font-gothic text-2xl text-foreground">You&apos;re on the list.</p>
-              <p className="text-sm text-muted-foreground">We saved your email. We&apos;ll write when you can come in.</p>
+              <p className="text-sm text-muted-foreground">We saved your email. We&apos;ll send your beta key when it&apos;s ready.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
