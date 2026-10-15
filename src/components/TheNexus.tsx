@@ -795,7 +795,7 @@ export default function TheNexus({
         return;
       }
 
-      toast.info("Resuming your Nexus ascendant — loop video still rendering.", { duration: 6000 });
+      toast.info("Resuming your Nexus ascendant — her loop is still coming together.", { duration: 6000 });
       startLoopVideoPoll(record.childId, token);
     };
 

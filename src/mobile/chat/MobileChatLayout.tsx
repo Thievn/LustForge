@@ -520,6 +520,7 @@ export function MobileChatLayout(props: UseChatSessionControllerReturn) {
           open={galleryOpen}
           onOpenChange={setGalleryOpen}
           companionName={companion.name}
+          companionId={companion.id}
           images={galleryImages}
           loading={galleryImagesLoading}
           currentPortraitUrl={portraitStillUrl}

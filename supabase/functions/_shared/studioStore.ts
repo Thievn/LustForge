@@ -1,6 +1,7 @@
 import { storageUri, parseStorageRef } from "./storageArchive.ts";
 import {
   type SourceTag,
+  appStorageSource,
   cameraExifReason,
   isSourceTag,
   parseDataUrl,
@@ -48,6 +49,24 @@ async function downloadStorage(svc: Svc, bucket: string, path: string): Promise<
   return { bytes, contentType };
 }
 
+async function rowHit(query: Promise<{ data: unknown; error: { message: string } | null }>): Promise<boolean> {
+  try {
+    const { data, error } = await query;
+    if (error) return false;
+    if (Array.isArray(data)) return data.length > 0;
+    return Boolean(data && typeof data === "object" && "id" in (data as Record<string, unknown>)
+      ? (data as { id?: unknown }).id
+      : data);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * App-made pictures (gallery, chat stills, portraits, Lab output) are lab or character.
+ * Only a file that never passed through those tables, and is not in the app's own
+ * storage prefixes, stays an outside upload.
+ */
 async function classifyPath(
   svc: Svc,
   userId: string,
@@ -65,14 +84,41 @@ async function classifyPath(
     .maybeSingle();
   if (isSourceTag(asset.data?.source_tag)) return asset.data.source_tag;
 
-  const generated = await svc
-    .from("generated_images")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("storage_path", path)
-    .limit(1)
-    .maybeSingle();
-  if (generated.data?.id) return "lab";
+  const like = `%${path}%`;
+  const ownedLab = await rowHit(
+    svc.from("generated_images").select("id").eq("user_id", userId).eq("storage_path", path).limit(1),
+  );
+  if (ownedLab) return "lab";
+  if (await rowHit(svc.from("generated_images").select("id").eq("user_id", userId).ilike("image_url", like).limit(1))) {
+    return "lab";
+  }
+  if (await rowHit(svc.from("lf_media").select("id").eq("user_id", userId).eq("storage_path", path).limit(1))) {
+    return "lab";
+  }
+  if (await rowHit(svc.from("chat_messages").select("id").eq("user_id", userId).ilike("image_url", like).limit(1))) {
+    return "lab";
+  }
+  if (await rowHit(svc.from("studio_jobs").select("id").eq("user_id", userId).ilike("image_url", like).limit(1))) {
+    return "lab";
+  }
+  if (await rowHit(svc.from("companion_portraits").select("id").eq("user_id", userId).ilike("image_url", like).limit(1))) {
+    return "character";
+  }
+  if (
+    await rowHit(
+      svc.from("user_companion_portrait_overrides").select("user_id").eq("user_id", userId).ilike("portrait_url", like).limit(1),
+    ) ||
+    await rowHit(
+      svc
+        .from("user_companion_portrait_overrides")
+        .select("user_id")
+        .eq("user_id", userId)
+        .ilike("animated_portrait_url", like)
+        .limit(1),
+    )
+  ) {
+    return "character";
+  }
 
   let characters = svc.from("custom_characters").select("id, image_url, static_image_url, avatar_url").eq("user_id", userId);
   if (catalogOwner) characters = svc.from("custom_characters").select("id, image_url, static_image_url, avatar_url");
@@ -82,7 +128,14 @@ async function classifyPath(
     const urls = [row.image_url, row.static_image_url, row.avatar_url].map((item: unknown) => String(item ?? ""));
     if (urls.some((url) => url.includes(needle))) return "character";
   }
-  return "upload";
+
+  if (catalogOwner) {
+    if (await rowHit(svc.from("generated_images").select("id").eq("storage_path", path).limit(1))) return "lab";
+    if (await rowHit(svc.from("generated_images").select("id").ilike("image_url", like).limit(1))) return "lab";
+    if (await rowHit(svc.from("companion_portraits").select("id").ilike("image_url", like).limit(1))) return "character";
+  }
+
+  return appStorageSource(bucket, path, userId) ?? "upload";
 }
 
 export async function resolveImage(
@@ -199,6 +252,7 @@ export async function saveStudioImage(
     prompt: input.prompt.slice(0, 2000),
     original_prompt: input.prompt.slice(0, 500),
     saved_to_personal_gallery: true,
+    saved_to_companion_gallery: Boolean(input.companionId && input.companionId !== "studio"),
     is_video: false,
     storage_bucket: "lf-chat-media",
     storage_path: path,

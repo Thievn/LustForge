@@ -46,7 +46,7 @@ export async function syncProfileLoopVideoToProfile(
     } catch {
       return {
         synced: false,
-        message: "Loop is still rendering — keep this page open or tap Generate loop video.",
+        message: "Her loop is still coming together — keep this page open, or tap Generate loop video.",
       };
     }
   }

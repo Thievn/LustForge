@@ -33,6 +33,8 @@ export function resolveStackedEdit(body: Record<string, unknown>): {
     parts.push(`Repose the person from image 1 so their whole body matches the stick-figure pose skeleton in ${ref}.${named} Keep the same face, hair, and outfit.`);
   }
   if (hasMask) parts.push("Change only the white painted region. Leave everything else identical.");
+  const treasureNote = String(body.treasureNote ?? "").trim().slice(0, 900);
+  if (treasureNote) parts.push(treasureNote);
   if (userText && (requested !== "background" || backgroundText)) parts.push(userText);
 
   const tool = hasMask
@@ -77,11 +79,12 @@ export function stackedEditReady(input: {
   mask: boolean;
   includeFix: boolean;
   background: boolean;
+  treasureCount?: number;
 }): { ok: boolean; error: string | null } {
-  if (!input.hasImage) return { ok: false, error: "Upload a photo or open one from the gallery." };
+  if (!input.hasImage) return { ok: false, error: "Open one of her pictures, or bring a picture in." };
   if (input.outfitCount > 3) return { ok: false, error: "An outfit swap takes at most 3 reference pictures." };
   const hasChange = Boolean(
-    input.instruction.trim() || input.outfitCount || input.poseId || input.mask || input.includeFix || input.background,
+    input.instruction.trim() || input.outfitCount || input.poseId || input.mask || input.includeFix || input.background || (input.treasureCount ?? 0) > 0,
   );
   if (!hasChange) return { ok: false, error: "Set a typed edit, an outfit, a pose, or a mask, then apply once." };
   return { ok: true, error: null };

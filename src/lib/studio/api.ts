@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { messageFromFunctionsInvoke } from "@/lib/supabaseFunctionsError";
+import { studioMood, studioTookTooLong } from "@/lib/studio/copy";
 
 export type StudioJob = {
   id: string;
@@ -11,6 +12,10 @@ export type StudioJob = {
   tag?: string;
   source?: "lab" | "character" | "upload";
   error?: string;
+  kind?: string;
+  companionId?: string | null;
+  subjectUrl?: string | null;
+  createdAt?: string;
 };
 
 export class StudioError extends Error {
@@ -32,7 +37,7 @@ async function invoke(name: string, body: Record<string, unknown>) {
 }
 
 export function studioEnhance(prompt: string, mode: "create" | "edit") {
-  return invoke("studio-generate", { action: "enhance", prompt, mode }) as Promise<{ prompt?: string }>;
+  return invoke("studio-generate", { action: "enhance", prompt, mode }) as Promise<{ prompt?: string; refused?: boolean; notice?: string }>;
 }
 
 export function studioGenerate(body: Record<string, unknown>) {
@@ -47,6 +52,11 @@ export function studioImport(body: Record<string, unknown>) {
   return invoke("studio-import", body) as Promise<{ assetId?: string; imageUrl?: string; tag?: string; source?: "character" }>;
 }
 
+export async function listStudioJobs(): Promise<StudioJob[]> {
+  const data = (await invoke("studio-status", { action: "mine" })) as { jobs?: StudioJob[] };
+  return data.jobs ?? [];
+}
+
 export async function pollStudioJobs(ids: string[], onStatus?: (label: string) => void): Promise<StudioJob[]> {
   const pending = new Set(ids);
   const done = new Map<string, StudioJob>();
@@ -54,18 +64,40 @@ export async function pollStudioJobs(ids: string[], onStatus?: (label: string) =
   while (pending.size && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 2500));
     const data = (await invoke("studio-status", { jobIds: [...pending] })) as { jobs?: StudioJob[] };
-    let label = "working";
+    let label = studioMood("IN_PROGRESS");
     for (const job of data.jobs ?? []) {
       if (job.status === "COMPLETED" || job.status === "FAILED" || job.status === "CANCELLED" || job.status === "TIMED_OUT") {
         pending.delete(job.id);
         done.set(job.id, job);
-      } else if (job.status === "IN_QUEUE") label = "queued, GPU waking";
-      else label = "working";
+      } else label = studioMood(job.status);
     }
     onStatus?.(pending.size ? label : "done");
   }
-  if (pending.size) throw new StudioError("The GPU took too long. Try again in a moment.");
-  return ids.map((id) => done.get(id) ?? { id, status: "FAILED", error: "Missing result" });
+  if (pending.size) throw new StudioError(studioTookTooLong());
+  return ids.map((id) => done.get(id) ?? { id, status: "FAILED", error: "She couldn't bring that picture back." });
+}
+
+const PENDING_KEY = "lf-studio-pending";
+
+export function rememberStudioPending(ids: string[]) {
+  const current = readStudioPending();
+  for (const id of ids) current.add(id);
+  localStorage.setItem(PENDING_KEY, JSON.stringify([...current]));
+}
+
+export function readStudioPending(): Set<string> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PENDING_KEY) || "[]") as unknown;
+    return new Set(Array.isArray(raw) ? raw.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function forgetStudioPending(ids: string[]) {
+  const current = readStudioPending();
+  for (const id of ids) current.delete(id);
+  localStorage.setItem(PENDING_KEY, JSON.stringify([...current]));
 }
 
 export function readFileAsJpeg(file: File, max = 1280): Promise<string> {

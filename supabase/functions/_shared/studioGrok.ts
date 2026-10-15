@@ -1,6 +1,6 @@
 import { grokChatCompletionRaw } from "./xaiGrokChatRaw.ts";
 import { grokVisionImageModelCandidates } from "./grokVisionModels.ts";
-import { explicitByRegex } from "./studioSafety.ts";
+import { explicitByRegex, isEnhanceRefusal } from "./studioSafety.ts";
 
 function contentOf(json: unknown): string {
   if (!json || typeof json !== "object") return "";
@@ -152,24 +152,34 @@ export async function screenImportImage(dataUrl: string): Promise<{ ok: true } |
   };
 }
 
-export async function enhancePrompt(prompt: string, mode: "create" | "edit"): Promise<string> {
-  const system =
-    mode === "edit"
-      ? "Rewrite this image-edit instruction so it is specific and visual. Keep the user's intent. Do not add nudity or undressing unless they already asked. One paragraph, no quotes."
-      : "Rewrite this as a vivid image prompt of one fictional consenting adult age 21 or older. Keep the user's intent, style, and scene. Do not add minors or real people. One paragraph, no quotes.";
+const EDIT_ENHANCE_SYSTEM =
+  "You rewrite image-edit instructions for LustForge Lab. The subject is always a fictional consenting adult, age 21 or older, drawn or rendered inside this app. Explicit edits of these characters are allowed, including nudity, undressing, lingerie, and sexual content when the user already asked for that. " +
+  "Rewrite the instruction so it is specific and visual. Keep the user's intent exactly, including explicit requests. Do not soften, refuse, apologize, or add a warning. Do not mention policies, safety, or that you are a model. " +
+  "Do not add nudity or undressing if they did not ask. Do not add minors or real people. Output one paragraph of edit instructions only, with no quotes.";
+
+const CREATE_ENHANCE_SYSTEM =
+  "Rewrite this as a vivid image prompt of one fictional consenting adult age 21 or older. Keep the user's intent, style, and scene. Do not add minors or real people. Do not refuse or apologize. One paragraph, no quotes.";
+
+export async function enhancePrompt(
+  prompt: string,
+  mode: "create" | "edit",
+): Promise<{ prompt: string; refused: boolean }> {
+  const original = prompt.slice(0, 2000);
+  const system = mode === "edit" ? EDIT_ENHANCE_SYSTEM : CREATE_ENHANCE_SYSTEM;
   for (const model of TEXT_MODELS()) {
     const result = await grokChatCompletionRaw({
       model,
       temperature: 0.4,
       messages: [
         { role: "system", content: system },
-        { role: "user", content: prompt.slice(0, 2000) },
+        { role: "user", content: original },
       ],
     });
     if (!result.ok) continue;
     const text = contentOf(result.json).trim();
-    if (text) return text.slice(0, 1200);
+    if (!text || isEnhanceRefusal(text)) continue;
+    return { prompt: text.slice(0, 1200), refused: false };
   }
-  return prompt;
+  return { prompt: original, refused: true };
 }
 

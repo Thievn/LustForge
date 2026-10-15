@@ -309,7 +309,7 @@ async function runProfileLoopPoll(
           : loadProfileLoopJobId(resolvedCompanionId);
       if (jobId && resolvedCompanionId) saveProfileLoopJobId(resolvedCompanionId, jobId);
       throw new Error(
-        "Profile loop video is still rendering after 45 minutes — reopen this profile to resume.",
+        "Her loop is still coming together. Reopen this profile and it will pick up where it left off.",
       );
     }
 

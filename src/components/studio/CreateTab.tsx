@@ -105,7 +105,11 @@ export function CreateTab() {
     setNotice(null);
     try {
       const next = await studioEnhance([scene.text, pose?.hint, prompt].filter(Boolean).join(", "), "create");
-      if (next.prompt) setPrompt(next.prompt);
+      if (next.refused || !next.prompt) {
+        setNotice(next.notice || "She kept your words. The polish sat this one out.");
+        return;
+      }
+      setPrompt(next.prompt);
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "Enhance failed");
     } finally {
@@ -118,7 +122,7 @@ export function CreateTab() {
       setNotice("Preview only. Sign in to generate.");
       return;
     }
-    setBusy("Starting the GPU…");
+    setBusy("Getting her ready…");
     setNotice(null);
     try {
       const style = CREATOR_STYLES.find((item) => item.id === styleId) ?? CREATOR_STYLES[0];
@@ -155,16 +159,16 @@ export function CreateTab() {
         height: sized.height,
       });
       const ids = (started.jobs ?? []).map((job) => job.id);
-      if (!ids.length) throw new StudioError("No job was started");
-      setBusy("Queued, GPU waking…");
-      const finished = await pollStudioJobs(ids, (label) => setBusy(label === "done" ? "Saving…" : label));
+      if (!ids.length) throw new StudioError("She couldn't start that picture.");
+      setBusy("Setting the mood…");
+      const finished = await pollStudioJobs(ids, (label) => setBusy(label === "done" ? "Tucking it away…" : label));
       const ok = finished.filter((job): job is Result => job.status === "COMPLETED" && Boolean(job.imageUrl));
       const failed = finished.find((job) => job.error);
-      if (!ok.length) throw new StudioError(failed?.error || "Nothing came back");
+      if (!ok.length) throw new StudioError(failed?.error || "She couldn't bring that picture back.");
       setResults(ok);
       if (failed?.error) setNotice(failed.error);
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Generate failed");
+      setNotice(err instanceof Error ? err.message : "That picture didn't come through.");
     } finally {
       setBusy("");
     }

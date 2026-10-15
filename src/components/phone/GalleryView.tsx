@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneEmpty, PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { StudioEditWand } from "@/components/studio/EditWand";
+import { PictureComing } from "@/components/studio/PictureComing";
+import { sameCompanion, useStudioJobs } from "@/lib/studio/jobs";
 import { displayableMediaUrl, parseStorageRef } from "@/lib/phone/storageUrl";
 
 type Source = "lab" | "character" | "upload";
@@ -29,6 +31,9 @@ export default function GalleryView() {
   const [loading, setLoading] = useState(!preview);
   const [active, setActive] = useState<Tile | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const studio = useStudioJobs();
+  const [params] = useSearchParams();
+  const focus = params.get("picture");
   const q = preview ? "?preview=1" : "";
 
   useEffect(() => {
@@ -104,7 +109,7 @@ export default function GalleryView() {
         await push(`cc-${row.id}`, still, `cc-${row.id}`, row.created_at, "character");
       }
       for (const row of messages.data ?? []) {
-        await push(row.id, row.image_url, row.companion_id, row.created_at, "upload");
+        await push(row.id, row.image_url, row.companion_id, row.created_at, "lab");
       }
       setTiles(next);
       setLoading(false);
@@ -113,6 +118,36 @@ export default function GalleryView() {
       cancelled = true;
     };
   }, [preview, user]);
+
+  useEffect(() => {
+    const done = studio.jobs.filter((job) => job.status === "COMPLETED" && job.imageUrl);
+    if (!done.length) return;
+    setTiles((prev) => {
+      const seen = new Set(prev.flatMap((tile) => [tile.src, tile.storageUrl].filter(Boolean) as string[]));
+      const extra: Tile[] = [];
+      for (const job of done) {
+        const src = job.imageUrl!;
+        if (seen.has(src) || (job.storageUrl && seen.has(job.storageUrl))) continue;
+        extra.push({
+          id: job.id,
+          src,
+          storageUrl: job.storageUrl,
+          companionId: job.companionId ?? null,
+          createdAt: job.createdAt ?? new Date().toISOString(),
+          source: "lab",
+        });
+      }
+      return extra.length ? [...extra, ...prev] : prev;
+    });
+  }, [studio.jobs]);
+
+  useEffect(() => {
+    if (!focus) return;
+    const hit = tiles.find((tile) => tile.storageUrl === focus || tile.src === focus || (tile.storageUrl && focus.includes(tile.storageUrl)));
+    if (hit) setActive(hit);
+  }, [focus, tiles]);
+
+  const pending = studio.pending.filter((job) => filter === "all" || sameCompanion(job.companionId, filter));
 
   const visible = tiles.filter((tile) => {
     if (filter === "all") return true;
@@ -141,15 +176,18 @@ export default function GalleryView() {
               <div key={index} className="aspect-[3/4] animate-pulse rounded-xl bg-card" />
             ))}
           </div>
-        ) : visible.length === 0 ? (
+        ) : visible.length === 0 && pending.length === 0 ? (
           <PhoneEmpty
             title="Nothing saved yet"
             body="Pictures she sends, and ones you generate, stay here. They are kept in Storage and tied to you and to her."
           />
         ) : (
           <div className="grid grid-cols-3 gap-2">
+            {pending.map((job) => (
+              <PictureComing key={job.id} src={job.subjectUrl} status={job.status} dense />
+            ))}
             {visible.map((tile) => (
-              <div key={tile.id} className="relative overflow-hidden rounded-xl border border-border">
+              <div key={tile.id} className={`relative overflow-hidden rounded-xl border border-border ${studio.jobs.some((job) => job.id === tile.id) ? "animate-in fade-in duration-700" : ""}`}>
                 <button type="button" onClick={() => setActive(tile)} className="block w-full">
                   <img src={tile.src} alt="" className="aspect-[3/4] w-full object-cover" />
                 </button>

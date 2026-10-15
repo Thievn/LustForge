@@ -12,15 +12,25 @@ function apiKey() {
 
 export type RunpodImage = { name: string; image: string };
 
+function webhookUrl(): string | null {
+  const secret = Deno.env.get("STUDIO_CRON_SECRET")?.trim();
+  const base = Deno.env.get("SUPABASE_URL")?.trim();
+  if (!secret || !base) return null;
+  return `${base.replace(/\/$/, "")}/functions/v1/studio-settle?key=${encodeURIComponent(secret)}`;
+}
+
 export async function submitWorkflow(
   workflow: Record<string, unknown>,
   images: RunpodImage[],
 ): Promise<string> {
   const key = apiKey();
+  const payload: Record<string, unknown> = { input: { workflow, images } };
+  const hook = webhookUrl();
+  if (hook) payload.webhook = hook;
   const started = await fetch(`https://api.runpod.ai/v2/${endpoint()}/run`, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ input: { workflow, images } }),
+    body: JSON.stringify(payload),
   });
   const body = (await started.json().catch(() => null)) as { id?: string; error?: string } | null;
   if (!started.ok || !body?.id) {

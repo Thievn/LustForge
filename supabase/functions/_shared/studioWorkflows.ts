@@ -108,9 +108,12 @@ export function isClothingEdit(tool: string, text: string): boolean {
   return tool === "outfit" || CLOTHING_RE.test(text);
 }
 
-/** Prefix + suffix the guard for outfit/clothing edits; other edits are returned unchanged. */
+const UNDRESS_RE = /\b(nud(?:e|es|ity)|naked|undress\w*|strip(?:ped|ping)?\b|remov\w*|uncloth\w*|nothing on|bare)\b/i;
+
+/** Prefix + suffix the guard for outfit/clothing edits; other edits are returned unchanged. Undress requests stay as written. */
 export function withOrientationGuard(tool: string, instruction: string, userText = instruction): string {
   if (!isClothingEdit(tool, userText)) return instruction;
+  if (UNDRESS_RE.test(userText) || UNDRESS_RE.test(instruction)) return instruction;
   return `${ORIENTATION_GUARD} ${instruction} Front view of the outfit, matching the face direction.`.trim();
 }
 

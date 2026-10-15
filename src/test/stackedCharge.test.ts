@@ -23,6 +23,7 @@ describe("stacked edit charge", () => {
     expect(resolved.instruction).toContain("outfit");
     expect(resolved.instruction).toContain("pose");
     expect(resolved.instruction).toContain("softer light");
+    expect(resolveStackedEdit({ stacked: true, instruction: "keep her face", treasureNote: "a black lace set on a fictional adult" }).instruction).toContain("black lace");
     expect(quoteStackedEdit({ admin: false, stacked: true }).label).toBe("This edit: 1 credit");
   });
 
@@ -36,7 +37,8 @@ describe("stacked edit charge", () => {
 
   it("refuses an empty edit and a pose-only edit is ready", () => {
     expect(stackedEditReady({ hasImage: true, instruction: "", outfitCount: 0, poseId: null, mask: false, includeFix: false, background: false }).ok).toBe(false);
-    expect(stackedEditReady({ hasImage: false, instruction: "x", outfitCount: 0, poseId: null, mask: false, includeFix: false, background: false }).error).toMatch(/Upload/);
+    expect(stackedEditReady({ hasImage: false, instruction: "x", outfitCount: 0, poseId: null, mask: false, includeFix: false, background: false }).error).toMatch(/picture/i);
+    expect(stackedEditReady({ hasImage: true, instruction: "", outfitCount: 0, poseId: null, mask: false, includeFix: false, background: false, treasureCount: 1 }).ok).toBe(true);
     expect(stackedEditReady({ hasImage: true, instruction: "", outfitCount: 0, poseId: "stand_hips", mask: false, includeFix: false, background: false }).ok).toBe(true);
   });
 });

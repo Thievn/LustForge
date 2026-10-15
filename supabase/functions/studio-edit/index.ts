@@ -5,7 +5,8 @@ import { classifyEditText } from "../_shared/studioGrok.ts";
 import { gate, json } from "../_shared/studioHttp.ts";
 import { isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { submitWorkflow } from "../_shared/studioRunpod.ts";
-import { EXPLICIT_UPLOAD_MESSAGE, parseDataUrl, type SourceTag } from "../_shared/studioSafety.ts";
+import { bytesFromImageUrl } from "../_shared/storageArchive.ts";
+import { EXPLICIT_UPLOAD_MESSAGE, parseDataUrl, publicStudioError, type SourceTag } from "../_shared/studioSafety.ts";
 import { poseCountsAsUpload, resolveImage, weakest } from "../_shared/studioStore.ts";
 import { POSE_SET } from "../_shared/studioPoseIds.ts";
 import { editLocksPixels, isClothingEdit, ORIENTATION_NEGATIVE, qwenEdit, withOrientationGuard } from "../_shared/studioWorkflows.ts";
@@ -82,6 +83,31 @@ Deno.serve(async (req) => {
     const poseBytes = poseParsed && poseParsed.bytes.byteLength < 2_000_000 ? poseParsed.bytes : null;
     const maskParsed = parseDataUrl(String(body.maskDataUrl ?? ""));
 
+    const treasureIds = Array.isArray(body.treasureIds)
+      ? [...new Set(body.treasureIds.map((id) => String(id ?? "").trim()).filter(Boolean))].slice(0, 6)
+      : [];
+    if (treasureIds.length) {
+      const owned = await svc.from("user_collectibles").select("item_id").eq("user_id", user.id).in("item_id", treasureIds);
+      const allowed = new Set((owned.data ?? []).map((row: { item_id?: string }) => String(row.item_id ?? "")));
+      const catalog = allowed.size
+        ? await svc.from("collectible_items").select("id, neutral, pose_id, image_url, kind").in("id", [...allowed])
+        : { data: [] as Array<Record<string, unknown>> };
+      const picked = (catalog.data ?? []).filter((row: { id?: string; kind?: string }) => allowed.has(String(row.id)) && row.kind !== "vibration");
+      const note = picked.map((row: { neutral?: string }) => String(row.neutral ?? "").trim()).filter(Boolean).join(". ");
+      if (note) body.treasureNote = note.slice(0, 900);
+      if (!outfits.length) {
+        const art = picked.find((row: { image_url?: string; kind?: string }) => row.image_url && row.kind !== "pose" && row.kind !== "mood");
+        if (art?.image_url) {
+          try {
+            const file = await bytesFromImageUrl(String(art.image_url));
+            if (file.bytes.byteLength < 6_000_000) outfits.push({ bytes: file.bytes, contentType: file.contentType, source: "lab" as SourceTag });
+          } catch {
+            /* The written treasure still goes into the instruction. */
+          }
+        }
+      }
+    }
+
     const resolved = instructionFor(body);
     const instruction = resolved.text;
     if (!instruction.trim()) return json({ error: "Add an edit instruction." }, 400);
@@ -92,6 +118,7 @@ Deno.serve(async (req) => {
     const checkText = [
       String(body.instruction ?? "").slice(0, 800),
       String(body.background ?? "").slice(0, 300),
+      String(body.treasureNote ?? "").slice(0, 900),
       posePhrase,
     ].map((part) => part.trim()).filter(Boolean).join(". ");
     const check = await classifyEditText(checkText);
@@ -130,7 +157,11 @@ Deno.serve(async (req) => {
         const seed = baseSeed + i;
         const workflow = qwenEdit(prompt, { seed, denoise: strength, images: flags, lock, negative });
         const runpodId = await submitWorkflow(workflow, images);
-        const inserted = await svc.from("studio_jobs").insert({
+        const subjectUrlRaw = String(body.subjectUrl ?? "").trim();
+        const subjectUrl = subjectUrlRaw.startsWith("http") || subjectUrlRaw.startsWith("storage://")
+          ? subjectUrlRaw.slice(0, 2000)
+          : null;
+        const jobRow = {
           user_id: user.id,
           runpod_id: runpodId,
           status: "IN_QUEUE",
@@ -140,7 +171,13 @@ Deno.serve(async (req) => {
           companion_id: companionId,
           charge_mode: charge.mode,
           seed,
-        }).select("id, status, seed").single();
+          subject_url: subjectUrl,
+        };
+        let inserted = await svc.from("studio_jobs").insert(jobRow).select("id, status, seed").single();
+        if (inserted.error && /subject_url|column/i.test(inserted.error.message ?? "")) {
+          const { subject_url: _subject, ...basic } = jobRow;
+          inserted = await svc.from("studio_jobs").insert(basic).select("id, status, seed").single();
+        }
         if (inserted.error || !inserted.data) throw new Error(inserted.error?.message || "Could not record the job");
         submitted += 1;
         jobs.push({ id: inserted.data.id, status: inserted.data.status, seed, source: inherited });
@@ -149,7 +186,7 @@ Deno.serve(async (req) => {
       for (let i = submitted; i < variations; i++) await refundOne(svc, user.id, charge.mode);
       const message = err instanceof Error ? err.message : String(err);
       const status = message === "IMAGE_NOT_CONFIGURED" ? 503 : 502;
-      return json({ error: message, code: message === "IMAGE_NOT_CONFIGURED" ? message : "IMAGE_FAILED", jobs }, status);
+      return json({ error: publicStudioError(message), code: message === "IMAGE_NOT_CONFIGURED" ? message : "IMAGE_FAILED", jobs }, status);
     }
 
     return json({
@@ -163,6 +200,6 @@ Deno.serve(async (req) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const code = (err as { code?: string }).code;
-    return json({ error: message.slice(0, 400), code }, code === "CAMERA_EXIF" ? 400 : 500);
+    return json({ error: publicStudioError(message), code }, code === "CAMERA_EXIF" ? 400 : 500);
   }
 });

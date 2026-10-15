@@ -74,5 +74,6 @@ describe("outfit orientation guard", () => {
     expect(guard("outfit", "x")).toContain("FRONT of all clothing");
     expect(guard("prompt", "put her in a denim jacket")).toContain("FRONT of all clothing");
     expect(guard("prompt", "make the sky purple")).toBe("make the sky purple");
+    expect(guard("prompt", "Remove her clothes")).toBe("Remove her clothes");
   });
 });

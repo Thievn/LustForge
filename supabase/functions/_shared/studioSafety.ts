@@ -13,7 +13,46 @@ export const EXPLICIT =
   /\b(nud(e|es|ity)|naked|nsfw|topless|bottomless|undress\w*|unclothe\w*|disrobe\w*|strip(ped|ping|s)?\b(?! ?(mall|light|club))|take (off|away) (her|his|their|the) (clothes|clothing|outfit|top|shirt|bra|dress|skirt|pants|panties|underwear|bikini)|remov\w* (all )?(of )?(her|his|their|the)? ?(clothes|clothing|outfit|top|shirt|bra|dress|skirt|pants|jeans|panties|underwear|bikini|lingerie|towel)|without (any )?(clothes|clothing|top|bra|panties|underwear)|no (clothes|clothing|top|bra|panties|underwear)|bare (breasts?|chest|butt|ass|skin)|nipples?|areola\w*|breasts?|boobs?|tits?|titties|genital\w*|pussy|vagina\w*|vulva|labia|penis|cock|dick|erect\w*|testic\w*|butt ?hole|anus|sex(ual|y)?\b|porn\w*|explicit|xxx|erotic\w*|lewd|cum\b|orgasm\w*|masturbat\w*|see[- ]?through|sheer|transparent (top|dress|shirt|bra|lingerie)|wet (t-?shirt|shirt)|lingerie|g-?string|thong|pasties|implied nudity|covering (her|his) (breasts|chest))/i;
 
 export const EXPLICIT_UPLOAD_MESSAGE =
-  "That edit isn't available on an uploaded photo. Import as character if this is a fictional adult you have the rights to use.";
+  "That kind of change stays off for a picture brought in from outside. If she's a fictional adult you have the rights to use, bring her in as a character first.";
+
+export const ENHANCE_KEPT_MESSAGE = "She kept your words. The polish sat this one out.";
+
+/** True when a model answered with a refusal instead of a rewrite. */
+export function isEnhanceRefusal(text: string | null | undefined): boolean {
+  const value = String(text ?? "").replace(/\s+/g, " ").trim();
+  if (!value) return true;
+  return /\b(i['’]m sorry|i am sorry|i can(?:not|'t)|i won['’]t|cannot assist|can['’]t assist|cannot help|can['’]t help|not able to|unable to (?:assist|help|comply)|against (?:my|the|our) (?:guidelines|policy|policies)|content policy|nudity or undressing|as an ai|i must refuse|i(?:'m| am) unable)\b/i.test(
+    value,
+  );
+}
+
+/**
+ * Storage the app itself writes. A file picked from the camera roll never lands here
+ * until it passes import, so these paths are app-made pictures.
+ */
+export function appStorageSource(bucket: string, path: string, userId: string): SourceTag | null {
+  if (!bucket || !path || !userId) return null;
+  if (bucket === "lf-chat-media" && path.split("/")[0] === userId) return "lab";
+  if (bucket === "companion-images" && (path.startsWith(`${userId}/`) || path.startsWith(`chat-media/${userId}/`))) {
+    return "lab";
+  }
+  if (bucket === "companion-portraits" && path.includes(userId)) return "character";
+  return null;
+}
+
+/** Hide worker and host names from anything a person might read. */
+export function publicStudioError(message: string): string {
+  const text = String(message || "").trim();
+  if (!text) return "She couldn't finish that. Try again in a moment.";
+  if (/^job not found$/i.test(text)) return "That picture isn't here anymore.";
+  if (
+    text === "IMAGE_NOT_CONFIGURED" ||
+    /runpod|comfyui|comfy|endpoint|gpu|worker|cold start|inference|webhook/i.test(text)
+  ) {
+    return "She couldn't start just now. Try again in a moment.";
+  }
+  return text.slice(0, 400);
+}
 
 export const CAMERA_EXIF_MESSAGE =
   "That file has camera info in it, so it can't be imported as a character. Use a drawing or render without camera metadata.";
