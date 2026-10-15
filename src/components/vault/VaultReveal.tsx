@@ -64,7 +64,7 @@ export function VaultReveal({
               ) : null}
             </div>
           </VaultFrame>
-          <p className="mt-2 text-center text-[10px] uppercase tracking-[0.16em]" style={{ color: tone.border }}>{tone.label}</p>
+          <p className="mt-2 text-center text-[10px] uppercase tracking-[0.16em]" style={{ color: tone.caption }}>{tone.label}</p>
           <h2 className="mt-0.5 text-center font-gothic text-lg leading-tight text-white">{name}</h2>
           <p className="mt-1 line-clamp-2 text-center text-[12px] leading-snug text-white/70">{line}</p>
           <button type="button" className="mt-3 h-8 w-full rounded-full bg-primary text-xs font-medium text-primary-foreground" onClick={onDone}>

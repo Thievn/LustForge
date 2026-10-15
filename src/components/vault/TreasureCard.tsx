@@ -231,7 +231,7 @@ export function TreasureCard({
           {shimmer ? <span className="vault-sheen pointer-events-none absolute inset-0" aria-hidden /> : null}
           {isNew && owned ? <span className="absolute right-2.5 top-2.5 z-[2] h-2 w-2 rounded-full bg-primary" aria-hidden /> : null}
           <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-[rgba(20,14,24,0.95)] to-transparent px-3 pb-2.5 pt-7">
-            <span className="block text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: RARITY_TONE[rarity].border }}>{RARITY_TONE[rarity].label}</span>
+            <span className="block text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: RARITY_TONE[rarity].caption }}>{RARITY_TONE[rarity].label}</span>
             <span className="block text-[13px] font-semibold leading-tight text-[#F4EEF2]">{name}</span>
           </span>
         </div>

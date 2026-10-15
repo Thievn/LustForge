@@ -295,7 +295,7 @@ export default function VelvetVault() {
           </span>
           <span className="mt-1 flex justify-between text-[9px] tabular-nums">
             {RARITY_ORDER.map((rarity) => (
-              <span key={rarity} style={{ color: RARITY_TONE[rarity].border }}>{formatPct(tiers[rarity])}</span>
+              <span key={rarity} style={{ color: RARITY_TONE[rarity].caption }}>{formatPct(tiers[rarity])}</span>
             ))}
           </span>
 
@@ -305,7 +305,7 @@ export default function VelvetVault() {
               <div key={rarity} className="flex items-center justify-between gap-3 text-[11px]">
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: RARITY_TONE[rarity].border }} />
-                  <span style={{ color: RARITY_TONE[rarity].border }}>{RARITY_TONE[rarity].label}</span>
+                  <span style={{ color: RARITY_TONE[rarity].caption }}>{RARITY_TONE[rarity].label}</span>
                 </span>
                 <span className="tabular-nums text-muted-foreground">
                   {formatPct(tiers[rarity])}
@@ -344,7 +344,7 @@ export default function VelvetVault() {
       <div className="flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <FilterChip active={rarityFilter === "all"} onClick={() => setRarityFilter("all")}>Any</FilterChip>
         {RARITY_ORDER.map((rarity) => (
-          <FilterChip key={rarity} active={rarityFilter === rarity} tone={RARITY_TONE[rarity].border} onClick={() => setRarityFilter(rarity)}>
+          <FilterChip key={rarity} active={rarityFilter === rarity} tone={RARITY_TONE[rarity].caption} onClick={() => setRarityFilter(rarity)}>
             {RARITY_TONE[rarity].label}
           </FilterChip>
         ))}
