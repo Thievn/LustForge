@@ -10,6 +10,7 @@ import type { User } from "@supabase/supabase-js";
 import { fetchFcPaymentHistory, type FcOrderRow } from "@/lib/nowpaymentsFcClient";
 import { useProfileWallet } from "@/hooks/useProfileWallet";
 import { ShopSyncableToysButton } from "@/components/ShopSyncableToysButton";
+import { isStandalonePwa } from "@/lib/pwaInstall";
 
 type UserTransactionRow = {
   id: string;
@@ -38,6 +39,7 @@ export default function Account() {
       ? null
       : (walletQuery.data?.tokens_balance ?? null);
   const [sessionUser, setSessionUser] = useState<User | null>(null);
+  const [installedApp, setInstalledApp] = useState(false);
   const [accountTab, setAccountTab] = useState<"account" | "history">("account");
   const [txLoading, setTxLoading] = useState(false);
   const [txRows, setTxRows] = useState<UserTransactionRow[]>([]);
@@ -91,6 +93,10 @@ export default function Account() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setInstalledApp(isStandalonePwa());
+  }, []);
 
   const loadTransactions = useCallback(async () => {
     const {
@@ -354,28 +360,24 @@ export default function Account() {
               </span>
             </button>
 
-            <div className="rounded-2xl border border-white/10 bg-black/35 px-4 py-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Download className="h-4 w-4 text-[#00E5C8]" />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">Install app</p>
+            {!installedApp ? (
+              <div className="rounded-2xl border border-white/10 bg-black/35 px-4 py-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Download className="h-4 w-4 text-[#D4AF37]" />
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/75">Install app</p>
+                </div>
+                <p className="text-xs text-white/75 leading-relaxed">
+                  Keep LustForge on your home screen, so she is one tap away.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event("lustforge-request-install-hint"))}
+                  className="w-full rounded-xl border border-[#D6336C]/35 bg-[#D6336C]/10 py-2.5 text-xs font-semibold text-[#D6336C] hover:bg-[#D6336C]/15 transition-colors"
+                >
+                  Install app
+                </button>
               </div>
-              <p className="text-xs text-white/75 leading-relaxed">
-                On your phone, add LustForge to your home screen for a full-screen app experience. iPhone: Safari →
-                Share → Add to Home Screen. Android: browser menu → Install app.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  window.dispatchEvent(new Event("lustforge-request-install-hint"));
-                  toast.message("Install sheet", {
-                    description: "If you are on a phone, check the bottom of the screen for the install prompt.",
-                  });
-                }}
-                className="w-full rounded-xl border border-[#D6336C]/35 bg-[#D6336C]/10 py-2.5 text-xs font-semibold text-[#D6336C] hover:bg-[#D6336C]/15 transition-colors"
-              >
-                Show install prompt
-              </button>
-            </div>
+            ) : null}
 
             <div className="pt-2 border-t border-white/10">
               <button

@@ -25,6 +25,8 @@ export type Database = {
           image_url: string | null
           lovense_command: Json | null
           message_source: string
+          private_photo: boolean
+          private_storage_path: string | null
           role: string
           tts_audio_url: string | null
           user_id: string
@@ -40,6 +42,8 @@ export type Database = {
           image_url?: string | null
           lovense_command?: Json | null
           message_source?: string
+          private_photo?: boolean
+          private_storage_path?: string | null
           role: string
           tts_audio_url?: string | null
           user_id: string
@@ -55,6 +59,8 @@ export type Database = {
           image_url?: string | null
           lovense_command?: Json | null
           message_source?: string
+          private_photo?: boolean
+          private_storage_path?: string | null
           role?: string
           tts_audio_url?: string | null
           user_id?: string
@@ -212,6 +218,8 @@ export type Database = {
           tags: string[]
           tcg_stats: Json | null
           updated_at: string
+          voice_story: string | null
+          voice_teaser: string | null
         }
         Insert: {
           animated_image_url?: string | null
@@ -246,6 +254,8 @@ export type Database = {
           tags?: string[]
           tcg_stats?: Json | null
           updated_at?: string
+          voice_story?: string | null
+          voice_teaser?: string | null
         }
         Update: {
           animated_image_url?: string | null
@@ -280,6 +290,8 @@ export type Database = {
           tags?: string[]
           tcg_stats?: Json | null
           updated_at?: string
+          voice_story?: string | null
+          voice_teaser?: string | null
         }
         Relationships: []
       }
@@ -331,6 +343,8 @@ export type Database = {
           updated_at: string
           user_id: string
           vibe_theme_selections: string[] | null
+          voice_story: string | null
+          voice_teaser: string | null
         }
         Insert: {
           animated_image_url?: string | null
@@ -379,6 +393,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           vibe_theme_selections?: string[] | null
+          voice_story?: string | null
+          voice_teaser?: string | null
         }
         Update: {
           animated_image_url?: string | null
@@ -426,6 +442,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vibe_theme_selections?: string[] | null
+          voice_story?: string | null
+          voice_teaser?: string | null
         }
         Relationships: []
       }

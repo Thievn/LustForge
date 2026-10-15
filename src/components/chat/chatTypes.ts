@@ -14,4 +14,6 @@ export interface ChatMessage {
   tts_audio_url?: string | null;
   /** Paid chat video clip (assistant). */
   videoUrl?: string | null;
+  /** Uploaded by this user. The thread shows a lock, never the picture. */
+  privatePhoto?: boolean;
 }

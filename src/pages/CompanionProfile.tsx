@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useMemo, useCallback, useRef, type ReactNode } from "react";
 import { getCompanionBackstoryParagraphs } from "@/lib/companionBackstory";
+import { BoudoirProfile } from "@/components/companion/BoudoirProfile";
 import {
   profileStillPortraitUrl,
   isVideoPortraitUrl,
@@ -943,730 +944,65 @@ const CompanionProfile = () => {
 
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background relative overflow-x-hidden">
-      <ParticleBackground />
-      <div
-        className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.14),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top,hsl(330_100%_58%/0.16),transparent_52%),linear-gradient(to_bottom,hsl(240_18%_6%),hsl(240_22%_3.5%))]"
-        aria-hidden
-      />
-      <Navbar />
-
-      <main
-        className={cn(
-          "relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[max(5.25rem,calc(3.25rem+env(safe-area-inset-top,0px)))] sm:pt-[max(5.5rem,calc(3.5rem+env(safe-area-inset-top,0px)))]",
-          user && !consumeFeatureLocked && !isDropLanding
-            ? "max-md:pb-[max(9.25rem,calc(5.75rem+env(safe-area-inset-bottom,0px)+3.25rem))] md:pb-20"
-            : user
-              ? "pb-mobile-nav md:pb-20"
-              : "pb-16 sm:pb-20",
-        )}
-      >
-        <motion.button
-          type="button"
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          whileHover={{ x: -2 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => {
-            const st = location.state as { from?: string } | undefined;
-            if (st?.from) {
-              navigate(st.from);
-              return;
-            }
-            navigate("/discover");
-          }}
-          className="flex items-center gap-2 text-muted-foreground hover:text-primary text-sm mb-8 transition-colors touch-manipulation"
-        >
-          <ArrowLeft className="h-4 w-4 shrink-0" />
-          Back
-        </motion.button>
-
-        <div className="grid lg:grid-cols-[minmax(0,460px)_1fr] gap-10 lg:gap-14 items-start">
-          {/* Still portrait: 2:3. Looping MP4: 9:16 frame to match typical I2V output; single video layer + object-cover. */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 280, damping: 26 }}
-            className="mx-auto w-full max-w-[min(100%,460px)] lg:mx-0 lg:max-w-none"
-          >
-            <TierHaloPortraitFrame
-              variant="card"
-              frameStyle="clean"
-              rarity={rarity}
-              gradientFrom={companion.gradientFrom}
-              gradientTo={companion.gradientTo}
-              overlayUrl={dbComp?.rarity_border_overlay_url}
-              aspectClassName={cn(portraitAspectClass, "w-full")}
-              rarityFrameBleed
-              profilePolish={loopVideoActive}
-              neonEdgeBreathing={false}
-            >
-              <PortraitViewLightbox
-                alt={companion.name}
-                stillSrc={stillForProfile}
-                animatedSrc={lightboxAnimated}
-                triggerClassName={cn("w-full", profileTierHaloInnerRoundClass("card", "clean"))}
-              >
-                <div
-                  className={cn(
-                    "relative h-full min-h-0 w-full overflow-hidden",
-                    profileTierHaloInnerRoundClass("card", "clean"),
-                    loopVideoActive ? "bg-black" : "bg-black/15",
-                  )}
-                >
-                  {isAbyssal && <AbyssalProfileParticles />}
-                  <div
-                    className="absolute inset-0 z-0"
-                    style={
-                      loopVideoActive
-                        ? { background: "#000" }
-                        : {
-                            background: `linear-gradient(160deg, ${companion.gradientFrom}66, ${companion.gradientTo}55)`,
-                          }
-                    }
-                  />
-                  {stillForProfile ? (
-                    <img
-                      src={stillForProfile}
-                      alt=""
-                      className="absolute inset-0 z-[1] h-full w-full origin-center scale-[1.08] object-cover object-top"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 z-[1] flex items-center justify-center">
-                      <span className="font-gothic text-7xl font-bold text-white/90">{companion.name.charAt(0)}</span>
-                    </div>
-                  )}
-                  <div
-                    className={cn(
-                      "pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent",
-                      loopVideoActive ? "z-[3]" : "z-[1]",
-                    )}
-                  />
-                </div>
-              </PortraitViewLightbox>
-            </TierHaloPortraitFrame>
-            {consumeFeatureLocked && !sampleLook ? (
-              <div className="mt-4 rounded-2xl border border-primary/35 bg-gradient-to-br from-primary/15 via-black/40 to-fuchsia-950/25 px-4 py-3 space-y-2 shadow-[0_0_28px_rgba(214,51,108,0.12)]">
-                <p className="text-[11px] text-muted-foreground leading-relaxed">{lockedPreviewBannerText}</p>
-                {vaultLocked && !isOwnForge ? (
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      if (!user) {
-                        navigate("/auth", { state: { from: `/companions/${companion.id}` } });
-                        return;
-                      }
-                      setBuyConfirmProfileOpen(true);
-                    }}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-primary/50 bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25"
-                  >
-                    <Crown className="h-4 w-4 shrink-0" />
-                    Acquire card · {discoverEffectiveFc <= 0 ? "FREE" : `${discoverListFc} FC`}
-                    <Gem className="h-4 w-4 shrink-0 opacity-90" />
-                  </motion.button>
-                ) : null}
-              </div>
-            ) : null}
-            {vibeTraits.length > 0 ? (
-              <div className="mt-4 flex justify-center px-1 pointer-events-auto">
-                <CompanionVibeTraitStrip traits={vibeTraits} size="md" max={8} />
-              </div>
-            ) : null}
-            <div className="mt-6 hidden lg:block">
-              <ProfileDiscoverRow />
-            </div>
-          </motion.div>
-
-          {/* Copy + actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.06, type: "spring", stiffness: 300, damping: 28 }}
-            className="min-w-0 space-y-6"
-          >
-            <div>
-              <h1 className="font-gothic text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-                <span className="gradient-vice-text">
-                  {sampleLook ? landingDisplayName(companion.id, companion.name) : companion.name}
-                </span>
-              </h1>
-              <p className="mt-2 text-lg sm:text-xl text-primary/95 italic">{companion.tagline}</p>
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => void copyCompanionShareLink()}
-                  className="inline-flex items-center gap-2 rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-foreground/90 hover:border-primary/40 hover:text-primary touch-manipulation"
-                >
-                  <Share2 className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
-                  Share {companion.name}&apos;s profile
-                </motion.button>
-                <span className="text-[10px] text-muted-foreground leading-snug max-w-[14rem] sm:max-w-md">
-                  Uses your public site URL ({getPublicSiteOrigin().replace(/^https?:\/\//, "")}), not this browser
-                  tab&apos;s host — friends land on this companion&apos;s profile; chat and live stay locked until they
-                  acquire the card.
-                </span>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs text-foreground/90">
-                  {companion.gender}
-                </span>
-                <span className="rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs text-foreground/90">
-                  {companion.orientation}
-                </span>
-                <span className="rounded-full border border-primary/35 bg-primary/[0.12] px-3 py-1 text-xs text-primary">
-                  {companion.role}
-                </span>
-              </div>
-              <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground/80">
-                <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-muted-foreground/72">
-                  {companion.id.startsWith("cc-") ? (
-                    <>
-                      <span className="tracking-[0.12em] uppercase text-[10px] text-muted-foreground/88">
-                        Forge creation
-                      </span>
-                      {companion.galleryCredit ? (
-                        <>
-                          <span className="text-muted-foreground/40" aria-hidden>
-                            ·
-                          </span>
-                          <span className="text-foreground/78">
-                            created by <span className="font-medium text-foreground/90">{companion.galleryCredit}</span>
-                          </span>
-                        </>
-                      ) : null}
-                    </>
-                  ) : (
-                    <span>Catalog</span>
-                  )}
-                  {companion.isNexusHybrid ? (
-                    <>
-                      <span className="text-muted-foreground/40" aria-hidden>
-                        ·
-                      </span>
-                      <span className="text-fuchsia-200/85">Nexus hybrid</span>
-                    </>
-                  ) : null}
-                </span>
-              </p>
-            </div>
-
-            {user && companion && !consumeFeatureLocked ? (
-              <ChatAutoSpendImagesToggle
-                variant="profile"
-                enabled={autoSpendChatImages}
-                onChange={(enabled) => {
-                  setAutoSpendChatImagesState(enabled);
-                  setChatAutoSpendImages(companion.id, enabled);
-                }}
-              />
-            ) : null}
-
-            <div
-              className={cn(
-                "flex max-w-2xl rounded-2xl border border-white/[0.08] bg-black/45 p-1 gap-0.5",
-                "max-md:snap-x max-md:snap-mandatory max-md:overflow-x-auto max-md:pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-              )}
-            >
-              <button
-                type="button"
-                disabled={isDropLanding}
-                onClick={() => setProfileTab("profile")}
-                className={cn(
-                  "flex-1 min-w-0 rounded-xl py-2.5 text-xs sm:text-sm font-semibold transition-colors touch-manipulation",
-                  "max-md:min-h-[48px] max-md:min-w-[50%] max-md:snap-start max-md:shrink-0 max-md:px-1",
-                  isDropLanding && "cursor-not-allowed opacity-60",
-                  profileTab === "profile"
-                    ? "bg-primary/20 text-primary border border-primary/30"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Profile
-              </button>
-              <button
-                type="button"
-                disabled={isDropLanding || sampleLook}
-                title={
-                  sampleLook
-                    ? "Hear them, whenever you pick up."
-                    : vaultLocked && !isOwnForge
-                    ? "Acquire this card to start a live call"
-                    : teaserConsumeLocked && !isAdminUser
-                      ? "Live calls unlock at launch"
-                      : undefined
-                }
-                onClick={() => {
-                  if (isDropLanding || sampleLook) return;
+    <>
+      <BoudoirProfile
+        companion={companion}
+        userId={user?.id ?? null}
+        canEditVoice={Boolean(isOwnForge || (user && isPlatformAdmin(user)))}
+        portraitUrl={stillForProfile}
+        gallery={galleryImagesForGrid
+          .filter((row) => row.image_url && !/\.mp4(\?|$)/i.test(row.image_url))
+          .map((row) => ({ id: row.id, url: row.image_url }))}
+        locked={consumeFeatureLocked}
+        onBack={() => {
+          const st = location.state as { from?: string } | undefined;
+          navigate(st?.from || "/discover");
+        }}
+        onChat={() => handleStartChat()}
+        onCall={() => handleQuickLiveCall()}
+        onIncoming={() => {
+          void ensureCompanionCallNotifications().then((ok) => {
+            toast.message(ok ? "She can reach you when she calls." : "Allow calls if you want her to find you.");
+          });
+        }}
+        acquire={
+          vaultLocked && !isOwnForge
+            ? {
+                label: discoverEffectiveFc <= 0 ? "Add her" : "Make her yours",
+                onClick: () => {
                   if (!user) {
                     navigate("/auth", { state: { from: `/companions/${companion.id}` } });
                     return;
                   }
-                  setProfileTab("live");
-                }}
-                className={cn(
-                  "flex-1 min-w-0 inline-flex items-center justify-center gap-1 sm:gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-semibold transition-colors touch-manipulation",
-                  "max-md:min-h-[48px] max-md:min-w-[50%] max-md:snap-start max-md:shrink-0 max-md:px-1",
-                  isDropLanding && "cursor-not-allowed opacity-60",
-                  profileTab === "live"
-                    ? "bg-primary/20 text-primary border border-primary/30"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate">Live call</span>
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              {sampleLook ? (
-                <>
-                  <PremiumDisabledButton
-                    label="Start chat"
-                    hint="This is where the thread with them lives."
-                    icon={<MessageCircle className="h-5 w-5 shrink-0" />}
-                    presented
-                  />
-                  <PremiumDisabledButton
-                    label="Live call"
-                    hint="Hear them, whenever you pick up."
-                    icon={<Phone className="h-5 w-5 shrink-0" />}
-                    presented
-                    tone="call"
-                  />
-                </>
-              ) : isDropLanding ? (
-                <>
-                  <PremiumDisabledButton
-                    label="Start chat"
-                    hint="Chat unlocks full in-character conversation with this companion."
-                    icon={<MessageCircle className="h-5 w-5 shrink-0" />}
-                  />
-                  <PremiumDisabledButton
-                    label="Live call"
-                    hint="Live call opens real-time voice sessions with adaptive responses."
-                    icon={<Phone className="h-4 w-4 shrink-0" />}
-                  />
-                  <PremiumDisabledButton
-                    label="Selfie studio"
-                    hint="Selfie studio generates custom portraits in this companion’s style."
-                    icon={<Images className="h-4 w-4 shrink-0" />}
-                  />
-                </>
-              ) : consumeFeatureLocked ? (
-                <>
-                  <PremiumDisabledButton
-                    label="Start chat"
-                    hint="A card must be acquired first — then chat and fantasies unlock for this companion."
-                    icon={<MessageCircle className="h-5 w-5 shrink-0" />}
-                  />
-                  <PremiumDisabledButton
-                    label="Live call"
-                    hint="A card must be acquired first to unlock live voice with this companion."
-                    icon={<Phone className="h-4 w-4 shrink-0" />}
-                  />
-                </>
-              ) : (
-                <>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleStartChat()}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-primary px-5 py-3 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30 glow-pink touch-manipulation max-md:min-h-[48px]"
-                  >
-                    <MessageCircle className="h-5 w-5 shrink-0" />
-                    Start chat
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(`/messages/${companion.id}`)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-card/70 px-5 py-3 text-sm font-bold text-foreground backdrop-blur-md touch-manipulation max-md:min-h-[48px]"
-                  >
-                    <MessageCircle className="h-5 w-5 shrink-0 text-primary" />
-                    Phone thread
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleQuickLiveCall()}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-card/70 px-5 py-3 text-sm font-bold text-primary backdrop-blur-md touch-manipulation max-md:min-h-[48px]"
-                  >
-                    <Phone className="h-5 w-5 shrink-0" />
-                    Live call
-                  </motion.button>
-                </>
-              )}
-            </div>
-
-            {(companion.appearance?.trim() || companion.personality?.trim()) ? (
-              <section className="rounded-2xl border border-white/[0.08] bg-black/35 p-4 sm:p-5 ring-1 ring-white/[0.05] backdrop-blur-sm">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-primary/85">Look &amp; voice</p>
-                  <button
-                    type="button"
-                    onClick={() => setBioExpanded((v) => !v)}
-                    className="text-[11px] font-semibold text-primary/90 hover:underline touch-manipulation"
-                  >
-                    {bioExpanded ? "Show less" : "Show full"}
-                  </button>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
-                  <div>
-                    <h3 className="mb-1.5 flex items-center gap-1.5 font-gothic text-sm font-bold text-foreground">
-                      <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
-                      Appearance
-                    </h3>
-                    <div
-                      className={cn(
-                        "space-y-2 text-[13px] leading-snug text-muted-foreground/92",
-                        !bioExpanded && "line-clamp-6",
-                      )}
-                    >
-                      {appearanceParagraphs.length > 0 ? (
-                        appearanceParagraphs.map((p, i) => (
-                          <p key={i}>{p}</p>
-                        ))
-                      ) : (
-                        <p>{companion.appearance}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="mb-1.5 flex items-center gap-1.5 font-gothic text-sm font-bold text-foreground">
-                      <Heart className="h-3.5 w-3.5 text-primary shrink-0" />
-                      Personality
-                    </h3>
-                    <div
-                      className={cn(
-                        "space-y-2 text-[13px] leading-snug text-muted-foreground/92",
-                        !bioExpanded && "line-clamp-6",
-                      )}
-                    >
-                      {personalityParagraphs.length > 0 ? (
-                        personalityParagraphs.map((p, i) => (
-                          <p key={i}>{p}</p>
-                        ))
-                      ) : (
-                        <p>{companion.personality}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            ) : null}
-
-            {backstoryParagraphs.length > 0 ? (
-              <details className="group rounded-2xl border border-primary/20 bg-gradient-to-b from-black/55 via-black/40 to-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-white/[0.06] open:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_0_28px_rgba(168,85,247,0.06)]">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 sm:p-6 [&::-webkit-details-marker]:hidden">
-                  <div className="min-w-0 text-left">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-primary/85 mb-1">Chronicle</p>
-                    <h2 className="font-gothic text-lg sm:text-xl font-bold text-foreground">Their story</h2>
-                    <p className="mt-1 text-xs text-muted-foreground/85 sm:hidden">Tap to expand</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
-                </summary>
-                <div className="space-y-4 border-t border-white/[0.06] px-5 pb-5 pt-4 text-sm sm:text-[15px] leading-relaxed text-muted-foreground/95 sm:px-6 sm:pb-6 max-w-prose">
-                  {backstoryParagraphs.map((p, i) => (
-                    <p
-                      key={i}
-                      className="first-letter:text-primary first-letter:font-gothic first-letter:text-2xl sm:first-letter:text-3xl first-letter:float-left first-letter:mr-2 first-letter:leading-none"
-                    >
-                      {p}
-                    </p>
-                  ))}
-                </div>
-              </details>
-            ) : null}
-
-            {profileTab === "live" ? (
-              <section className="rounded-2xl border border-white/[0.1] bg-black/45 backdrop-blur-xl p-5 sm:p-6 ring-1 ring-primary/15">
-                <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-primary mb-1">Live call</h2>
-                {user ? (
-                  <LiveCallTypePanel companion={companion} className="mt-2" spendLocked={consumeFeatureLocked} />
-                ) : (
-                  <p className="mt-4 text-sm text-muted-foreground py-6 text-center border border-dashed border-white/15 rounded-xl">
-                    <Link to="/auth" state={{ from: `/companions/${companion.id}` }} className="text-primary font-semibold hover:underline">
-                      Sign in
-                    </Link>{" "}
-                    for voice sessions with {companion.name}.
-                  </p>
-                )}
-              </section>
-            ) : null}
-
-            {profileTab === "profile" ? (
-              <>
-            {nexusCooldownMs > 0 ? (
-              <p className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-100/95 leading-relaxed">
-                Nexus recovery: this companion rests{" "}
-                <span className="font-semibold tabular-nums">{formatNexusCooldownShort(nexusCooldownMs)}</span>{" "}
-                longer before they can enter another merge.
-              </p>
-            ) : null}
-
-            {(companion.isNexusHybrid || companion.mergeStats || lineageParents.length > 0) && (
-              <section className="rounded-2xl border border-primary/25 bg-black/40 backdrop-blur-md p-5 sm:p-6 space-y-4">
-                <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-primary flex items-center gap-2">
-                  <GitBranch className="h-4 w-4 shrink-0" />
-                  The Nexus
-                </h2>
-                {lineageParents.length > 0 ? (
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">Lineage</p>
-                    <ul className="flex flex-wrap gap-2">
-                      {lineageParents.map((p) => (
-                        <li key={p.id}>
-                          <Link
-                            to={`/companions/${p.id}`}
-                            state={{ from: `${location.pathname}${location.search}` }}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-foreground/90 hover:border-primary/40 hover:text-primary transition-colors"
-                          >
-                            {p.name}
-                            <ChevronRight className="h-3.5 w-3.5 opacity-60" />
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-                {companion.mergeStats ? (
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-3">Merge signature</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {(
-                        [
-                          ["Compatibility", companion.mergeStats.compatibility, Heart],
-                          ["Resonance", companion.mergeStats.resonance, Waves],
-                          ["Pulse", companion.mergeStats.pulse, Zap],
-                          ["Affinity", companion.mergeStats.affinity, Sparkles],
-                        ] as const
-                      ).map(([label, val, Icon], i) => (
-                        <div
-                          key={`${label}-${i}`}
-                          className="rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5 space-y-1"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
-                            <Icon className="h-3.5 w-3.5 text-primary/80 shrink-0" />
-                          </div>
-                          <p className="font-gothic text-2xl tabular-nums text-foreground">{val}</p>
-                          <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                              style={{ width: `${val}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : companion.isNexusHybrid ? (
-                  <p className="text-sm text-muted-foreground">
-                    Emerged from The Nexus — merge metrics will appear here.
-                  </p>
-                ) : null}
-              </section>
-            )}
-
-            <div className="lg:hidden">
-              <ProfileDiscoverRow />
-            </div>
-
-            <VibeTraitProfilePanel traits={vibeTraits} isNexus={Boolean(companion.isNexusHybrid)} />
-
-            {companion.kinks.length > 0 ? (
-              <div className="rounded-2xl border border-primary/20 bg-black/40 p-5 backdrop-blur-xl ring-1 ring-primary/10">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground/90 mb-1">
-                  Kinks &amp; interests
-                </p>
-                <h3 className="mb-4 font-gothic text-xl font-bold text-foreground">Signature cravings</h3>
-                <div className="flex flex-wrap gap-2">
-                  {companion.kinks.map((kink) => (
-                    <span
-                      key={kink}
-                      className="rounded-full border border-primary/28 bg-black/35 px-3 py-1 text-xs font-medium text-foreground/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                    >
-                      {kink}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {id && vibrationPatterns.length > 0 ? (
-              <div className="rounded-[1.35rem] border border-[#D6336C]/25 bg-gradient-to-br from-black/55 via-[hsl(280_28%_9%)]/95 to-black/50 p-5 sm:p-6 shadow-[0_0_48px_rgba(214,51,108,0.08),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                  <div>
-                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#D6336C]/80">
-                      Haptic signature
-                    </h3>
-                    <p className="mt-1 font-gothic text-xl text-white flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-[#E0457B] shrink-0 drop-shadow-[0_0_10px_rgba(0,255,212,0.35)]" />
-                      Lovense patterns
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                      {consumeFeatureLocked
-                        ? "Preview every pattern below — acquire the card to send them to a linked toy."
-                        : hasLovenseToy
-                          ? `Tap to send ${companion.name}'s curated patterns to your linked toy.`
-                          : "Tap Pair toy to scan the QR, or use Preferences → Device connection."}
-                    </p>
-                  </div>
-                  {!hasLovenseToy ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!user) {
-                          navigate("/auth", { state: { from: location.pathname } });
-                          return;
-                        }
-                        setPairDialogOpen(true);
-                      }}
-                      className="text-[11px] font-semibold uppercase tracking-wider text-primary hover:underline shrink-0"
-                    >
-                      Pair toy
-                    </button>
-                  ) : (
-                    <span className="rounded-full border border-[#E0457B]/30 bg-[#E0457B]/10 px-2.5 py-1 text-[10px] font-medium text-[#E0457B]">
-                      Linked
-                    </span>
-                  )}
-                </div>
-                {vibrationPatternsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <VibrationPatternButtons
-                    patterns={vibrationPatterns}
-                    disabled={!hasLovenseToy || consumeFeatureLocked}
-                    sendingId={sendingVibrationId}
-                    activePatternId={livePatternId}
-                    onTrigger={(row) => void triggerProfileVibration(row)}
-                    variant="profile"
-                  />
-                )}
-              </div>
-            ) : null}
-              </>
-            ) : null}
-          </motion.div>
-        </div>
-
-        {profileTab === "profile" ? (
-        <>
-        {/* Fantasy starters */}
-        <section className="mt-8 sm:mt-10">
-          <h2 className="font-gothic text-2xl sm:text-3xl font-bold text-foreground mb-2">Fantasy starters</h2>
-          <p className="mb-8 max-w-2xl text-sm text-muted-foreground/88">
-            Tap a scene — we open chat and send your opening line exactly as written, so the companion meets you in
-            that moment.
-          </p>
-          {starters.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/15 bg-card/40 p-10 text-center text-sm text-muted-foreground backdrop-blur-md">
-              No scripted openers yet. Use <strong className="text-foreground">Start chat</strong> and set the scene
-              yourself.
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {starters.map((starter, i) => (
-                <motion.button
-                  type="button"
-                  key={`${starter.title}-${i}`}
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.04 * i, type: "spring", stiffness: 380, damping: 26 }}
-                  whileHover={{ scale: 1.015, y: -2 }}
-                  whileTap={{ scale: 0.99 }}
-                  onClick={() => {
-                    if (isDropLanding || sampleLook) return;
-                    if (consumeFeatureLocked) {
-                      toast.message("A card must be acquired first", {
-                        description: "Acquire this card to begin this fantasy in chat.",
-                      });
-                      return;
-                    }
-                    handleStartChat(starter.description, starter.title);
-                  }}
-                  disabled={isDropLanding}
-                  className={cn(
-                    "group relative overflow-hidden rounded-2xl border border-white/[0.1] bg-gradient-to-br from-card/90 via-card/70 to-black/40 p-5 sm:p-6 text-left shadow-lg shadow-black/30 ring-1 ring-white/[0.04] backdrop-blur-xl transition-[border-color,box-shadow] touch-manipulation",
-                    isDropLanding
-                      ? "cursor-not-allowed opacity-65"
-                      : consumeFeatureLocked
-                        ? "opacity-80 hover:border-primary/35"
-                        : "hover:border-primary/45 hover:shadow-[0_0_36px_rgba(214,51,108,0.18)]",
-                  )}
-                >
-                  <div
-                    className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-30 blur-3xl transition-opacity group-hover:opacity-50"
-                    style={{
-                      background: `radial-gradient(circle, ${companion.gradientFrom}, transparent 65%)`,
-                    }}
-                  />
-                  <div className="relative flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-gothic text-lg sm:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                  setBuyConfirmProfileOpen(true);
+                },
+              }
+            : null
+        }
+        extras={
+          starters.length ? (
+            <div className="acc open">
+              <button type="button" aria-expanded="true">Scenes</button>
+              <div className="pn">
+                <div>
+                  <div className="in" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {starters.map((starter) => (
+                      <button
+                        type="button"
+                        key={starter.title}
+                        className="btn ghost"
+                        onClick={() => handleStartChat(starter.description, starter.title)}
+                      >
                         {starter.title}
-                      </p>
-                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground/90">{starter.description}</p>
-                    </div>
-                    <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-primary/60 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                      </button>
+                    ))}
                   </div>
-                  <span className="relative mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-primary/80">
-                    {isDropLanding ? "Feature preview" : consumeFeatureLocked ? "Unlock to begin" : "Begin this fantasy"}
-                    <Sparkles className="h-3.5 w-3.5" />
-                  </span>
-                  {isDropLanding ? (
-                    <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <div className="rounded-lg border border-white/10 bg-black/85 px-3 py-2 text-[11px] text-white/85 backdrop-blur-md">
-                        Fantasy starters launch straight into immersive chat scenes.
-                      </div>
-                    </div>
-                  ) : null}
-                </motion.button>
-              ))}
+                </div>
+              </div>
             </div>
-          )}
-        </section>
-
-        {/* Tags — merged for search (gender, orientation, role, forge tags) */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          {profileSearchTags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-xs text-muted-foreground/95"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        </>
-        ) : null}
-
-        {user && !consumeFeatureLocked && !isDropLanding && !sampleLook && companion ? (
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden px-3 pt-2 pb-[max(5.75rem,calc(4.75rem+env(safe-area-inset-bottom,0px)))] bg-gradient-to-t from-black via-black/90 to-transparent">
-            <div className="pointer-events-auto mx-auto max-w-lg">
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleStartChat()}
-                className="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary px-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 touch-manipulation"
-              >
-                <MessageCircle className="h-5 w-5 shrink-0" />
-                Start chat
-              </motion.button>
-            </div>
-          </div>
-        ) : null}
-      </main>
-
+          ) : null
+        }
+      />
       <DiscoverPurchaseConfirmDialog
         open={buyConfirmProfileOpen}
         name={companion.name}
@@ -1717,8 +1053,7 @@ const CompanionProfile = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-    </div>
+    </>
   );
 };
 

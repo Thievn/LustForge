@@ -14,6 +14,7 @@ import { defaultGrokProductChatModel } from "../_shared/xaiGrokChatRaw.ts";
 import { lustforgeNarrowUserScopeBlock } from "../_shared/lustforgeNarrowUserScope.ts";
 import { lustforgeChatServerSystemPrefix } from "../_shared/lustforgeChatSystemPrefix.ts";
 import { GROK_VOICE_UNCENSORED_SYSTEM_PREFIX } from "../_shared/grokVoiceUncensoredPrefix.ts";
+import { grokVisionImageModelCandidates } from "../_shared/grokVisionModels.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +57,61 @@ function extractJsonObject(text: string): unknown {
 
 const STATIC_SMART_FALLBACK = ["Tell me more…", "I love that.", "Keep going."];
 
+type VoiceSourceBody = {
+  name?: string;
+  tagline?: string;
+  bio?: string;
+  backstory?: string;
+  personality?: string;
+  appearance?: string;
+  role?: string;
+};
+
+function clipField(value: unknown, max: number): string {
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+async function xaiChat(opts: {
+  apiKey: string;
+  model: string;
+  messages: unknown[];
+  maxTokens: number;
+  temperature: number;
+  convId?: string;
+}): Promise<{ ok: true; content: string } | { ok: false; error: string; status: number }> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${opts.apiKey}`,
+    "Content-Type": "application/json",
+  };
+  if (opts.convId) headers["x-grok-conv-id"] = opts.convId;
+  const res = await fetch("https://api.x.ai/v1/chat/completions", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: opts.model,
+      messages: opts.messages,
+      max_tokens: opts.maxTokens,
+      temperature: opts.temperature,
+    }),
+  });
+  const rawText = await res.text();
+  let raw: unknown;
+  try {
+    raw = JSON.parse(rawText) as unknown;
+  } catch {
+    return { ok: false, status: 502, error: `xAI invalid JSON (HTTP ${res.status})` };
+  }
+  if (!res.ok) {
+    const errMsg =
+      typeof raw === "object" && raw !== null && "error" in raw
+        ? JSON.stringify((raw as { error?: unknown }).error)
+        : rawText.slice(0, 400);
+    return { ok: false, status: 502, error: `xAI HTTP ${res.status}: ${errMsg}` };
+  }
+  const content = (raw as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]?.message?.content?.trim() || "";
+  return { ok: true, content };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -85,27 +141,35 @@ Deno.serve(async (req) => {
       systemPrompt?: string;
       companionName?: string;
       connectedToys?: unknown;
+      imageDataUrl?: string;
+      voiceSource?: VoiceSourceBody;
     } | null;
 
     const intent = String(body?.intent ?? "").trim();
-    const allowed = new Set(["live_voice", "image_teaser", "classic_chat", "smart_replies"]);
+    const allowed = new Set(["live_voice", "image_teaser", "classic_chat", "smart_replies", "voice_copy", "private_photo_react"]);
     if (!allowed.has(intent)) {
       return json(
         {
           error:
-            "grok-chat: pass body.intent one of: \"classic_chat\", \"live_voice\", \"image_teaser\", \"smart_replies\".",
+            "grok-chat: pass body.intent one of: \"classic_chat\", \"live_voice\", \"image_teaser\", \"smart_replies\", \"voice_copy\", \"private_photo_react\".",
         },
         400,
       );
     }
 
     const systemRaw = String(body?.systemPrompt ?? "").trim();
-    if (intent !== "smart_replies" && !systemRaw) {
+    if (intent !== "smart_replies" && intent !== "voice_copy" && !systemRaw) {
       return json({ error: "systemPrompt is required" }, 400);
     }
 
     const companionIdForGate = String(body?.companionId ?? "").trim();
-    if (intent === "classic_chat" || intent === "live_voice" || intent === "smart_replies" || intent === "image_teaser") {
+    if (
+      intent === "classic_chat" ||
+      intent === "live_voice" ||
+      intent === "smart_replies" ||
+      intent === "image_teaser" ||
+      intent === "private_photo_react"
+    ) {
       if (!companionIdForGate) {
         return json(
           {
@@ -122,6 +186,120 @@ Deno.serve(async (req) => {
       const svc = createClient(supabaseUrl, svcKey);
       const gate = await assertUserUnlockedCompanionForSpend(svc, sessionUser.id, companionIdForGate);
       if (!gate.ok) return json({ error: gate.message, code: "COMPANION_LOCKED" }, 403);
+    }
+
+    if (intent === "voice_copy") {
+      const src = body?.voiceSource ?? {};
+      const name = clipField(src.name, 80);
+      if (!name) return json({ error: "voiceSource.name is required" }, 400);
+      const userPrompt = `Write profile copy for a fictional consenting adult (21+).
+Use ONLY facts in the fields below. Do not invent places, relatives, events, jobs, or traits that are not written there.
+If something is missing, leave it out. Do not mention apps, credits, or technology.
+Return JSON only: {"voice_teaser":"...","voice_story":"..."}
+voice_teaser: one or two sentences, first person, about 160 characters, human, in their voice.
+voice_story: 3 or 4 sentences, first person, in their voice, from the backstory and bio.
+
+Name: ${name}
+Tagline: ${clipField(src.tagline, 240)}
+Role: ${clipField(src.role, 120)}
+Personality: ${clipField(src.personality, 2000)}
+Bio: ${clipField(src.bio, 4000)}
+Backstory: ${clipField(src.backstory, 6000)}
+Appearance: ${clipField(src.appearance, 1500)}`;
+      const model = defaultGrokProductChatModel((n) => Deno.env.get(n));
+      const result = await xaiChat({
+        apiKey,
+        model,
+        maxTokens: 500,
+        temperature: 0.7,
+        messages: [
+          { role: "system", content: "You return only JSON. You never invent biography." },
+          { role: "user", content: userPrompt },
+        ],
+      });
+      if (!result.ok) return json({ error: result.error }, result.status);
+      const parsed = extractJsonObject(result.content) as { voice_teaser?: unknown; voice_story?: unknown } | null;
+      const voice_teaser = clipField(parsed?.voice_teaser, 180);
+      const voice_story = clipField(parsed?.voice_story, 1200);
+      if (voice_teaser.length < 20 || voice_story.length < 40) {
+        return json({ error: "Could not write her introduction." }, 502);
+      }
+      return json({ voice_teaser, voice_story, model });
+    }
+
+    if (intent === "private_photo_react") {
+      const imageDataUrl = String(body?.imageDataUrl ?? "").trim();
+      if (!imageDataUrl.startsWith("data:image/") || imageDataUrl.length > 4_500_000) {
+        return json({ error: "She needs a picture to look at." }, 400);
+      }
+      const visionModels = grokVisionImageModelCandidates((n) => Deno.env.get(n));
+      let sawMinor: boolean | null = null;
+      for (const model of visionModels) {
+        const screen = await xaiChat({
+          apiKey,
+          model,
+          maxTokens: 80,
+          temperature: 0,
+          messages: [
+            {
+              role: "system",
+              content:
+                'Does this image appear to show anyone under 21? Reply JSON only: {"minor": true or false}. If you are unsure, minor is true.',
+            },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Look at this picture." },
+                { type: "image_url", image_url: { url: imageDataUrl } },
+              ],
+            },
+          ],
+        });
+        if (!screen.ok) continue;
+        const parsed = extractJsonObject(screen.content) as { minor?: unknown } | null;
+        if (parsed && typeof parsed.minor === "boolean") {
+          sawMinor = parsed.minor;
+          break;
+        }
+      }
+      if (sawMinor === true) {
+        return json({ error: "She can't look at that picture." }, 400);
+      }
+      const threadRaw = Array.isArray(body?.messages) ? body!.messages! : [];
+      let reaction = "";
+      let usedModel = visionModels[0] ?? "grok-4.3";
+      for (const model of visionModels) {
+        const result = await xaiChat({
+          apiKey,
+          model,
+          maxTokens: 280,
+          temperature: 0.85,
+          convId: await grokConversationCacheId(sessionUser.id, companionIdForGate),
+          messages: [
+            {
+              role: "system",
+              content: `${systemRaw}\n\nThe user just showed you a private photo only they can see. React in character, in the first person, in two or three sentences. Describe what you notice only if it is an adult. Do not mention apps, storage, or credits. If you cannot see the picture, say you want them to send it again.`,
+            },
+            ...threadRaw.slice(-6).map((m) => ({
+              role: m.role === "assistant" ? "assistant" : "user",
+              content: String(m.content ?? "").slice(0, 500),
+            })),
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Private photo — tell me what you think." },
+                { type: "image_url", image_url: { url: imageDataUrl } },
+              ],
+            },
+          ],
+        });
+        if (!result.ok || !result.content.trim()) continue;
+        reaction = result.content.trim();
+        usedModel = model;
+        break;
+      }
+      if (!reaction) return json({ error: "She couldn't see that picture just now." }, 502);
+      return json({ response: reaction, model: usedModel });
     }
 
     const threadRaw = Array.isArray(body?.messages) ? body!.messages! : [];

@@ -78,6 +78,7 @@ import { buildForgeCharacterReferenceFallback } from "@/lib/forgeCharacterRefere
 import { invokeParseCompanionPrompt } from "@/lib/invokeParseCompanionPrompt";
 import { withAsyncTimeout } from "@/lib/withAsyncTimeout";
 import { invokeGenerateLiveCallOptions } from "@/lib/invokeGenerateLiveCallOptions";
+import { ensureVoiceCopy } from "@/lib/companionVoiceCopy";
 import { formatSupabaseError } from "@/lib/supabaseError";
 import { fallbackForgeDisplayName } from "@/lib/forgeRandomName";
 import { FORGE_ACCENT_TRAIT_POOL, FORGE_ACCENT_TRAIT_SET } from "@/lib/forgeAccentTraits";
@@ -2735,6 +2736,29 @@ User flavor notes: ${extraNotes || "none"}`;
       void queryClient.invalidateQueries({ queryKey: ["companions"] });
       void queryClient.invalidateQueries({ queryKey: ["vault-collection"] });
       void queryClient.invalidateQueries({ queryKey: ["admin-custom-characters"] });
+      if (insertedRows?.length) {
+        insertedRows.forEach((row, index) => {
+          const source = rows[index] as {
+            name?: string;
+            tagline?: string;
+            bio?: string;
+            backstory?: string;
+            personality?: string;
+            appearance?: string;
+            role?: string;
+          } | undefined;
+          if (!row?.id || !source?.name) return;
+          void ensureVoiceCopy("custom_characters", String(row.id), {
+            name: source.name,
+            tagline: source.tagline,
+            bio: source.bio,
+            backstory: source.backstory,
+            personality: source.personality,
+            appearance: source.appearance,
+            role: source.role,
+          }).catch(() => undefined);
+        });
+      }
       if (insertedRows?.[0]?.id) {
         const ccFull = `cc-${String(insertedRows[0].id)}`;
         void invokeGenerateLiveCallOptions(ccFull, { skipCache: true }).catch(() => undefined);

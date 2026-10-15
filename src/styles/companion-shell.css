@@ -1,0 +1,192 @@
+/* Boudoir companion profile + chat. Scoped so the rest of the app keeps its theme. */
+/* Companion profile + chat — extends style.css tokens */
+.lf-boudoir {--bg:#1B1620;--card:#262030;--card2:#2F2839;--bd:rgba(255,255,255,.08);--acc:#D6336C;--acc-h:#E0457B;--acc-t:#F57AA3;--gold:#D4AF37;--tx:#F4EEF2;--tx2:#B8A9BC;--r:16px;--r2:14px;--wine:#2A1424;--wine2:#3A1C32;--rose:#D6336C;--rose-s:#F57AA3;--velv:#3B1D33;--velv2:#47223B;--glow:#4ADE80}
+.lf-boudoir {background:#1B1620 radial-gradient(900px 500px at 85% -10%,rgba(214,51,108,.12),transparent 60%);overflow-x:hidden}
+.lf-boudoir svg.i {width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.lf-boudoir svg.i.s {width:18px;height:18px}
+.lf-boudoir button {font-family:inherit;color:inherit}
+.lf-boudoir .glass {background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:var(--tx)}
+.lf-boudoir .btn.glass:hover {background:rgba(255,255,255,.14)}
+.lf-boudoir .ib2 {width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(27,22,32,.5);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;color:var(--tx)}
+.lf-boudoir .ib2:hover {background:rgba(255,255,255,.14)}
+.lf-boudoir .glow-dot {width:9px;height:9px;border-radius:50%;background:var(--glow);box-shadow:0 0 0 0 rgba(74,222,128,.5),0 0 10px rgba(74,222,128,.7);animation:pulse 3.2s ease-in-out infinite;display:inline-block;flex:none}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(74,222,128,0),0 0 14px rgba(74,222,128,.9)}}
+
+/* ---------- PROFILE ---------- */
+.lf-boudoir .pf {display:grid;grid-template-columns:1fr}
+.lf-boudoir .pf-float {position:absolute;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top))}
+.lf-boudoir .pf-float .wordmark {font-size:18px}
+.lf-boudoir .hero {position:relative;height:58svh;min-height:430px;overflow:hidden;cursor:zoom-in;background:#241a2b}
+.lf-boudoir .hero img {width:100%;height:100%;object-fit:cover;object-position:50% 12%}
+.lf-boudoir .hero:after {content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(27,22,32,.35) 0,transparent 22%,transparent 42%,rgba(27,22,32,.72) 74%,#1B1620 100%);pointer-events:none}
+.lf-boudoir .hero .over {position:absolute;left:0;right:0;bottom:0;padding:0 22px 20px;z-index:2;pointer-events:none}
+.lf-boudoir .mood-line {display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:#E7F8EE;padding:6px 12px;border-radius:999px;background:rgba(27,22,32,.55);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.lf-boudoir .over h1 {font-size:36px;margin:12px 0 4px;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+.lf-boudoir .over .tag {color:#F0DFE8;font-size:16px;text-shadow:0 1px 12px rgba(0,0,0,.6)}
+.lf-boudoir .fs-hint {position:absolute;top:70px;right:16px;z-index:3;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:550;color:#F4EEF2;padding:6px 10px;border-radius:999px;background:rgba(27,22,32,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none}
+.lf-boudoir .fs-hint svg.i {width:14px;height:14px}
+.lf-boudoir .pf-body {padding:6px 18px 56px;max-width:720px;margin:0 auto;width:100%}
+.lf-boudoir .cta {display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:10px;margin:2px 0 22px}
+.lf-boudoir .cta .btn {padding:0 10px;min-height:50px;font-size:14.5px;white-space:nowrap}
+.lf-boudoir .bio {font-size:16px;line-height:1.65;color:#EFE4EA}
+.lf-boudoir .bio .more {display:none;margin-top:12px;color:#D9C9D2}
+.lf-boudoir .bio.open .more {display:block;animation:in .3s ease}
+.lf-boudoir .link {background:none;border:0;color:var(--acc-t);font-weight:600;font-size:15px;cursor:pointer;padding:8px 0;min-height:44px}
+.lf-boudoir .tags {display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 22px}
+.lf-boudoir .tags .chip {min-height:34px;font-size:13.5px;color:#E9DCE4;background:rgba(214,51,108,.14);border-color:rgba(245,122,163,.28)}
+.lf-boudoir .acc {background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
+.lf-boudoir .acc>button {width:100%;display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 18px;background:none;border:0;font:600 16px Inter;cursor:pointer;text-align:left}
+.lf-boudoir .acc>button svg {transition:transform .25s;color:var(--tx2)}
+.lf-boudoir .acc.open>button svg {transform:rotate(180deg)}
+.lf-boudoir .acc .pn {display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.lf-boudoir .acc.open .pn {grid-template-rows:1fr}
+.lf-boudoir .acc .pn>div {overflow:hidden}
+.lf-boudoir .acc .pn .in {padding:0 18px 18px;color:#D9C9D2;font-size:15px;line-height:1.65}
+.lf-boudoir .rows {display:flex;flex-direction:column;gap:10px}
+.lf-boudoir .rows .r {display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd);font-size:14.5px}
+.lf-boudoir .rows .r:last-child {border:0}.lf-boudoir .rows .r span:first-child {color:var(--tx2)}.lf-boudoir .rows .r span:last-child {text-align:right}
+.lf-boudoir .vitems {display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.lf-boudoir .vitems figure {margin:0;text-align:center;font-size:12px;color:var(--tx2)}
+.lf-boudoir .vitems img {aspect-ratio:1;object-fit:cover;border-radius:12px;border:1px solid var(--bd);margin-bottom:6px;width:100%;background:var(--card2)}
+.lf-boudoir .gal {display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lf-boudoir .gal button {padding:0;border:1px solid var(--bd);border-radius:12px;overflow:hidden;aspect-ratio:3/4;background:var(--card2);cursor:zoom-in}
+.lf-boudoir .gal img {width:100%;height:100%;object-fit:cover;object-position:top}
+.lf-boudoir .gal .locked {display:grid;place-items:center;color:var(--tx2);font-size:12px;gap:4px;cursor:default;background:linear-gradient(160deg,#3A1C32,#241a2b)}
+.lf-boudoir .gal .locked span {display:grid;place-items:center;gap:4px}
+.lf-boudoir .relg {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lf-boudoir .relg .box {background:var(--card2);border:1px solid var(--bd);border-radius:14px;padding:14px}
+.lf-boudoir .relg .box b {display:block;font-size:22px}.lf-boudoir .relg .box span {font-size:13px;color:var(--tx2)}
+.lf-boudoir .bond {height:8px;border-radius:99px;background:var(--card2);margin-top:14px;overflow:hidden}.lf-boudoir .bond i {display:block;height:100%;width:22%;background:linear-gradient(90deg,var(--acc),var(--acc-t));border-radius:99px}
+.lf-boudoir .lb {position:fixed;inset:0;z-index:100;background:rgba(14,10,16,.94);display:none;align-items:center;justify-content:center;padding:16px}
+.lf-boudoir .lb.on {display:flex;animation:in .25s ease}
+.lf-boudoir .lb img {max-height:92vh;max-width:96vw;object-fit:contain;border-radius:14px}
+.lf-boudoir .lb .x {position:absolute;top:14px;right:14px}
+@media(min-width:900px){
+ .lf-boudoir .pf {grid-template-columns:1fr 1fr;min-height:100vh}
+ .lf-boudoir .hero {position:sticky;top:0;height:100vh;min-height:0}
+ .lf-boudoir .hero:after {background:linear-gradient(90deg,transparent 55%,#1B1620 100%),linear-gradient(180deg,rgba(27,22,32,.3),transparent 20%,transparent 60%,rgba(27,22,32,.75) 100%)}
+ .lf-boudoir .hero .over {padding:0 56px 48px}.lf-boudoir .over h1 {font-size:52px}.lf-boudoir .over .tag {font-size:18px}
+ .lf-boudoir .fs-hint {top:80px;right:auto;left:24px}
+ .lf-boudoir .pf-float {padding:20px 28px}.lf-boudoir .pf-float.r {left:0}
+ .lf-boudoir .pf-body {padding:96px 56px 80px 24px;margin:0;max-width:680px}
+ .lf-boudoir .cta .btn {font-size:15px}
+}
+
+/* ---------- CHAT ---------- */
+.lf-boudoir .lf-chatpage {height:100svh;overflow:hidden}
+.lf-boudoir .app {height:100svh;display:grid;grid-template-columns:minmax(0,1fr)}
+.lf-boudoir .cm {min-width:0}
+.lf-boudoir .col-l, .lf-boudoir .col-r {display:none}
+.lf-boudoir .cm {display:flex;flex-direction:column;height:100svh;min-height:0;position:relative;background:linear-gradient(180deg,#221826,#1B1620 40%);animation:slideup .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideup{from{transform:translateY(100%)}}
+.lf-boudoir .ch {display:flex;align-items:center;gap:12px;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(27,22,32,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);z-index:5}
+.lf-boudoir .ch .av {width:42px;height:42px;border-radius:50%;object-fit:cover;object-position:50% 12%;border:1.5px solid rgba(245,122,163,.5)}
+.lf-boudoir .ch .who {flex:1;min-width:0;line-height:1.25}.lf-boudoir .ch .who b {display:block;font-size:16px}
+.lf-boudoir .ch .who span {display:flex;align-items:center;gap:7px;font-size:12.5px;color:#9FE6BB}
+.lf-boudoir .ch .who span.mood {color:var(--tx2)}
+.lf-boudoir .scene-bar {display:none;align-items:center;gap:10px;margin:10px 14px 0;padding:10px 14px;border-radius:14px;background:rgba(214,51,108,.14);border:1px solid rgba(245,122,163,.3);font-size:13.5px;color:#F6DCE6}
+.lf-boudoir .scene-bar.on {display:flex}.lf-boudoir .scene-bar b {color:#fff}.lf-boudoir .scene-bar button {margin-left:auto;background:none;border:0;color:var(--acc-t);font-weight:600;cursor:pointer;min-height:36px;padding:0 4px}
+.lf-boudoir .msgs {flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+.lf-boudoir .day {align-self:center;font-size:12px;color:var(--tx2);padding:4px 12px;border-radius:99px;background:rgba(255,255,255,.05);margin:4px 0 8px}
+.lf-boudoir .m {max-width:80%;display:flex;flex-direction:column;position:relative;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.lf-boudoir .m.her {align-self:flex-start}.lf-boudoir .m.me {align-self:flex-end;align-items:flex-end}
+.lf-boudoir .bub {padding:10px 14px;border-radius:20px;font-size:15.5px;line-height:1.45;overflow-wrap:anywhere}
+.lf-boudoir .her .bub {background:var(--velv);border:1px solid rgba(255,255,255,.07);border-bottom-left-radius:6px;color:#F6ECF1}
+.lf-boudoir .me .bub {background:var(--acc);color:#fff;border-bottom-right-radius:6px}
+.lf-boudoir .meta {font-size:11.5px;color:var(--tx2);margin:3px 6px 0;display:flex;gap:5px;align-items:center}
+.lf-boudoir .tick {display:inline-flex;color:#B8A9BC}.lf-boudoir .tick svg.i {width:13px;height:13px;stroke-width:2.2}.lf-boudoir .tick.read {color:var(--acc-t)}
+.lf-boudoir .tick .t2 {margin-left:-8px}
+.lf-boudoir .pic {padding:5px;border-radius:20px;cursor:zoom-in;display:block}
+.lf-boudoir .her .pic {background:var(--velv);border:1px solid rgba(255,255,255,.07);border-bottom-left-radius:6px}
+.lf-boudoir .me .pic {background:var(--acc);border-bottom-right-radius:6px}
+.lf-boudoir .pic img, .lf-boudoir .pic .ph {width:220px;max-width:100%;aspect-ratio:3/4;object-fit:cover;object-position:50% 15%;border-radius:15px}
+.lf-boudoir .ph {background:linear-gradient(160deg,#f6b58a,#d6558a 55%,#4b2a63);display:grid;place-items:center;color:rgba(255,255,255,.85);font-size:13px;font-weight:600}
+.lf-boudoir .pic.sq img, .lf-boudoir .pic.sq .ph {aspect-ratio:1}
+.lf-boudoir .lock-note {display:flex;align-items:center;gap:6px;font-size:12px;color:#E8CBD7;margin:4px 6px 0}.lf-boudoir .lock-note svg.i {width:13px;height:13px}
+.lf-boudoir .react {position:absolute;bottom:100%;display:none;gap:2px;padding:6px 8px;border-radius:99px;background:#3a2a40;border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:6;margin-bottom:4px}
+.lf-boudoir .m.her .react {left:0}.lf-boudoir .m.me .react {right:0}.lf-boudoir .react.on {display:flex;animation:in .2s ease}
+.lf-boudoir .react button {background:none;border:0;font-size:22px;cursor:pointer;width:38px;height:38px;border-radius:50%}.lf-boudoir .react button:hover {background:rgba(255,255,255,.1)}
+.lf-boudoir .rx {position:absolute;bottom:-12px;font-size:13px;background:#3a2a40;border:1px solid var(--bd);border-radius:99px;padding:1px 6px}.lf-boudoir .her .rx {right:-8px}.lf-boudoir .me .rx {left:-8px}
+.lf-boudoir .hint {align-self:center;font-size:12px;color:#9c8ca3;margin:6px 0}
+.lf-boudoir .typing {align-self:flex-start;display:none;gap:6px;padding:14px 16px;border-radius:20px;border-bottom-left-radius:6px;background:var(--velv);border:1px solid rgba(255,255,255,.07)}
+.lf-boudoir .typing.on {display:flex}
+.lf-boudoir .typing i {width:7px;height:7px;border-radius:50%;background:#CDB9C7;opacity:.5;animation:bob 1.4s ease-in-out infinite}
+.lf-boudoir .typing i:nth-child(2) {animation-delay:.18s}.lf-boudoir .typing i:nth-child(3) {animation-delay:.36s}
+@keyframes bob{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-4px);opacity:.95}}
+.lf-boudoir .comp {display:flex;align-items:flex-end;gap:8px;padding:10px 12px;padding-bottom:max(12px,env(safe-area-inset-bottom));background:rgba(27,22,32,.92);border-top:1px solid var(--bd);position:relative}
+.lf-boudoir .comp .ib2 {background:var(--card2);flex:none}
+.lf-boudoir .comp .plus.open {background:var(--acc);border-color:var(--acc);transform:rotate(45deg)}
+.lf-boudoir .comp .plus {transition:transform .2s,background .2s}
+.lf-boudoir .inp {flex:1;min-height:44px;max-height:120px;border-radius:22px;background:var(--card);border:1px solid rgba(255,255,255,.1);color:var(--tx);font:400 16px/1.4 Inter;padding:11px 16px;resize:none;outline:none}
+.lf-boudoir .inp::placeholder {color:#8f8095}.lf-boudoir .inp:focus {border-color:rgba(245,122,163,.55)}
+.lf-boudoir .sendb {background:var(--acc)!important;border-color:var(--acc)!important;display:none}.lf-boudoir .comp.has .sendb {display:grid}.lf-boudoir .comp.has .mic {display:none}
+.lf-boudoir .qsheet {position:absolute;left:10px;right:10px;bottom:76px;background:#2b2133;border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:8px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:none;z-index:8}
+.lf-boudoir .qsheet.on {display:block;animation:in .22s ease}
+.lf-boudoir .qsheet button {width:100%;display:flex;align-items:center;gap:14px;min-height:52px;padding:0 14px;border:0;background:none;border-radius:14px;font:550 15px Inter;text-align:left;cursor:pointer}
+.lf-boudoir .qsheet button:hover {background:rgba(255,255,255,.07)}
+.lf-boudoir .qsheet button .ico {width:36px;height:36px;border-radius:50%;background:rgba(214,51,108,.18);display:grid;place-items:center;color:var(--acc-t)}
+.lf-boudoir .qsheet button small {display:block;color:var(--tx2);font-weight:400;font-size:12.5px}
+.lf-boudoir .scrim {position:absolute;inset:0;z-index:7;display:none}.lf-boudoir .scrim.on {display:block}
+.lf-boudoir .mini {display:none}
+.lf-boudoir .drop {display:none}
+
+@media(min-width:900px){
+ .lf-boudoir .lf-chatpage {height:100vh}
+ .lf-boudoir .app {height:100vh;grid-template-columns:300px minmax(0,1fr) 340px;transition:grid-template-columns .3s ease}
+ .lf-boudoir .app.rc {grid-template-columns:300px minmax(0,1fr) 0px}
+ .lf-boudoir .col-l, .lf-boudoir .col-r {display:flex;flex-direction:column;min-height:0;overflow-y:auto;background:#1F1824}
+ .lf-boudoir .col-l {border-right:1px solid var(--bd);padding:22px 20px;gap:16px}
+ .lf-boudoir .col-r {border-left:1px solid var(--bd);padding:22px 20px;gap:20px;overflow-x:hidden}
+ .lf-boudoir .app.rc .col-r {padding:0;border:0;visibility:hidden}
+ .lf-boudoir .cm {height:100vh;animation:none}
+ .lf-boudoir .ch {padding:14px 20px;padding-top:14px}.lf-boudoir .ch .back {display:none}
+ .lf-boudoir .msgs {padding:24px 8%}.lf-boudoir .m {max-width:68%}
+ .lf-boudoir .comp {padding:14px 8%}
+ .lf-boudoir .qsheet {left:8%;bottom:80px;width:340px;right:auto}
+ .lf-boudoir .mini .ph0 {aspect-ratio:3/4;border-radius:18px;overflow:hidden;position:relative;border:1px solid var(--bd)}
+ .lf-boudoir .mini .ph0 img {width:100%;height:100%;object-fit:cover;object-position:50% 10%}
+ .lf-boudoir .mini {display:flex;flex-direction:column;gap:14px}
+ .lf-boudoir .mini h2 {font-size:24px}
+ .lf-boudoir .col-l .wordmark {font-size:19px;display:block;margin-bottom:6px}
+ .lf-boudoir .col-l .btn {width:100%}
+ .lf-boudoir .col-r h3 {font-size:14px;color:var(--tx2);font-weight:600;letter-spacing:.02em;margin-bottom:10px}
+ .lf-boudoir .moods {display:flex;flex-wrap:wrap;gap:8px}.lf-boudoir .moods .chip {cursor:pointer;min-height:36px;font:550 13px Inter;border:1px solid var(--bd)}
+ .lf-boudoir .moods .chip:hover {background:var(--velv2)}
+ .lf-boudoir .vgrid {display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+ .lf-boudoir .vgrid button, .lf-boudoir .pgrid button {padding:0;border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:var(--card2);cursor:pointer;text-align:center;font-size:11.5px;color:var(--tx2)}
+ .lf-boudoir .vgrid img {aspect-ratio:1;width:100%;object-fit:cover}.lf-boudoir .vgrid span {display:block;padding:4px 2px 6px}
+ .lf-boudoir .vgrid button:hover, .lf-boudoir .pgrid button:hover, .lf-boudoir .moods .chip:hover {border-color:rgba(245,122,163,.5)}
+ .lf-boudoir .pgrid {display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.lf-boudoir .pgrid img {aspect-ratio:3/4;width:100%;object-fit:cover;object-position:top}
+ .lf-boudoir .dz {border:1.5px dashed rgba(245,122,163,.4);border-radius:16px;padding:18px 12px;text-align:center;color:var(--tx2);font-size:13.5px;cursor:pointer;transition:.2s;background:rgba(214,51,108,.05)}
+ .lf-boudoir .dz.over, .lf-boudoir .dz:hover {background:rgba(214,51,108,.14);border-color:var(--acc-t);color:#fff}
+ .lf-boudoir .dz svg {display:block;margin:0 auto 6px;color:var(--acc-t)}
+ .lf-boudoir .drop.on {display:grid;position:absolute;inset:0;z-index:20;background:rgba(27,22,32,.88);place-items:center;font-size:18px;font-weight:600;border:2px dashed var(--acc-t);margin:12px;border-radius:20px;pointer-events:none}
+ .lf-boudoir .tools {display:flex;gap:8px;margin-left:auto}
+ .lf-boudoir .tools .ib2 {width:40px;height:40px}.lf-boudoir .tools .ib2.on {background:var(--acc);border-color:var(--acc)}
+ /* floating phone mode */
+ .lf-boudoir.phone .app {grid-template-columns:1fr;background:radial-gradient(700px 500px at 50% 40%,rgba(214,51,108,.14),transparent 70%),#17111b}
+ .lf-boudoir.phone .col-l, .lf-boudoir.phone .col-r {display:none}
+ .lf-boudoir.phone .cm {width:390px;height:min(820px,94vh);margin:auto;border-radius:40px;border:8px solid #0e0a10;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1);overflow:hidden;animation:none}
+ .lf-boudoir.phone .msgs {padding:16px 14px 8px}.lf-boudoir.phone .m {max-width:80%}.lf-boudoir.phone .comp {padding:10px 12px 12px}.lf-boudoir.phone .qsheet {left:10px;bottom:76px;width:auto;right:10px}
+ .lf-boudoir.phone .tools .hide-ph {display:none}
+}
+@media(max-width:899px){.tools{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
+
+.lf-boudoir .wordmark {font-family:'Cinzel Decorative',serif;font-weight:700;font-size:21px;letter-spacing:.02em;color:var(--tx);text-decoration:none}
+.lf-boudoir .wordmark b {color:var(--acc-t);font-weight:700}
+.lf-boudoir .muted {color:var(--tx2)}
+.lf-boudoir h1, .lf-boudoir h2, .lf-boudoir h3 {font-weight:650;letter-spacing:-.01em;line-height:1.2}
+.lf-boudoir .btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border-radius:var(--r2);border:1px solid transparent;background:var(--acc);color:#fff;font:600 15px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:none}
+.lf-boudoir .btn:hover {background:var(--acc-h)}
+.lf-boudoir .btn.ghost {background:transparent;border-color:rgba(255,255,255,.18);color:var(--tx)}
+.lf-boudoir .btn.ghost:hover {background:var(--card2)}
+.lf-boudoir .chip {display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;background:var(--card2);border:1px solid var(--bd);font-size:13px;color:var(--tx2);font-weight:550}
+.lf-boudoir .chip.on {background:var(--acc);border-color:var(--acc);color:#fff}
+.lf-boudoir svg.i {width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.lf-boudoir svg.i.s {width:18px;height:18px}
+.lf-boudoir .lb img {max-height:92vh;max-width:96vw;object-fit:contain;border-radius:14px}
+.lf-boudoir .editbox {display:flex;flex-direction:column;gap:8px}
+.lf-boudoir .editbox textarea {width:100%;border-radius:12px;border:1px solid var(--bd);background:var(--card2);color:var(--tx);padding:10px 12px;font:400 14px/1.45 Inter,system-ui,sans-serif}
+.lf-chatpage {height:100svh;overflow:hidden}
+.lf-boudoir.lf-chatpage, .lf-boudoir .lf-chatpage {height:100svh;overflow:hidden}
