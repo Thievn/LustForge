@@ -58,7 +58,7 @@ export function MobileBottomNav() {
       initial={false}
       className={cn(
         "md:hidden fixed inset-x-0 bottom-0 z-[60]",
-        "border-t border-white/[0.08] bg-[#050508]/95 backdrop-blur-xl shadow-[0_-8px_32px_rgba(0,0,0,0.45)]",
+        "border-t border-white/[0.08] bg-[#1B1620]/95 backdrop-blur-xl shadow-[0_-8px_32px_rgba(0,0,0,0.45)]",
       )}
       aria-label="Main navigation"
     >
@@ -81,7 +81,7 @@ export function MobileBottomNav() {
               <Icon
                 className={cn(
                   "h-5 w-5 shrink-0 transition-transform",
-                  active && "text-[#FF2D7B] drop-shadow-[0_0_10px_rgba(255,45,123,0.35)]",
+                  active && "text-[#D6336C] drop-shadow-[0_0_10px_rgba(214,51,108,0.35)]",
                 )}
                 strokeWidth={active ? 2.25 : 2}
               />
@@ -89,7 +89,7 @@ export function MobileBottomNav() {
                 {label}
               </span>
               {active ? (
-                <span className="mt-0.5 h-0.5 w-6 rounded-full bg-primary shadow-[0_0_8px_rgba(255,45,123,0.6)]" />
+                <span className="mt-0.5 h-0.5 w-6 rounded-full bg-primary shadow-[0_0_8px_rgba(214,51,108,0.6)]" />
               ) : (
                 <span className="mt-0.5 h-0.5 w-6 rounded-full bg-transparent" aria-hidden />
               )}

@@ -48,9 +48,9 @@ export async function bakeLovenseCompanionComboCardPngBlob(args: BakeLovenseComb
   if (!ctx) throw new Error("Canvas unsupported.");
 
   const bg = ctx.createLinearGradient(0, 0, LOVENSE_PROMO_W, LOVENSE_PROMO_H);
-  bg.addColorStop(0, "#050508");
+  bg.addColorStop(0, "#1B1620");
   bg.addColorStop(0.5, "#120818");
-  bg.addColorStop(1, "#050508");
+  bg.addColorStop(1, "#1B1620");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, LOVENSE_PROMO_W, LOVENSE_PROMO_H);
 
@@ -86,7 +86,7 @@ export async function bakeLovenseCompanionComboCardPngBlob(args: BakeLovenseComb
   ctx.fillRect(leftX, leftY, leftW, leftH);
   ctx.restore();
 
-  ctx.strokeStyle = "rgba(255,45,123,0.4)";
+  ctx.strokeStyle = "rgba(214,51,108,0.4)";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.roundRect(leftX, leftY, leftW, leftH, 20);
@@ -116,16 +116,16 @@ export async function bakeLovenseCompanionComboCardPngBlob(args: BakeLovenseComb
   const badgeText = "Pairs with Lovense";
   ctx.font = "bold 12px system-ui,sans-serif";
   const bw = ctx.measureText(badgeText).width + 24;
-  ctx.fillStyle = "rgba(255,45,123,0.22)";
-  ctx.strokeStyle = "rgba(255,45,123,0.55)";
-  ctx.shadowColor = "rgba(255,45,123,0.45)";
+  ctx.fillStyle = "rgba(214,51,108,0.22)";
+  ctx.strokeStyle = "rgba(214,51,108,0.55)";
+  ctx.shadowColor = "rgba(214,51,108,0.45)";
   ctx.shadowBlur = 14;
   ctx.beginPath();
   ctx.roundRect(leftX + 14, leftY + leftH - 100, bw, 28, 10);
   ctx.fill();
   ctx.stroke();
   ctx.shadowBlur = 0;
-  ctx.fillStyle = "#ffb8d9";
+  ctx.fillStyle = "#F57AA3";
   ctx.fillText(badgeText, leftX + 26, leftY + leftH - 80);
 
   const rightX = leftX + leftW + 24;
@@ -134,7 +134,7 @@ export async function bakeLovenseCompanionComboCardPngBlob(args: BakeLovenseComb
   const rightH = LOVENSE_PROMO_H - 160;
 
   ctx.fillStyle = "rgba(255,255,255,0.06)";
-  ctx.strokeStyle = "rgba(255,45,123,0.3)";
+  ctx.strokeStyle = "rgba(214,51,108,0.3)";
   ctx.beginPath();
   ctx.roundRect(rightX, rightY, rightW, rightH, 16);
   ctx.fill();

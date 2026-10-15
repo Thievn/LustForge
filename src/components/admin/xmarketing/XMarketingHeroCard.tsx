@@ -89,7 +89,7 @@ export function XMarketingHeroCard({
             {rarity}
           </span>
           {companion.id.startsWith("cc-") ? (
-            <span className="rounded bg-black/65 border border-[#FF2D7B]/40 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#ffb8d9]">
+            <span className="rounded bg-black/65 border border-[#D6336C]/40 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#F57AA3]">
               Forge
             </span>
           ) : null}

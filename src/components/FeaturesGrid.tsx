@@ -2,23 +2,23 @@ import { Zap, Shield, Heart, Crown, Mic, Image as ImageIcon, Users, Sparkles, Bo
 
 export default function FeaturesGrid() {
   const features = [
-    { icon: MessageCircle, title: "AI Chat Companions", desc: "50+ unique AI personalities with deep memory and distinct voices — growing as users create hybrids", color: "#FF2D7B", comingSoon: false },
-    { icon: Zap, title: "Smart Device Control", desc: "Real-time Lovense integration — your companion controls your devices", color: "#00FFD4", comingSoon: false },
-    { icon: Shield, title: "Safe Word System", desc: "Customizable safe word instantly stops all activity and device control", color: "#FF2D7B", comingSoon: false },
-    { icon: Gamepad2, title: "Hybrid Creation System", desc: "Breed two companions to create unique hybrids with exclusive rarity tiers and device patterns", color: "#00FFD4", comingSoon: false },
-    { icon: Brain, title: "Conversation Memory", desc: "Companions remember your history and build deeper connections", color: "#FF2D7B", comingSoon: false },
-    { icon: Lock, title: "Privacy First", desc: "No logging of private content. Your sessions stay yours", color: "#00FFD4", comingSoon: false },
-    { icon: Palette, title: "Fantasy Scenarios", desc: "Pre-built scenario starters for every companion", color: "#FF2D7B", comingSoon: false },
-    { icon: Settings, title: "Intensity Controls", desc: "Set device intensity limits for a comfortable experience", color: "#00FFD4", comingSoon: false },
+    { icon: MessageCircle, title: "AI Chat Companions", desc: "50+ unique AI personalities with deep memory and distinct voices — growing as users create hybrids", color: "#D6336C", comingSoon: false },
+    { icon: Zap, title: "Smart Device Control", desc: "Real-time Lovense integration — your companion controls your devices", color: "#E0457B", comingSoon: false },
+    { icon: Shield, title: "Safe Word System", desc: "Customizable safe word instantly stops all activity and device control", color: "#D6336C", comingSoon: false },
+    { icon: Gamepad2, title: "Hybrid Creation System", desc: "Breed two companions to create unique hybrids with exclusive rarity tiers and device patterns", color: "#E0457B", comingSoon: false },
+    { icon: Brain, title: "Conversation Memory", desc: "Companions remember your history and build deeper connections", color: "#D6336C", comingSoon: false },
+    { icon: Lock, title: "Privacy First", desc: "No logging of private content. Your sessions stay yours", color: "#E0457B", comingSoon: false },
+    { icon: Palette, title: "Fantasy Scenarios", desc: "Pre-built scenario starters for every companion", color: "#D6336C", comingSoon: false },
+    { icon: Settings, title: "Intensity Controls", desc: "Set device intensity limits for a comfortable experience", color: "#E0457B", comingSoon: false },
     
     // Coming Soon ones
     { icon: Mic, title: "Voice Chat", desc: "Talk to your companions with real-time voice synthesis", color: "#7B2D8E", comingSoon: true },
     { icon: ImageIcon, title: "AI Image Generation", desc: "Companions send custom-generated images during sessions", color: "#7B2D8E", comingSoon: true },
-    { icon: Crown, title: "Custom Companions", desc: "Build companions from scratch with full control over appearance, personality, traits, and art style", color: "#FF2D7B", comingSoon: false },
+    { icon: Crown, title: "Custom Companions", desc: "Build companions from scratch with full control over appearance, personality, traits, and art style", color: "#D6336C", comingSoon: false },
     { icon: Heart, title: "Relationship System", desc: "Companions develop feelings and relationship dynamics over time", color: "#7B2D8E", comingSoon: true },
     { icon: Gamepad2, title: "Interactive Scenarios", desc: "Branching storylines with choices that affect the outcome", color: "#7B2D8E", comingSoon: true },
     { icon: Globe, title: "Multi-Language", desc: "Companions speak your language — 20+ languages supported", color: "#7B2D8E", comingSoon: true },
-    { icon: Star, title: "Favorites & Collections", desc: "Save your favorite moments and revisit them anytime", color: "#FF2D7B", comingSoon: true },
+    { icon: Star, title: "Favorites & Collections", desc: "Save your favorite moments and revisit them anytime", color: "#D6336C", comingSoon: true },
     { icon: Sparkles, title: "Mood Detection", desc: "AI adapts tone and intensity based on your responses", color: "#7B2D8E", comingSoon: true },
     { icon: Book, title: "Story Mode", desc: "Long-form narrative adventures with your companion", color: "#7B2D8E", comingSoon: true },
     { icon: Bell, title: "Companion Notifications", desc: "Your companions reach out when they miss you", color: "#7B2D8E", comingSoon: true },
@@ -44,7 +44,7 @@ export default function FeaturesGrid() {
               className={`relative rounded-xl border p-5 transition-all duration-300 backdrop-blur-md shadow-md shadow-black/15 ${
                 feature.comingSoon
                   ? "border-white/[0.06] bg-card/55 hover:border-white/10"
-                  : "border-white/[0.08] bg-card/80 hover:border-primary/40 hover:glow-pink hover:shadow-[0_10px_36px_rgba(255,45,123,0.08)] ring-1 ring-white/[0.03]"
+                  : "border-white/[0.08] bg-card/80 hover:border-primary/40 hover:glow-pink hover:shadow-[0_10px_36px_rgba(214,51,108,0.08)] ring-1 ring-white/[0.03]"
               }`}
             >
               {feature.comingSoon && (

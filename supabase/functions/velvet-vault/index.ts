@@ -17,6 +17,7 @@ type Item = {
   blurb: string;
   active: boolean;
   is_new?: boolean;
+  pattern_payload?: unknown;
 };
 
 const SLOT_OF: Record<string, LookSlot> = {
@@ -31,7 +32,12 @@ const SLOT_OF: Record<string, LookSlot> = {
   mood: "mood",
 };
 
+function isVibration(item: Item): boolean {
+  return item.kind === "vibration" || item.slot === "vibration";
+}
+
 function slotOf(item: Item): LookSlot {
+  if (isVibration(item)) return "outfit";
   const raw = String(item.slot ?? "");
   if (raw === "outfit" || raw === "accessory" || raw === "scene" || raw === "pose" || raw === "hair" || raw === "mood") return raw;
   return SLOT_OF[item.kind] ?? "outfit";
@@ -82,7 +88,7 @@ Deno.serve(async (req) => {
       neutral: item.neutral,
       poseId: item.pose_id,
       blurb: item.blurb,
-      slot: slotOf(item),
+      slot: isVibration(item) ? "vibration" : slotOf(item),
       isNew: Boolean(item.is_new),
       owned: owned.has(item.id),
       percent: owned.has(item.id) ? 0 : percent.get(item.id) ?? 0,
@@ -115,7 +121,7 @@ Deno.serve(async (req) => {
       return items.find((item) => item.id === key) ?? null;
     };
 
-    const catalog = items.map((item) => ({
+    const catalog = items.filter((item) => !isVibration(item)).map((item) => ({
       id: item.id,
       slot: slotOf(item),
       neutral: item.neutral,
@@ -194,6 +200,28 @@ Deno.serve(async (req) => {
       if (action === "wear") {
         const item = ownedItem(body?.itemId);
         if (!item) return json({ error: "Find it in the Vault first.", code: "NOT_OWNED" }, 403);
+        if (isVibration(item)) {
+          const existing = await svc.from("companion_looks").select("id").eq("user_id", user.id).eq("companion_id", companionId).eq("is_default", true).maybeSingle();
+          if (existing.error && /vibration_id|column/i.test(existing.error.message) === false && existing.error) {
+            return json({ error: "Could not save that pattern." }, 500);
+          }
+          const written = existing.data?.id
+            ? await svc.from("companion_looks").update({ vibration_id: item.id }).eq("id", existing.data.id)
+            : await svc.from("companion_looks").insert({
+              user_id: user.id,
+              companion_id: companionId,
+              name: "Worn now",
+              is_default: true,
+              vibration_id: item.id,
+            });
+          if (written.error) {
+            const missing = /vibration_id|column/i.test(written.error.message);
+            return json({
+              error: missing ? "Vibration treasures need the latest vault migration before they can be applied." : "Could not save that pattern.",
+            }, missing ? 503 : 500);
+          }
+          return json({ ok: true, slot: "vibration", itemId: item.id, name: item.name, pattern: item.pattern_payload ?? null });
+        }
         const slot = slotOf(item);
         const column = `${slot === "pose" ? "pose" : slot}_id`;
         const existing = await svc.from("companion_looks").select("id").eq("user_id", user.id).eq("companion_id", companionId).eq("is_default", true).maybeSingle();

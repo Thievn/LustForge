@@ -106,7 +106,7 @@ export function ChatQuickActionFab({ onAction, isActionDisabled, luxury = false 
           "flex items-center justify-center rounded-full border shadow-lg transition-shadow",
           luxury
             ? "h-10 w-10 border-fuchsia-500/25 bg-black/55 text-fuchsia-100 backdrop-blur-md hover:shadow-[0_0_22px_rgba(236,72,153,0.28)] sm:h-11 sm:w-11"
-            : "h-12 w-12 border-primary/40 bg-gradient-to-br from-[#FF2D7B] to-[hsl(280_45%_32%)] text-white hover:shadow-[0_0_28px_rgba(255,45,123,0.45)] sm:h-14 sm:w-14",
+            : "h-12 w-12 border-primary/40 bg-gradient-to-br from-[#D6336C] to-[hsl(280_45%_32%)] text-white hover:shadow-[0_0_28px_rgba(214,51,108,0.45)] sm:h-14 sm:w-14",
         )}
         aria-expanded={open}
         aria-label={open ? "Close quick actions" : "Quick actions — toys, praise, gallery"}

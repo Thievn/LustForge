@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 
 type ProductDraft = {
   id: string;

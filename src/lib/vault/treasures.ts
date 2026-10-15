@@ -2,8 +2,8 @@ import { POSE_SET } from "../../../supabase/functions/_shared/studioPoseIds";
 import type { VaultRarity } from "../../../supabase/functions/_shared/vaultDraw";
 
 export type { VaultRarity };
-export type VaultCategory = "lingerie" | "swim" | "night" | "costume" | "accessory" | "scene" | "pose" | "hair" | "mood";
-export type TreasureSlot = "outfit" | "accessory" | "scene" | "pose" | "hair" | "mood";
+export type VaultCategory = "lingerie" | "swim" | "night" | "costume" | "accessory" | "scene" | "pose" | "hair" | "mood" | "vibration";
+export type TreasureSlot = "outfit" | "accessory" | "scene" | "pose" | "hair" | "mood" | "vibration";
 
 export type TreasureSeed = {
   id: string;
@@ -16,6 +16,8 @@ export type TreasureSeed = {
   poseId?: string;
   blurb: string;
   isNew: boolean;
+  /** Lovense-compatible payload. Only vibration treasures carry one. */
+  pattern?: Record<string, unknown>;
 };
 
 export const SLOT_OF: Record<VaultCategory, TreasureSlot> = {
@@ -28,6 +30,7 @@ export const SLOT_OF: Record<VaultCategory, TreasureSlot> = {
   pose: "pose",
   hair: "hair",
   mood: "mood",
+  vibration: "vibration",
 };
 
 export const VAULT_CATEGORIES: Array<{ id: VaultCategory; label: string }> = [
@@ -40,6 +43,7 @@ export const VAULT_CATEGORIES: Array<{ id: VaultCategory; label: string }> = [
   { id: "pose", label: "Poses" },
   { id: "hair", label: "Hair & Makeup" },
   { id: "mood", label: "Moods & Lighting" },
+  { id: "vibration", label: "Vibrations" },
 ];
 
 export const CATEGORY_REWARDS: Record<VaultCategory, { title: string; badge: string }> = {
@@ -52,14 +56,15 @@ export const CATEGORY_REWARDS: Record<VaultCategory, { title: string; badge: str
   pose: { title: "She knows the angle", badge: "Frame" },
   hair: { title: "How she woke", badge: "Comb" },
   mood: { title: "The light she keeps", badge: "Flame" },
+  vibration: { title: "She knows the rhythm", badge: "Pulse" },
 };
 
 export const RARITY_SPLIT: Record<VaultRarity, number> = {
-  silk: 63,
-  satin: 43,
-  velvet: 18,
-  forbidden: 16,
-  obsession: 10,
+  silk: 68,
+  satin: 46,
+  velvet: 20,
+  forbidden: 17,
+  obsession: 11,
 };
 
 export const CATEGORY_SPLIT: Record<VaultCategory, Record<VaultRarity, number>> = {
@@ -72,6 +77,7 @@ export const CATEGORY_SPLIT: Record<VaultCategory, Record<VaultRarity, number>> 
   pose: { silk: 6, satin: 4, velvet: 2, forbidden: 2, obsession: 1 },
   hair: { silk: 5, satin: 3, velvet: 2, forbidden: 1, obsession: 1 },
   mood: { silk: 5, satin: 2, velvet: 1, forbidden: 1, obsession: 1 },
+  vibration: { silk: 5, satin: 3, velvet: 2, forbidden: 1, obsession: 1 },
 };
 
 function row(
@@ -82,6 +88,7 @@ function row(
   neutral: string,
   blurb: string,
   poseId?: string,
+  pattern?: Record<string, unknown>,
 ): TreasureSeed {
   return {
     id,
@@ -94,6 +101,7 @@ function row(
     blurb,
     poseId,
     isNew: rarity === "obsession",
+    pattern,
   };
 }
 
@@ -256,10 +264,23 @@ export const TREASURES: TreasureSeed[] = [
   row("mood-neon", "Neon glow", "mood", "velvet", "neon rim light in pink and violet on a fictional adult", "The sign outside writes on her skin."),
   row("mood-rain", "Rain on glass", "mood", "forbidden", "rain on glass, cool light, and a warm lamp on a fictional adult", "The weather stays outside. She does not."),
   row("mood-pulse", "Pulse Dark", "mood", "obsession", "a dark room with a slow iridescent pulse of light on a fictional adult", "The light keeps time with her. So do you."),
+
+  row("vib-pulse", "Pulse", "vibration", "silk", "a slow even pulse, felt more than seen", "A steady pulse. She does not rush it.", undefined, { command: "pattern", pattern: "Pulse", intensity: 50, duration: 8000 }),
+  row("vib-heartbeat", "Heartbeat", "vibration", "silk", "a heartbeat that stays close", "Two beats, then a wait. Like she is listening.", undefined, { command: "pattern", pattern: "Pulse", intensity: 42, duration: 11000 }),
+  row("vib-soft", "Soft wave", "vibration", "silk", "a soft wave that barely arrives", "It comes in, and it does not leave all at once.", undefined, { command: "vibrate", intensity: 22, duration: 9000 }),
+  row("vib-flutter", "Flutter", "vibration", "silk", "a light flutter against the skin", "Short. Then gone. Then back.", undefined, { command: "vibrate", intensity: 25, duration: 6000 }),
+  row("vib-hush", "Hush", "vibration", "silk", "a hush that stays low", "Quiet enough to make her lean in.", undefined, { command: "vibrate", intensity: 18, duration: 7000 }),
+  row("vib-wave", "Wave", "vibration", "satin", "a long wave that rises and falls", "She lets it travel the whole way.", undefined, { command: "pattern", pattern: "Wave", intensity: 50, duration: 10000 }),
+  row("vib-tease", "Tease", "vibration", "satin", "a tease that stops just short", "Almost. Then she makes you wait.", undefined, { command: "pattern", pattern: "Wave", intensity: 36, duration: 12000 }),
+  row("vib-tide", "Tide", "vibration", "satin", "a tide that takes its time", "Out, then further in.", undefined, { command: "pattern", pattern: "Wave", intensity: 50, duration: 12000 }),
+  row("vib-coil", "Deep coil", "vibration", "velvet", "a deep coil that stays low and close", "It sits in one place and does not apologize.", undefined, { command: "vibrate", intensity: 52, duration: 10000 }),
+  row("vib-thorn", "Rose thorn", "vibration", "velvet", "a sharper rhythm with a soft edge", "Sweet, then it catches.", undefined, { command: "vibrate", intensity: 48, duration: 8000 }),
+  row("vib-crescendo", "Crescendo", "vibration", "forbidden", "a climb that does not plateau", "Each pass is louder than the last.", undefined, { command: "pattern", pattern: "Fireworks", intensity: 64, duration: 11000 }),
+  row("vib-obsession", "Obsession wave", "vibration", "obsession", "the pattern she does not share", "It does not fade until she says so.", undefined, { command: "pattern", pattern: "Earthquake", intensity: 70, duration: 15000 }),
 ];
 
 export function assertTreasureCatalog(): void {
-  if (TREASURES.length !== 150) throw new Error(`expected 150 treasures, got ${TREASURES.length}`);
+  if (TREASURES.length !== 162) throw new Error(`expected 162 treasures, got ${TREASURES.length}`);
   const counts: Record<VaultRarity, number> = { silk: 0, satin: 0, velvet: 0, forbidden: 0, obsession: 0 };
   const byCategory = {} as Record<VaultCategory, Record<VaultRarity, number>>;
   const ids = new Set<string>();
@@ -276,6 +297,12 @@ export function assertTreasureCatalog(): void {
     } else if (item.poseId) {
       throw new Error(`${item.id} should not carry a skeleton`);
     }
+    if (item.kind === "vibration") {
+      const command = item.pattern?.command;
+      if (command !== "vibrate" && command !== "pattern") throw new Error(`${item.id} needs a vibration payload`);
+    } else if (item.pattern) {
+      throw new Error(`${item.id} should not carry a vibration payload`);
+    }
     if (item.rarity === "obsession") obsessionCategories.add(item.kind);
     const bucket = (byCategory[item.kind] ??= { silk: 0, satin: 0, velvet: 0, forbidden: 0, obsession: 0 });
     bucket[item.rarity] += 1;
@@ -291,5 +318,5 @@ export function assertTreasureCatalog(): void {
       }
     });
   });
-  if (obsessionCategories.size !== 9) throw new Error("obsession must touch every category");
+  if (obsessionCategories.size !== 10) throw new Error("obsession must touch every category");
 }

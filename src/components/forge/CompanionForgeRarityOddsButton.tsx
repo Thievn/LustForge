@@ -30,8 +30,8 @@ export function CompanionForgeRarityOddsButton({ className, size = "default", fo
           type="button"
           className={cn(
             "shrink-0 inline-flex items-center justify-center rounded-xl border border-violet-500/35 bg-gradient-to-br from-violet-950/70 to-black/60 text-violet-100/90",
-            "shadow-[0_0_18px_rgba(139,92,246,0.28),0_0_28px_rgba(255,45,123,0.12)]",
-            "hover:border-fuchsia-400/50 hover:text-white hover:shadow-[0_0_22px_rgba(167,139,250,0.38),0_0_36px_rgba(255,45,123,0.16)] transition-colors motion-safe:transition-shadow",
+            "shadow-[0_0_18px_rgba(139,92,246,0.28),0_0_28px_rgba(214,51,108,0.12)]",
+            "hover:border-fuchsia-400/50 hover:text-white hover:shadow-[0_0_22px_rgba(167,139,250,0.38),0_0_36px_rgba(214,51,108,0.16)] transition-colors motion-safe:transition-shadow",
             isTitle ? "h-10 w-10 sm:h-11 sm:w-11" : "h-9 w-9",
             className,
           )}

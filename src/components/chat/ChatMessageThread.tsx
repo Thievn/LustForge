@@ -202,15 +202,15 @@ export function ChatMessageThread({
                 "rounded-br-[0.55rem] border border-fuchsia-500/25 bg-gradient-to-br from-[hsl(300_55%_18%)] to-[hsl(280_50%_12%)] text-primary-foreground shadow-[0_4px_28px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition-[box-shadow,transform] duration-300 hover:shadow-[0_4px_32px_rgba(0,0,0,0.5),0_0_36px_rgba(236,72,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]",
               msg.role === "user" &&
                 !luxury &&
-                "rounded-br-[0.55rem] bg-gradient-to-br from-primary to-[hsl(320_70%_32%)] text-primary-foreground shadow-[0_4px_28px_rgba(0,0,0,0.35),0_0_40px_rgba(255,45,123,0.22),inset_0_1px_0_rgba(255,255,255,0.14)]",
+                "rounded-br-[0.55rem] bg-gradient-to-br from-primary to-[hsl(320_70%_32%)] text-primary-foreground shadow-[0_4px_28px_rgba(0,0,0,0.35),0_0_40px_rgba(214,51,108,0.22),inset_0_1px_0_rgba(255,255,255,0.14)]",
               msg.role === "assistant" &&
                 assistantDisplay.signatureBeat &&
                 luxury &&
-                "border border-[#ff2d7b]/30 bg-gradient-to-br from-[#ff2d7b]/[0.12] via-[hsl(280_40%_8%/0.85)] to-[#00ffd4]/[0.06] text-foreground/95 rounded-bl-[0.55rem] backdrop-blur-md shadow-[0_0_32px_rgba(255,45,123,0.12)] ring-1 ring-fuchsia-500/20",
+                "border border-[#D6336C]/30 bg-gradient-to-br from-[#D6336C]/[0.12] via-[hsl(280_40%_8%/0.85)] to-[#E0457B]/[0.06] text-foreground/95 rounded-bl-[0.55rem] backdrop-blur-md shadow-[0_0_32px_rgba(214,51,108,0.12)] ring-1 ring-fuchsia-500/20",
               msg.role === "assistant" &&
                 assistantDisplay.signatureBeat &&
                 !luxury &&
-                "border border-[#ff2d7b]/35 bg-gradient-to-br from-[#ff2d7b]/[0.15] via-fuchsia-950/25 to-[#00ffd4]/[0.08] text-foreground/95 rounded-bl-[0.55rem] backdrop-blur-md shadow-[0_0_44px_rgba(255,45,123,0.16),0_4px_24px_rgba(0,0,0,0.2)] ring-1 ring-[#ff2d7b]/25",
+                "border border-[#D6336C]/35 bg-gradient-to-br from-[#D6336C]/[0.15] via-fuchsia-950/25 to-[#E0457B]/[0.08] text-foreground/95 rounded-bl-[0.55rem] backdrop-blur-md shadow-[0_0_44px_rgba(214,51,108,0.16),0_4px_24px_rgba(0,0,0,0.2)] ring-1 ring-[#D6336C]/25",
               msg.role === "assistant" &&
                 !assistantDisplay.signatureBeat &&
                 luxury &&
@@ -292,7 +292,7 @@ export function ChatMessageThread({
                     type="button"
                     onClick={() => onConfirmPendingImage()}
                     disabled={loading}
-                    className="w-full rounded-lg border border-white/10 bg-black/35 px-2.5 py-1.5 text-center text-xs font-semibold text-primary-foreground shadow-[0_0_14px_rgba(255,45,123,0.16)] ring-1 ring-white/10 hover:bg-black/50 disabled:opacity-40 transition-colors"
+                    className="w-full rounded-lg border border-white/10 bg-black/35 px-2.5 py-1.5 text-center text-xs font-semibold text-primary-foreground shadow-[0_0_14px_rgba(214,51,108,0.16)] ring-1 ring-white/10 hover:bg-black/50 disabled:opacity-40 transition-colors"
                   >
                     {pendingImageButtonLabel}
                   </button>

@@ -49,7 +49,7 @@ export function VaultReveal({
         </div>
         <div className="vault-reveal-card relative w-[min(100%,200px)]">
           <VaultFrame rarity={rarity} owned>
-            <div className="relative aspect-[3/4] overflow-hidden bg-[#14090f]">
+            <div className="relative aspect-[3/4] overflow-hidden bg-[#3A3346]">
               {artFailed || !imageUrl ? (
                 <TreasureArt kind={kind} rarity={rarity} poseId={poseId} />
               ) : (

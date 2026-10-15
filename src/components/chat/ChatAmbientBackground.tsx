@@ -47,7 +47,7 @@ export function ChatAmbientBackground({ activityKey, className, luxuryScanlines 
         className="absolute inset-0 opacity-[0.42]"
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(123, 45, 142, 0.2), transparent 55%), radial-gradient(ellipse 70% 50% at 100% 80%, rgba(255, 45, 123, 0.1), transparent 50%)",
+            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(123, 45, 142, 0.2), transparent 55%), radial-gradient(ellipse 70% 50% at 100% 80%, rgba(214, 51, 108, 0.1), transparent 50%)",
         }}
       />
 
@@ -95,7 +95,7 @@ export function ChatAmbientBackground({ activityKey, className, luxuryScanlines 
         className="absolute inset-0 opacity-[0.055]"
         style={{
           backgroundImage: `linear-gradient(rgba(0, 255, 212, 0.35) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 45, 123, 0.2) 1px, transparent 1px)`,
+            linear-gradient(90deg, rgba(214, 51, 108, 0.2) 1px, transparent 1px)`,
           backgroundSize: "48px 48px",
         }}
       />

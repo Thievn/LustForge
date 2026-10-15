@@ -11,7 +11,7 @@ export function ForgeMomentsBadge({ kind, className }: { kind: ForgeMomentsBadge
         "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] font-sans",
         locks
           ? "border-[hsl(170_100%_42%)]/45 bg-[hsl(170_100%_42%)]/12 text-[hsl(170_100%_72%)]"
-          : "border-[#FF2D7B]/35 bg-[#FF2D7B]/10 text-[#ffb3d1]",
+          : "border-[#D6336C]/35 bg-[#D6336C]/10 text-[#F57AA3]",
         className,
       )}
     >

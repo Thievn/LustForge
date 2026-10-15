@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-05-24T15:23:06.787Z",
+  "generatedAt": "2026-10-15T11:36:17.334Z",
   "items": [
     {
       "id": "dashboard",
@@ -45,6 +45,84 @@
       "path": "/account"
     },
     {
+      "id": "companion-profile",
+      "kind": "route",
+      "label": "Companion profiles",
+      "path": "/dashboard?nav=discover"
+    },
+    {
+      "id": "route-companions",
+      "kind": "route",
+      "label": "/companions",
+      "path": "/companions"
+    },
+    {
+      "id": "route-companions-:id-bond",
+      "kind": "route",
+      "label": "/companions/:id/bond",
+      "path": "/companions/example/bond"
+    },
+    {
+      "id": "route-treasures",
+      "kind": "route",
+      "label": "/treasures",
+      "path": "/treasures"
+    },
+    {
+      "id": "route-messages-group",
+      "kind": "route",
+      "label": "/messages/group",
+      "path": "/messages/group"
+    },
+    {
+      "id": "route-admin-treasures",
+      "kind": "route",
+      "label": "/admin/treasures",
+      "path": "/admin/treasures"
+    },
+    {
+      "id": "route-vault",
+      "kind": "route",
+      "label": "/vault",
+      "path": "/vault"
+    },
+    {
+      "id": "route-messages",
+      "kind": "route",
+      "label": "/messages",
+      "path": "/messages"
+    },
+    {
+      "id": "route-lab",
+      "kind": "route",
+      "label": "/lab",
+      "path": "/lab"
+    },
+    {
+      "id": "route-lab-new",
+      "kind": "route",
+      "label": "/lab/new",
+      "path": "/lab/new"
+    },
+    {
+      "id": "route-gallery",
+      "kind": "route",
+      "label": "/gallery",
+      "path": "/gallery"
+    },
+    {
+      "id": "route-plans",
+      "kind": "route",
+      "label": "/plans",
+      "path": "/plans"
+    },
+    {
+      "id": "route-calls",
+      "kind": "route",
+      "label": "/calls",
+      "path": "/calls"
+    },
+    {
       "id": "chat",
       "kind": "route",
       "label": "Chat",
@@ -55,12 +133,6 @@
       "kind": "route",
       "label": "/live-call/:id",
       "path": "/live-call/example"
-    },
-    {
-      "id": "companion-profile",
-      "kind": "route",
-      "label": "Companion profiles",
-      "path": "/dashboard?nav=discover"
     },
     {
       "id": "create-companion",

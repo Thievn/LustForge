@@ -110,7 +110,7 @@ export function LiveCallTypePanel({ companion, className, spendLocked }: Props) 
   };
 
   const gFrom = companion.gradientFrom || "#7B2D8E";
-  const gTo = companion.gradientTo || "#FF2D7B";
+  const gTo = companion.gradientTo || "#D6336C";
 
   return (
     <div className={cn("space-y-4", spendLocked && "opacity-90", className)}>

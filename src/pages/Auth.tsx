@@ -16,7 +16,7 @@ import {
 import { trackEvent } from "@/lib/analytics";
 import { formatSupabaseError } from "@/lib/supabaseError";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 
 const signUpSchema = z
   .object({
@@ -216,10 +216,10 @@ export default function Auth() {
   };
 
   const inputClass =
-    "w-full pl-10 pr-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder:text-white/55 focus:outline-none focus:border-[#FF2D7B]/70 focus:ring-2 focus:ring-[#FF2D7B]/25 transition-shadow text-sm";
+    "w-full pl-10 pr-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder:text-white/55 focus:outline-none focus:border-[#D6336C]/70 focus:ring-2 focus:ring-[#D6336C]/25 transition-shadow text-sm";
 
   return (
-    <div className="min-h-screen bg-[#050508] flex items-center justify-center py-14 px-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#1B1620] flex items-center justify-center py-14 px-4 relative overflow-hidden font-sans">
       <div
         className="pointer-events-none absolute inset-0 opacity-90"
         style={{
@@ -228,12 +228,11 @@ export default function Auth() {
             radial-gradient(ellipse 50% 30% at 0% 80%, hsl(170 70% 30% / 0.12), transparent)`,
         }}
       />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,45,123,0.05)_1px,transparent_1px)] [background-size:40px_40px] opacity-50" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(214,51,108,0.05)_1px,transparent_1px)] [background-size:40px_40px] opacity-50" />
 
       <div
         className={cn(
-          "max-w-md w-full rounded-3xl border border-white/[0.08] p-8 md:p-10 relative z-10",
-          "bg-black/55 backdrop-blur-2xl shadow-2xl",
+          "max-w-md w-full rounded-2xl border border-white/[0.08] bg-[#262030] p-8 md:p-10 relative z-10",
         )}
         style={{ boxShadow: `0 0 80px ${NEON}10, inset 0 1px 0 rgba(255,255,255,0.06)` }}
       >
@@ -247,8 +246,8 @@ export default function Auth() {
           >
             <Flame className="h-6 w-6 text-white" />
           </div>
-          <h1 className="font-gothic text-2xl md:text-3xl tracking-wide text-white mb-1">
-            <span style={{ color: NEON }}>LustForge</span>
+          <h1 className="font-wordmark mb-1 text-[28px] tracking-wide text-[#F4EEF2]">
+            Lust<b className="text-[#F57AA3]">Forge</b>
           </h1>
           <p className="text-xs uppercase tracking-[0.3em] text-white/80">Access your empire</p>
         </div>
@@ -364,7 +363,7 @@ export default function Auth() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-white/20 bg-black/50 accent-[#FF2D7B]"
+                  className="rounded border-white/20 bg-black/50 accent-[#D6336C]"
                 />
                 Remember me
               </label>
@@ -492,7 +491,7 @@ export default function Auth() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-white/20 bg-black/50 accent-[#FF2D7B]"
+                className="rounded border-white/20 bg-black/50 accent-[#D6336C]"
               />
               Remember me on this device
             </label>
@@ -514,7 +513,7 @@ export default function Auth() {
         <div className="mt-8 text-center border-t border-white/10 pt-6">
           <p className="text-[11px] leading-relaxed text-white/80">
             By continuing you agree to our{" "}
-            <Link to="/terms-of-service" className="text-[#FF2D7B] hover:underline underline-offset-2">
+            <Link to="/terms-of-service" className="text-[#D6336C] hover:underline underline-offset-2">
               Terms of Service
             </Link>{" "}
             and{" "}

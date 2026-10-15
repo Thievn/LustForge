@@ -43,14 +43,14 @@ export function ToyHubPopover({
           className={cn(
             "relative flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold transition-colors",
             n > 0
-              ? "border-[#00ffd4]/35 bg-[#00ffd4]/10 text-[#00ffd4] hover:bg-[#00ffd4]/15"
+              ? "border-[#E0457B]/35 bg-[#E0457B]/10 text-[#E0457B] hover:bg-[#E0457B]/15"
               : "border-border bg-muted/80 text-muted-foreground hover:text-foreground hover:bg-muted",
           )}
         >
           <Zap className="h-3.5 w-3.5 shrink-0" />
           <span className="hidden sm:inline">Toys</span>
           {n > 0 && (
-            <span className="min-w-[1.25rem] rounded-full bg-background/80 px-1 text-center text-[10px] font-bold text-[#00ffd4]">
+            <span className="min-w-[1.25rem] rounded-full bg-background/80 px-1 text-center text-[10px] font-bold text-[#E0457B]">
               +{n}
             </span>
           )}

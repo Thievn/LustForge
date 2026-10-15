@@ -44,7 +44,7 @@ export function NexusMergeRitualOverlay({
       aria-busy="true"
       aria-label="Nexus forge merge in progress"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[#030208]/92 backdrop-blur-sm" />
+      <div className="pointer-events-none absolute inset-0 bg-[#1B1620]/92 backdrop-blur-sm" />
       <NexusRealmBackdrop className="pointer-events-none absolute inset-0 opacity-[0.97]" />
 
       <div className="relative z-[2] mx-auto w-full max-w-6xl space-y-4 sm:space-y-5">

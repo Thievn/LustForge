@@ -11,8 +11,8 @@ type ShopSyncableToysButtonProps = {
 
 const glowStyle = {
   background:
-    "linear-gradient(135deg, rgba(255,45,123,0.2) 0%, rgba(120,60,160,0.14) 50%, rgba(255,45,123,0.1) 100%)",
-  border: "1px solid rgba(255, 45, 123, 0.5)",
+    "linear-gradient(135deg, rgba(214,51,108,0.2) 0%, rgba(120,60,160,0.14) 50%, rgba(214,51,108,0.1) 100%)",
+  border: "1px solid rgba(214, 51, 108, 0.5)",
 } as const;
 
 /**
@@ -36,7 +36,7 @@ export function ShopSyncableToysButton({
         "transition-all duration-300 ease-out",
         "hover:scale-[1.02] active:scale-[0.98]",
         "animate-toys-cta-glow",
-        "hover:!shadow-[0_0_28px_rgba(255,45,123,0.5),0_0_52px_rgba(255,45,123,0.22),0_0_64px_rgba(168,85,247,0.14)]",
+        "hover:!shadow-[0_0_28px_rgba(214,51,108,0.5),0_0_52px_rgba(214,51,108,0.22),0_0_64px_rgba(168,85,247,0.14)]",
         isPromo
           ? "flex w-full flex-col gap-2 rounded-2xl px-4 py-4 text-left sm:flex-row sm:items-center sm:gap-4"
           : isMenu
@@ -48,21 +48,21 @@ export function ShopSyncableToysButton({
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-r from-[#FF2D7B]/0 via-white/[0.06] to-[#FF2D7B]/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-r from-[#D6336C]/0 via-white/[0.06] to-[#D6336C]/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
       />
 
       <span
         className={cn(
           "relative flex shrink-0 items-center justify-center rounded-lg",
-          "border border-[#FF2D7B]/45 bg-[#FF2D7B]/18",
-          "shadow-[0_0_12px_rgba(255,45,123,0.4)]",
-          "group-hover:shadow-[0_0_20px_rgba(255,45,123,0.65)] transition-shadow duration-300",
+          "border border-[#D6336C]/45 bg-[#D6336C]/18",
+          "shadow-[0_0_12px_rgba(214,51,108,0.4)]",
+          "group-hover:shadow-[0_0_20px_rgba(214,51,108,0.65)] transition-shadow duration-300",
           isPromo ? "h-11 w-11" : isMenu ? "h-8 w-8" : "h-7 w-7",
         )}
       >
         <Activity
           className={cn(
-            "text-[#FF2D7B] drop-shadow-[0_0_8px_rgba(255,45,123,0.85)]",
+            "text-[#D6336C] drop-shadow-[0_0_8px_rgba(214,51,108,0.85)]",
             isPromo ? "h-5 w-5" : isMenu ? "h-4 w-4" : "h-3.5 w-3.5",
           )}
           strokeWidth={2.25}

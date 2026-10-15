@@ -37,6 +37,7 @@ const PILL: Record<VaultCategory, string> = {
   pose: "Poses",
   hair: "Hair",
   mood: "Mood",
+  vibration: "Vibrations",
 };
 
 const EMPTY_TIERS: Record<VaultRarity, number> = { silk: 53, satin: 27, velvet: 13, forbidden: 5, obsession: 2 };
@@ -144,7 +145,7 @@ export default function VelvetVault() {
   }, [load]);
 
   const owned = items.filter((item) => item.owned).length;
-  const total = items.length || 150;
+  const total = items.length || 162;
   const remaining = items.length - owned;
   const all = items.length > 0 && owned === items.length;
   const visible = useMemo(
@@ -220,7 +221,10 @@ export default function VelvetVault() {
       await load();
       return;
     }
-    setItems((current) => current.map((item) => (won.some((next) => next.id === item.id) ? { ...item, ...next, owned: true, percent: 0 } : item)));
+    setItems((current) => current.map((item) => {
+      const hit = won.find((next) => next.id === item.id);
+      return hit ? { ...item, ...hit, owned: true, percent: 0 } : item;
+    }));
     setSelectedId(null);
     setQueue(won);
     void load();
@@ -228,10 +232,15 @@ export default function VelvetVault() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1176px] flex-col gap-3 px-4 pb-24 pt-3 lg:px-6 lg:pb-8 lg:pt-5">
-      <section className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <h1 className="font-gothic text-[15px] leading-none tracking-wide text-foreground">Vault</h1>
+    <div className="mx-auto flex w-full max-w-[1176px] flex-col gap-5 px-4 pb-36 pt-6 lg:px-8 lg:pb-12 lg:pt-8">
+      <section className="rounded-2xl border border-white/[0.08] bg-card px-5 py-5">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-[30px] font-semibold leading-tight text-foreground">Velvet Vault</h1>
+            <p className="mt-1 text-[15px] text-[#B8A9BC]">Collect Treasures to dress and delight your companions.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
           <p className="truncate text-[11px] text-muted-foreground">{crackLabel}</p>
           <button
             type="button"
@@ -247,7 +256,7 @@ export default function VelvetVault() {
             type="button"
             disabled={Boolean(busy) || all || (!server && !preview)}
             onClick={() => void open("crack")}
-            className="h-8 shrink-0 rounded-full bg-primary px-3.5 text-xs font-medium text-primary-foreground disabled:opacity-40"
+            className="h-12 shrink-0 rounded-[14px] bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-40"
           >
             {all ? "Collected" : busy === "crack" ? "Cracking" : "Crack"}
           </button>
@@ -416,8 +425,8 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       className={cn(
-        "h-6 shrink-0 rounded-full px-2.5 text-[11px]",
-        active ? "bg-white/10 text-foreground" : "text-muted-foreground",
+        "h-11 shrink-0 rounded-full border px-4 text-sm font-medium",
+        active ? "border-[#D6336C] bg-[#D6336C] text-white" : "border-white/[0.08] bg-[#2F2839] text-[#B8A9BC]",
       )}
     >
       {children}

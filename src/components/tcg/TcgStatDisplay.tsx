@@ -63,7 +63,7 @@ export function TcgProfilePanel({ stats }: { stats: TcgStatBlock | null | undefi
   const entries = tcgStatEntries(stats);
   if (entries.length === 0) return null;
   return (
-    <section className="rounded-[1.35rem] border border-primary/20 bg-gradient-to-br from-black/50 via-[hsl(280_22%_8%)]/90 to-black/45 p-5 sm:p-7 shadow-[0_0_40px_rgba(255,45,123,0.06)] ring-1 ring-white/[0.05] backdrop-blur-xl">
+    <section className="rounded-[1.35rem] border border-primary/20 bg-gradient-to-br from-black/50 via-[hsl(280_22%_8%)]/90 to-black/45 p-5 sm:p-7 shadow-[0_0_40px_rgba(214,51,108,0.06)] ring-1 ring-white/[0.05] backdrop-blur-xl">
       <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-primary/75 mb-1">Signature deck</p>
       <h2 className="font-gothic text-2xl sm:text-3xl font-bold text-foreground mb-2">Ascendant stats</h2>
       <p className="text-xs text-muted-foreground mb-6 max-w-2xl leading-relaxed">

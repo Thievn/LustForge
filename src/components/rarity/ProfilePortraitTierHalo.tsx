@@ -101,7 +101,7 @@ export function ProfilePortraitTierHalo({
                 "pointer-events-none absolute inset-0 z-[1]",
                 gradientOpacity,
                 isAbyssal
-                  ? "bg-gradient-to-br from-[#ff2d7b]/45 via-fuchsia-600/35 to-[#00ffd4]/28"
+                  ? "bg-gradient-to-br from-[#D6336C]/45 via-fuchsia-600/35 to-[#E0457B]/28"
                   : "",
               )}
               style={

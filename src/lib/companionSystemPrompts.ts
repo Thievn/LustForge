@@ -196,7 +196,7 @@ export function createCompanionSystemPrompt(
     bio: "",
     fantasyStarters: [],
     gradientFrom: "#7B2D8E",
-    gradientTo: "#FF2D7B",
+    gradientTo: "#D6336C",
     systemPrompt: `You are ${name}, a flirty companion on LustForge — short natural texts, 1–3 sentences, playful and explicit when the vibe goes there.`,
   };
   return buildChatSystemPrompt(minimal, {

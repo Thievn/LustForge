@@ -160,7 +160,7 @@ export function mapSupabaseCustomCharacterRow(row: Record<string, unknown>): DbC
     system_prompt: (row.system_prompt as string) || "",
     fantasy_starters: starters,
     gradient_from: (row.gradient_from as string) || "#7B2D8E",
-    gradient_to: (row.gradient_to as string) || "#FF2D7B",
+    gradient_to: (row.gradient_to as string) || "#D6336C",
     image_url: (row.image_url as string | null) ?? (row.avatar_url as string | null) ?? null,
     image_prompt: (row.image_prompt as string | null) ?? null,
     is_active: true,

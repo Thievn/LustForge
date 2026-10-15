@@ -8,16 +8,17 @@ import type { VaultCategory, VaultRarity } from "@/lib/vault/treasures";
 const RARITY_COLOR: Record<VaultRarity, { label: string; from: string; to: string; glow: string; ink: string }> = {
   silk: { label: "Silk", from: "#ffd0e4", to: "#f4a7c5", glow: "rgba(255, 182, 213, 0.62)", ink: "#4a1830" },
   satin: { label: "Satin", from: "#ddd6fe", to: "#7c3aed", glow: "rgba(139, 92, 246, 0.7)", ink: "#1e1033" },
-  velvet: { label: "Velvet", from: "#fb7185", to: "#7f1d1d", glow: "rgba(159, 18, 57, 0.8)", ink: "#fff5f5" },
+  velvet: { label: "Velvet", from: "#f4b4c6", to: "#9f1239", glow: "rgba(194, 37, 92, 0.7)", ink: "#2a1020" },
   forbidden: { label: "Forbidden", from: "#fde68a", to: "#b45309", glow: "rgba(250, 204, 21, 0.92)", ink: "#2a1604" },
-  obsession: { label: "Obsession", from: "#f8fafc", to: "#0a0a0a", glow: "rgba(255, 45, 123, 0.85)", ink: "#f8f4ff" },
+  obsession: { label: "Obsession", from: "#f8fafc", to: "#0a0a0a", glow: "rgba(214, 51, 108, 0.85)", ink: "#f8f4ff" },
 };
 
-function artShape(kind: VaultCategory): "lace" | "swim" | "jewel" | "place" | "pose" | "hair" {
+function artShape(kind: VaultCategory): "lace" | "swim" | "jewel" | "place" | "pose" | "hair" | "wave" {
   if (kind === "swim") return "swim";
   if (kind === "night" || kind === "costume" || kind === "lingerie") return "lace";
   if (kind === "accessory" || kind === "hair") return kind === "hair" ? "hair" : "jewel";
   if (kind === "pose") return "pose";
+  if (kind === "vibration") return "wave";
   return "place";
 }
 
@@ -47,13 +48,13 @@ export function TreasureArt({
           <stop offset="1" stopColor={tone.to} />
         </linearGradient>
       </defs>
-      <rect width="160" height="200" fill="#140910" />
-      <rect x="8" y="8" width="144" height="184" rx="18" fill={hidden ? "#1a1020" : `url(#${grad})`} opacity="0.95" />
+      <rect width="160" height="200" fill="#3A3346" />
+      <rect x="8" y="8" width="144" height="184" rx="18" fill={hidden ? "#4a4158" : `url(#${grad})`} opacity="0.95" />
       {!hidden && artShape(kind) === "lace" ? (
         <>
           <path d="M80 48c18 0 28 16 28 32 0 28-28 48-28 48S52 108 52 80c0-16 10-32 28-32z" fill={tone.ink} opacity="0.85" />
           <path d="M62 150h36l8 22H54z" fill={tone.ink} opacity="0.75" />
-          <path d="M58 78h44M70 92h20" stroke="#140910" strokeWidth="2" opacity="0.35" />
+          <path d="M58 78h44M70 92h20" stroke="#3A3346" strokeWidth="2" opacity="0.35" />
         </>
       ) : null}
       {!hidden && artShape(kind) === "swim" ? (
@@ -73,7 +74,7 @@ export function TreasureArt({
       {!hidden && artShape(kind) === "place" ? (
         <>
           <path d="M28 140 L80 58 L132 140 Z" fill={tone.ink} opacity="0.8" />
-          <rect x="68" y="112" width="24" height="28" fill="#140910" opacity="0.45" />
+          <rect x="68" y="112" width="24" height="28" fill="#3A3346" opacity="0.45" />
           <circle cx="118" cy="48" r="10" fill={tone.ink} opacity="0.7" />
         </>
       ) : null}
@@ -82,6 +83,9 @@ export function TreasureArt({
           <circle cx="80" cy="78" r="18" fill={tone.ink} />
           <path d="M52 78c4-28 52-28 56 0 2 30-10 48-28 62-18-14-30-32-28-62z" fill={tone.ink} opacity="0.8" />
         </>
+      ) : null}
+      {!hidden && artShape(kind) === "wave" ? (
+        <path d="M28 100c16-28 28-28 40 0s24 28 40 0 24-28 24 0" fill="none" stroke={tone.ink} strokeWidth="6" strokeLinecap="round" />
       ) : null}
       {!hidden && artShape(kind) === "pose" ? (
         <>
@@ -98,15 +102,13 @@ export function VaultFrostVeil({ rarity, className }: { rarity: VaultRarity; cla
   return (
     <>
       <div
-        className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-[40%]", className)}
-        style={{ background: `linear-gradient(to top, ${tone.wash}, transparent)` }}
+        className={cn("pointer-events-none absolute inset-0 bg-[rgba(246,239,234,0.22)]", className)}
+        style={{ boxShadow: `inset 0 0 0 1px ${tone.wash}` }}
         aria-hidden
       />
-      <Lock
-        className={cn("absolute left-1 top-1 h-2.5 w-2.5 text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]", className)}
-        strokeWidth={2.25}
-        aria-hidden
-      />
+      <span className="absolute right-2.5 top-2.5 z-[2] grid h-[30px] w-[30px] place-items-center rounded-full bg-[rgba(27,22,32,0.8)] text-white">
+        <Lock className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+      </span>
     </>
   );
 }
@@ -138,7 +140,7 @@ export function VaultArt({
   const photo = photos[attempt] ?? "";
   const drawn = !photo;
   return (
-    <div className="relative aspect-[3/4] overflow-hidden bg-[#14090f]">
+    <div className={cn("vault-art-well relative aspect-[3/4] overflow-hidden", rarity === "velvet" && "velvet")}>
       {drawn ? (
         <TreasureArt kind={kind} rarity={rarity} poseId={poseId} />
       ) : (
@@ -153,6 +155,16 @@ export function VaultArt({
           className={cn("absolute inset-0 h-full w-full object-cover", locked && vaultFrostClass(frost))}
         />
       )}
+      <span
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{
+          background:
+            rarity === "velvet"
+              ? "radial-gradient(circle at 50% 36%, rgba(255,228,234,0.5), rgba(255,228,234,0.08) 48%, transparent 72%)"
+              : "radial-gradient(circle at 50% 38%, rgba(255,236,228,0.3), transparent 64%)",
+        }}
+        aria-hidden
+      />
       {locked ? <VaultFrostVeil rarity={rarity} /> : null}
     </div>
   );
@@ -175,13 +187,13 @@ export function VaultFrame({
   if (rarity === "obsession") {
     return (
       <div className={cn("vault-obsession-frame rounded-[10px] p-[1.5px]", breathe && "vault-breathe", className)} style={style}>
-        <div className="overflow-hidden rounded-[8.5px] bg-[#120910]">{children}</div>
+        <div className="overflow-hidden rounded-[12px] bg-[#3A3346]">{children}</div>
       </div>
     );
   }
   return (
-    <div className={cn("rounded-[10px] border-[1.5px]", breathe && "vault-breathe", className)} style={{ ...style, borderColor: tone.border }}>
-      <div className="overflow-hidden rounded-[8.5px]">{children}</div>
+    <div className={cn("rounded-[14px] border-2", breathe && "vault-breathe", className)} style={{ ...style, borderColor: tone.border, background: rarity === "velvet" ? "#6a4554" : "#3A3346" }}>
+      <div className="overflow-hidden rounded-[12px]">{children}</div>
     </div>
   );
 }
@@ -217,10 +229,13 @@ export function TreasureCard({
         <div className="relative">
           <VaultArt src={thumbUrl} locked={!owned} rarity={rarity} kind={kind} poseId={poseId} />
           {shimmer ? <span className="vault-sheen pointer-events-none absolute inset-0" aria-hidden /> : null}
-          {isNew ? <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" aria-hidden /> : null}
+          {isNew && owned ? <span className="absolute right-2.5 top-2.5 z-[2] h-2 w-2 rounded-full bg-primary" aria-hidden /> : null}
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-[rgba(20,14,24,0.95)] to-transparent px-3 pb-2.5 pt-7">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.06em]" style={{ color: RARITY_TONE[rarity].border }}>{RARITY_TONE[rarity].label}</span>
+            <span className="block text-[13px] font-semibold leading-tight text-[#F4EEF2]">{name}</span>
+          </span>
         </div>
       </VaultFrame>
-      <p className="mt-1 line-clamp-2 h-[2.35em] text-[10px] leading-[1.15] text-foreground/75">{name}</p>
     </button>
   );
 }

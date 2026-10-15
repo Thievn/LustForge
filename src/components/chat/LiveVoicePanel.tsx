@@ -361,14 +361,14 @@ export function LiveVoicePanel({
     <div
       id="lf-live-voice-panel"
       className={cn(
-        "rounded-lg border border-[#00ffd4]/18 bg-gradient-to-br from-black/75 via-[hsl(280_30%_8%)]/92 to-black/80 p-1.5 shadow-[0_0_20px_rgba(0,255,212,0.05)] space-y-1",
+        "rounded-lg border border-[#E0457B]/18 bg-gradient-to-br from-black/75 via-[hsl(280_30%_8%)]/92 to-black/80 p-1.5 shadow-[0_0_20px_rgba(0,255,212,0.05)] space-y-1",
         className,
       )}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#00ffd4]/90">Live Voice</p>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#E0457B]/90">Live Voice</p>
             {rate != null ? (
               <span className="text-[8px] font-medium tabular-nums text-amber-200/90">
                 {rate} FC/min · ~{runningFc} FC
@@ -385,9 +385,9 @@ export function LiveVoicePanel({
             ) : null}
           </div>
           <p className="text-[8px] text-muted-foreground mt-0.5 leading-snug line-clamp-2">
-            <span className="text-[#00ffd4]/85">Square</span> = send · type below anytime.
+            <span className="text-[#E0457B]/85">Square</span> = send · type below anytime.
             {disabled && rate != null ? <span className="text-amber-200/85"> · Need {rate}+ FC</span> : null}
-            {voiceInteractiveLocked && !disabled ? <span className="text-[#00ffd4]/80"> · Open mic for ramp</span> : null}
+            {voiceInteractiveLocked && !disabled ? <span className="text-[#E0457B]/80"> · Open mic for ramp</span> : null}
           </p>
         </div>
         <div className="flex flex-col items-end gap-0.5 shrink-0">
@@ -401,7 +401,7 @@ export function LiveVoicePanel({
                 "relative flex h-9 w-9 select-none items-center justify-center rounded-lg border-2 transition-all touch-manipulation",
                 recording
                   ? "border-destructive bg-destructive/20 text-destructive hover:bg-destructive/30"
-                  : "border-[#00ffd4]/50 bg-[#00ffd4]/10 text-[#00ffd4] hover:bg-[#00ffd4]/20",
+                  : "border-[#E0457B]/50 bg-[#E0457B]/10 text-[#E0457B] hover:bg-[#E0457B]/20",
                 off && "opacity-40 pointer-events-none",
               )}
               title={recording ? "Tap to send & transcribe" : "Tap to open the mic"}

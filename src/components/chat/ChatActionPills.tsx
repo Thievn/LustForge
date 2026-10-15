@@ -55,7 +55,7 @@ export function ChatActionPills({
         className={cn(pillClass, "text-primary/95 border-primary/25 bg-primary/8")}
         title="Start a live call"
       >
-        <Phone className="h-3.5 w-3.5 text-[#00ffd4]" />
+        <Phone className="h-3.5 w-3.5 text-[#E0457B]" />
         <span>Live call</span>
       </motion.button>
       <motion.button

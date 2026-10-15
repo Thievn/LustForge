@@ -76,7 +76,7 @@ import {
   type XMarketingPortraitTier,
 } from "@/lib/xMarketingPortraitTier";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 const MARKETING_IMAGE_TOKEN_COST = 75;
 const HISTORY_KEY = "lustforge-x-marketing-history-v2";
 
@@ -1221,7 +1221,7 @@ export default function XMarketingHub() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[1.75rem] border border-primary/25 bg-gradient-to-br from-black/75 via-card/45 to-[#140818]/95 backdrop-blur-xl overflow-hidden shadow-[0_0_70px_rgba(255,45,123,0.09)]">
+      <div className="rounded-[1.75rem] border border-primary/25 bg-gradient-to-br from-black/75 via-card/45 to-[#140818]/95 backdrop-blur-xl overflow-hidden shadow-[0_0_70px_rgba(214,51,108,0.09)]">
         <div className="px-5 md:px-8 py-6 border-b border-white/[0.08] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-start gap-4">
             <div
@@ -1649,7 +1649,7 @@ export default function XMarketingHub() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-primary/35 bg-gradient-to-b from-black/60 via-black/75 to-black/90 p-4 md:p-6 lg:p-7 shadow-[0_0_60px_rgba(255,45,123,0.08)] space-y-5">
+              <div className="rounded-2xl border border-primary/35 bg-gradient-to-b from-black/60 via-black/75 to-black/90 p-4 md:p-6 lg:p-7 shadow-[0_0_60px_rgba(214,51,108,0.08)] space-y-5">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary/90">X post mock-up</p>
@@ -2095,7 +2095,7 @@ export default function XMarketingHub() {
                 type="button"
                 disabled={generating}
                 onClick={() => void runGenerate()}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-primary-foreground border border-primary/40 shadow-[0_0_40px_rgba(255,45,123,0.2)] disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-primary-foreground border border-primary/40 shadow-[0_0_40px_rgba(214,51,108,0.2)] disabled:opacity-50"
                 style={{ background: `linear-gradient(135deg, ${NEON}, hsl(280 40% 36%))` }}
               >
                 {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}

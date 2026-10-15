@@ -39,7 +39,7 @@ export default function Toys() {
           className="mx-auto max-w-7xl px-4 pb-20 pt-[calc(5.5rem+env(safe-area-inset-top))] sm:px-6"
         >
           <header className="mx-auto max-w-3xl text-center">
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#FF2D7B]/30 bg-[#FF2D7B]/[0.06] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[#FF2D7B]">
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#D6336C]/30 bg-[#D6336C]/[0.06] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[#D6336C]">
               <Sparkles className="h-3 w-3" />
               Lovense × LustForge
             </p>
@@ -52,8 +52,8 @@ export default function Toys() {
           <section
             className={cn(
               "mx-auto mt-10 max-w-4xl rounded-2xl border border-[hsl(280_50%_35%/0.45)] p-5 sm:p-6",
-              "bg-gradient-to-r from-[hsl(280_50%_35%/0.12)] via-[#FF2D7B]/[0.06] to-[hsl(170_100%_50%/0.05)]",
-              "shadow-[0_0_40px_rgba(255,45,123,0.08)]",
+              "bg-gradient-to-r from-[hsl(280_50%_35%/0.12)] via-[#D6336C]/[0.06] to-[hsl(170_100%_50%/0.05)]",
+              "shadow-[0_0_40px_rgba(214,51,108,0.08)]",
             )}
           >
             <div className="flex items-start gap-3 sm:gap-4">

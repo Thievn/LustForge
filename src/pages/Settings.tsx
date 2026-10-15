@@ -569,7 +569,7 @@ const Settings = () => {
                       })
                       .finally(() => setTestPulseBusy(false));
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#00ffd4]/35 bg-[#00ffd4]/[0.06] text-[#00ffd4] text-sm hover:bg-[#00ffd4]/10 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#E0457B]/35 bg-[#E0457B]/[0.06] text-[#E0457B] text-sm hover:bg-[#E0457B]/10 transition-colors disabled:opacity-50"
                 >
                   {testPulseBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                   Test pulse

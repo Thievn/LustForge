@@ -4,10 +4,12 @@ import type { VaultRarity } from "../../../supabase/functions/_shared/vaultDraw"
 export const VAULT_ART_BASE = "https://tyaplrrlirlbqrfjqryo.supabase.co/storage/v1/object/public/vault-art";
 
 export function vaultImageUrl(id: string): string {
+  if (id.startsWith("vib-")) return `/vault-art/${id}.webp`;
   return `${VAULT_ART_BASE}/${id}.webp`;
 }
 
 export function vaultThumbUrl(id: string): string {
+  if (id.startsWith("vib-")) return `/vault-art/thumbs/${id}.webp`;
   return `${VAULT_ART_BASE}/thumbs/${id}.webp`;
 }
 
@@ -65,11 +67,11 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
   },
   velvet: {
     label: "Velvet",
-    border: "#9f1239",
-    tint: "rgba(159, 18, 57, 0.22)",
-    wash: "rgba(159, 18, 57, 0.34)",
-    glow: "rgba(159, 18, 57, 0.5)",
-    light: "rgba(176, 36, 68, 0.52)",
+    border: "#C2255C",
+    tint: "rgba(194, 37, 92, 0.22)",
+    wash: "rgba(255, 214, 224, 0.28)",
+    glow: "rgba(194, 37, 92, 0.45)",
+    light: "rgba(255, 214, 224, 0.5)",
   },
   forbidden: {
     label: "Forbidden",
@@ -89,11 +91,11 @@ export const RARITY_TONE: Record<VaultRarity, RarityTone> = {
   },
 };
 
-/** Grid frost stays soft enough to read the garment. The sheet is a step clearer. */
+/** Light frost: the treasure stays readable, the lock says it is not yours yet. */
 export function vaultFrostClass(frost: "card" | "sheet" = "card"): string {
   return frost === "sheet"
-    ? "scale-[1.03] blur-[2px] brightness-[0.55]"
-    : "scale-[1.05] blur-[3.5px] brightness-[0.55]";
+    ? "scale-[1.02] blur-[1.5px] brightness-[1.04] saturate-[0.92]"
+    : "scale-[1.03] blur-[2px] brightness-[1.02] saturate-[0.9]";
 }
 
 export function rarityBreathes(rarity: VaultRarity, owned: boolean): boolean {

@@ -10,7 +10,7 @@ import { X_PROFILE_CTA_PRESETS, type XProfileCtaPreset } from "@/lib/xMarketingP
 
 export type TweetVariationLite = { text: string; hashtags: string[] };
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 
 const TABS: { id: ZernioHubTab; label: string }[] = [
   { id: "compose", label: "Compose" },
@@ -43,7 +43,7 @@ export function MarketingHubTabStrip({ hubTab, onHubTab }: { hubTab: ZernioHubTa
           className={cn(
             "shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors touch-manipulation",
             hubTab === t.id
-              ? "bg-primary/25 text-primary border border-primary/40 shadow-[0_0_20px_rgba(255,45,123,0.15)]"
+              ? "bg-primary/25 text-primary border border-primary/40 shadow-[0_0_20px_rgba(214,51,108,0.15)]"
               : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]",
           )}
         >

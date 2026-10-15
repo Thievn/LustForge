@@ -47,7 +47,7 @@ export function ToyControlPanel({
           {disabled ? (
             <BluetoothOff className="h-4 w-4 text-muted-foreground shrink-0" />
           ) : (
-            <Bluetooth className="h-4 w-4 text-[#00ffd4] shrink-0 drop-shadow-[0_0_8px_rgba(0,255,212,0.35)]" />
+            <Bluetooth className="h-4 w-4 text-[#E0457B] shrink-0 drop-shadow-[0_0_8px_rgba(0,255,212,0.35)]" />
           )}
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Toy control</p>
@@ -57,7 +57,7 @@ export function ToyControlPanel({
           </div>
         </div>
         {!disabled && (
-          <span className="shrink-0 rounded-full border border-[#00ffd4]/30 bg-[#00ffd4]/10 px-2 py-0.5 text-[10px] font-medium text-[#00ffd4]">
+          <span className="shrink-0 rounded-full border border-[#E0457B]/30 bg-[#E0457B]/10 px-2 py-0.5 text-[10px] font-medium text-[#E0457B]">
             Live
           </span>
         )}
@@ -75,7 +75,7 @@ export function ToyControlPanel({
                 className={cn(
                   "flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors",
                   (primaryToyId === t.id || (!primaryToyId && t.id === active[0]?.id))
-                    ? "border-[#00ffd4]/50 bg-[#00ffd4]/10 text-[#00ffd4]"
+                    ? "border-[#E0457B]/50 bg-[#E0457B]/10 text-[#E0457B]"
                     : "border-white/10 bg-black/30 text-muted-foreground hover:border-white/20",
                 )}
               >

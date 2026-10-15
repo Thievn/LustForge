@@ -109,14 +109,14 @@ function drawPills(
 
   drawPill(rarityLabel, "rgba(0,0,0,0.65)", "rgba(255,255,255,0.12)", "rgba(255,255,255,0.92)");
   if (showForge) {
-    drawPill("FORGE", "rgba(0,0,0,0.65)", "rgba(255,45,123,0.45)", "rgba(255,184,217,0.95)");
+    drawPill("FORGE", "rgba(0,0,0,0.65)", "rgba(214,51,108,0.45)", "rgba(255,184,217,0.95)");
   }
   if (pinCount > 0) {
     const text = String(pinCount);
     const w = ctx.measureText(text).width + padX * 2;
     const rx = FRAMED_CARD_OUT_W - w - 12;
     ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.strokeStyle = "rgba(255,45,123,0.35)";
+    ctx.strokeStyle = "rgba(214,51,108,0.35)";
     ctx.beginPath();
     ctx.roundRect(rx, y0, w, 22, 6);
     ctx.fill();

@@ -67,61 +67,84 @@ export function VaultSheet({
     onClose();
   }
 
+  const vibration = kind === "vibration";
+  const actionLabel = vibration ? "Apply to companion" : companions.length === 1 ? `Equip on ${companions[0]!.name}` : "Equip";
+
+  async function apply(companionId: string) {
+    if (vibration) {
+      if (!preview) {
+        setBusy(true);
+        const res = await vaultCall({ action: "wear", companionId, itemId });
+        setBusy(false);
+        if (res.error) {
+          setNotice(res.error);
+          return;
+        }
+      }
+      const her = companions.find((row) => row.id === companionId);
+      setNotice(her ? `Applied to ${her.name}. It is ready in chat and on a call.` : "Applied.");
+      setPicking(false);
+      return;
+    }
+    await styleHer(companionId);
+  }
+
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/65 sm:items-center" role="presentation" onClick={onClose}>
+    <div className="fixed inset-0 z-[70] grid place-items-center bg-[rgba(15,10,18,0.55)] p-5 backdrop-blur-[14px]" role="presentation" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="vault-sheet-title"
-        className="w-full max-w-[360px] rounded-t-2xl border border-white/10 bg-[#10090e] px-3.5 pb-[max(0.85rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] sm:rounded-2xl sm:pb-3.5"
+        className="flex max-h-[calc(100vh-40px)] w-full max-w-[440px] flex-col overflow-auto rounded-[20px] bg-[#EADFD6] text-[#2A2030] shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-white/45">Treasure</p>
-          <button type="button" className="grid h-7 w-7 place-items-center rounded-full text-white/70 hover:bg-white/5" onClick={onClose} aria-label="Close">
-            <X className="h-3.5 w-3.5" />
+        <div className="flex justify-end px-4 pt-4">
+          <button type="button" className="grid h-12 w-12 place-items-center rounded-[14px] bg-[rgba(42,32,48,0.08)] text-[#2A2030]" onClick={onClose} aria-label="Close">
+            <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="mx-auto w-[168px]">
-          <VaultFrame rarity={rarity} owned={owned}>
-            <VaultArt src={imageUrl} locked={!owned} rarity={rarity} eager frost="sheet" kind={kind} poseId={poseId} />
-          </VaultFrame>
-        </div>
-        <h2 id="vault-sheet-title" className="mt-2.5 text-center font-gothic text-lg leading-tight text-white">{name}</h2>
-        <p className="mt-1 line-clamp-2 text-center text-[12px] leading-snug text-white/65">{blurb.trim() || `${tone.label} · ${category}`}</p>
-        <div className="mt-2 flex items-center justify-center gap-1.5">
-          <span className="rounded-full px-2 py-0.5 text-[10px] tracking-wide" style={{ color: tone.border, backgroundColor: tone.tint }}>{tone.label}</span>
-          <span className="text-[10px] text-white/45">{category}</span>
-        </div>
-        {owned && companions.length === 0 ? (
-          <Link to={`/companions${query}`} className="mt-3 flex h-8 items-center justify-center rounded-full border border-white/15 text-xs text-primary">
-            Style Her with this
-          </Link>
-        ) : null}
-        {owned && companions.length === 1 ? (
-          <button type="button" disabled={busy} className="mt-3 h-8 w-full rounded-full border border-white/15 text-xs text-primary disabled:opacity-50" onClick={() => void styleHer(companions[0]!.id)}>
-            Style Her with this
-          </button>
-        ) : null}
-        {owned && companions.length > 1 ? (
-          <div className="mt-3">
-            <button type="button" disabled={busy} className="h-8 w-full rounded-full border border-white/15 text-xs text-primary disabled:opacity-50" onClick={() => setPicking((open) => !open)} aria-expanded={picking}>
-              Style Her with this
-            </button>
-            {picking ? (
-              <ul className="mt-1 max-h-28 overflow-y-auto">
-                {companions.map((her) => (
-                  <li key={her.id}>
-                    <button type="button" disabled={busy} className="flex h-8 w-full items-center px-2 text-left text-xs text-white/80 hover:text-white" onClick={() => void styleHer(her.id)}>
-                      {her.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+        <div className="px-6 pb-2">
+          <div className="mx-auto w-[min(100%,280px)]">
+            <VaultFrame rarity={rarity} owned={owned}>
+              <VaultArt src={imageUrl} locked={!owned} rarity={rarity} eager frost="sheet" kind={kind} poseId={poseId} />
+            </VaultFrame>
           </div>
-        ) : null}
-        {notice ? <p className="mt-2 text-center text-[11px] text-white/80" role="status">{notice}</p> : null}
+        </div>
+        <div className="flex flex-col gap-4 px-7 pb-7 pt-4">
+          <span className="inline-flex w-fit items-center rounded-full bg-[#2A2030] px-3 py-1 text-[12px] font-bold uppercase tracking-[0.06em] text-[#D4AF37]">{tone.label}</span>
+          <h2 id="vault-sheet-title" className="text-[26px] font-semibold leading-tight text-[#2A2030]">{name}</h2>
+          <p className="text-[15px] leading-relaxed text-[#665670]">{blurb.trim() || `${tone.label} · ${category}`}</p>
+          <p className="text-sm text-[#665670]">{category}{owned ? "" : " · locked. Roll to unlock it."}</p>
+          {owned && companions.length === 0 ? (
+            <Link to={`/companions${query}`} className="inline-flex h-12 items-center justify-center rounded-[14px] bg-[#D6336C] text-[15px] font-semibold text-white">
+              {actionLabel}
+            </Link>
+          ) : null}
+          {owned && companions.length === 1 ? (
+            <button type="button" disabled={busy} className="h-12 w-full rounded-[14px] bg-[#D6336C] text-[15px] font-semibold text-white disabled:opacity-50" onClick={() => void apply(companions[0]!.id)}>
+              {actionLabel}
+            </button>
+          ) : null}
+          {owned && companions.length > 1 ? (
+            <div>
+              <button type="button" disabled={busy} className="h-12 w-full rounded-[14px] bg-[#D6336C] text-[15px] font-semibold text-white disabled:opacity-50" onClick={() => setPicking((open) => !open)} aria-expanded={picking}>
+                {actionLabel}
+              </button>
+              {picking ? (
+                <ul className="mt-2 max-h-40 overflow-y-auto rounded-[14px] border border-[rgba(42,32,48,0.12)]">
+                  {companions.map((her) => (
+                    <li key={her.id}>
+                      <button type="button" disabled={busy} className="flex h-12 w-full items-center px-4 text-left text-[15px] font-medium text-[#2A2030] hover:bg-black/5" onClick={() => void apply(her.id)}>
+                        {her.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+          {notice ? <p className="text-center text-sm text-[#2A2030]" role="status">{notice}</p> : null}
+        </div>
       </div>
     </div>
   );

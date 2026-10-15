@@ -46,7 +46,7 @@ function MicWaveBars({ active }: { active: boolean }) {
       {heights.map((h, i) => (
         <motion.span
           key={i}
-          className="w-[3px] rounded-full bg-[#00ffd4]/90"
+          className="w-[3px] rounded-full bg-[#E0457B]/90"
           style={{ height: h, transformOrigin: "bottom" }}
           animate={{ scaleY: [0.5, 1, 0.55, 0.92, 0.5] }}
           transition={{
@@ -269,7 +269,7 @@ export function ChatComposer({
       className={cn(
         "shrink-0 border-t backdrop-blur-2xl",
         luxury
-          ? "border-fuchsia-500/12 bg-gradient-to-t from-[#030208]/98 via-[#08040f]/88 to-transparent shadow-[0_-24px_80px_rgba(0,0,0,0.55)]"
+          ? "border-fuchsia-500/12 bg-gradient-to-t from-[#1B1620]/98 via-[#08040f]/88 to-transparent shadow-[0_-24px_80px_rgba(0,0,0,0.55)]"
           : "border-white/[0.07] bg-gradient-to-t from-black/95 via-black/80 to-black/40",
         liveDock
           ? "px-2.5 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] sm:px-3 sm:pt-2"
@@ -332,11 +332,11 @@ export function ChatComposer({
               className={cn(
                 luxury
                   ? "inline-flex h-9 w-9 items-center justify-center rounded-full border border-cyan-500/15 text-cyan-300/90 transition-colors sm:h-10 sm:w-10"
-                  : "inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#00ffd4] transition-colors sm:h-11 sm:w-11",
-                !luxury && "hover:bg-[#00ffd4]/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00ffd4]/40",
+                  : "inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#E0457B] transition-colors sm:h-11 sm:w-11",
+                !luxury && "hover:bg-[#E0457B]/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E0457B]/40",
                 luxury && "hover:border-cyan-400/35 hover:bg-cyan-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/30",
                 disabled && !micLive && "pointer-events-none opacity-40",
-                micLive && (luxury ? "border-cyan-400/40 bg-cyan-500/10 ring-1 ring-cyan-400/30" : "bg-[#00ffd4]/15 ring-1 ring-[#00ffd4]/35"),
+                micLive && (luxury ? "border-cyan-400/40 bg-cyan-500/10 ring-1 ring-cyan-400/30" : "bg-[#E0457B]/15 ring-1 ring-[#E0457B]/35"),
               )}
               title={micLive ? "Stop speech-to-text" : "Speech to text — tap again to stop"}
               aria-label={micLive ? "Stop speech-to-text" : "Start speech-to-text dictation"}
@@ -532,7 +532,7 @@ function StillStylePicker({
         "inline-flex items-center justify-center text-white transition-[border-color,box-shadow,transform]",
         luxury
           ? "h-7 w-7 rounded-full border border-white/[0.1] bg-white/[0.04] shadow-none hover:border-fuchsia-500/35 hover:bg-fuchsia-500/10 sm:h-8 sm:w-8"
-          : "h-7 w-7 rounded-lg border border-fuchsia-400/35 bg-gradient-to-br from-fuchsia-500/25 via-[#FF2D7B]/20 to-cyan-500/20 shadow-[0_0_16px_rgba(255,45,123,0.15)] hover:border-primary/45 hover:shadow-[0_0_22px_rgba(255,45,123,0.24)] sm:h-8 sm:w-8",
+          : "h-7 w-7 rounded-lg border border-fuchsia-400/35 bg-gradient-to-br from-fuchsia-500/25 via-[#D6336C]/20 to-cyan-500/20 shadow-[0_0_16px_rgba(214,51,108,0.15)] hover:border-primary/45 hover:shadow-[0_0_22px_rgba(214,51,108,0.24)] sm:h-8 sm:w-8",
         disabled && "pointer-events-none opacity-40",
       )}
     >

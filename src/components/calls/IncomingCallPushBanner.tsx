@@ -47,7 +47,7 @@ export function IncomingCallPushBanner() {
       role="dialog"
       aria-label="Incoming call"
     >
-      <div className="flex w-full max-w-lg items-center gap-3 rounded-2xl border border-pink-500/35 bg-black/75 px-4 py-3 shadow-[0_12px_48px_rgba(255,45,123,0.25)] backdrop-blur-xl">
+      <div className="flex w-full max-w-lg items-center gap-3 rounded-2xl border border-pink-500/35 bg-black/75 px-4 py-3 shadow-[0_12px_48px_rgba(214,51,108,0.25)] backdrop-blur-xl">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-pink-500/20 text-pink-200">
           <Phone className="h-5 w-5" aria-hidden />
         </div>

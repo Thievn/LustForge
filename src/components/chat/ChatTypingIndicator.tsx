@@ -45,7 +45,7 @@ export function ChatTypingIndicator({
       <motion.div
         className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-primary/30 bg-zinc-900 shadow-[0_0_20px_rgba(168,85,247,0.2)] ring-2 ring-primary/10 sm:h-11 sm:w-11"
         aria-hidden
-        animate={{ boxShadow: ["0 0 20px rgba(168,85,247,0.15)", "0 0 28px rgba(255,45,123,0.2)", "0 0 20px rgba(168,85,247,0.15)"] }}
+        animate={{ boxShadow: ["0 0 20px rgba(168,85,247,0.15)", "0 0 28px rgba(214,51,108,0.2)", "0 0 20px rgba(168,85,247,0.15)"] }}
         transition={{ duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       >
         {companionImageUrl ? (
@@ -67,7 +67,7 @@ export function ChatTypingIndicator({
           {[0, 1, 2, 3].map((d) => (
             <motion.span
               key={`typing-dot-${d}`}
-              className="inline-block h-2 w-2 rounded-full bg-gradient-to-t from-primary to-fuchsia-400 shadow-[0_0_8px_rgba(255,45,123,0.5)]"
+              className="inline-block h-2 w-2 rounded-full bg-gradient-to-t from-primary to-fuchsia-400 shadow-[0_0_8px_rgba(214,51,108,0.5)]"
               animate={{ y: [0, -6, 0], scale: [1, 1.15, 1], opacity: [0.5, 1, 0.5] }}
               transition={{
                 duration: t.minDuration * 1.1 + d * 0.06,

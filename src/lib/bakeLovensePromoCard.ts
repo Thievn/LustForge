@@ -73,8 +73,8 @@ export async function bakeLovensePromoCardPngBlob(args: BakeLovensePromoCardArgs
   ctx.save();
   ctx.globalAlpha = 0.35;
   const glow = ctx.createRadialGradient(LOVENSE_PROMO_W * 0.72, LOVENSE_PROMO_H * 0.35, 0, LOVENSE_PROMO_W * 0.72, LOVENSE_PROMO_H * 0.35, 420);
-  glow.addColorStop(0, "rgba(255,45,123,0.55)");
-  glow.addColorStop(1, "rgba(255,45,123,0)");
+  glow.addColorStop(0, "rgba(214,51,108,0.55)");
+  glow.addColorStop(1, "rgba(214,51,108,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, LOVENSE_PROMO_W, LOVENSE_PROMO_H);
   ctx.restore();
@@ -99,7 +99,7 @@ export async function bakeLovensePromoCardPngBlob(args: BakeLovensePromoCardArgs
       const dh = productImg.naturalHeight * scale;
       ctx.drawImage(productImg, panelX + (panelW - dw) / 2, panelY + (panelH - dh) / 2, dw, dh);
       ctx.restore();
-      ctx.strokeStyle = "rgba(255,45,123,0.35)";
+      ctx.strokeStyle = "rgba(214,51,108,0.35)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.roundRect(panelX, panelY, panelW, panelH, 18);
@@ -109,7 +109,7 @@ export async function bakeLovensePromoCardPngBlob(args: BakeLovensePromoCardArgs
     }
   }
 
-  ctx.fillStyle = "rgba(255,45,123,0.92)";
+  ctx.fillStyle = "rgba(214,51,108,0.92)";
   ctx.font = "bold 13px system-ui,sans-serif";
   ctx.fillText("LustForge × Lovense", 56, 52);
 
@@ -117,13 +117,13 @@ export async function bakeLovensePromoCardPngBlob(args: BakeLovensePromoCardArgs
     const badge = args.badge.trim().toUpperCase();
     ctx.font = "bold 11px system-ui,sans-serif";
     const bw = ctx.measureText(badge).width + 20;
-    ctx.fillStyle = "rgba(255,45,123,0.18)";
-    ctx.strokeStyle = "rgba(255,45,123,0.45)";
+    ctx.fillStyle = "rgba(214,51,108,0.18)";
+    ctx.strokeStyle = "rgba(214,51,108,0.45)";
     ctx.beginPath();
     ctx.roundRect(56, 64, bw, 24, 8);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#ffb8d9";
+    ctx.fillStyle = "#F57AA3";
     ctx.fillText(badge, 66, 81);
   }
 

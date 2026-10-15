@@ -3,7 +3,7 @@ import { Crown, Gem, Loader2 } from "lucide-react";
 import type { CompanionRarity } from "@/lib/companionRarity";
 import { discoverCardPriceFc } from "@/lib/forgeEconomy";
 
-const NEON_PINK = "#FF2D7B";
+const NEON_PINK = "#D6336C";
 
 export function tierGlowForDiscoverCard(rarity: CompanionRarity): { border: string; glow: string; accent: string } {
   switch (rarity) {
@@ -133,7 +133,7 @@ export function DiscoverPurchaseConfirmDialog({
                   type="button"
                   disabled={purchasing}
                   onClick={onConfirm}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-primary/45 bg-gradient-to-r from-primary/85 to-fuchsia-700/90 px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-[0_0_28px_rgba(255,45,123,0.28)] disabled:opacity-50"
+                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-primary/45 bg-gradient-to-r from-primary/85 to-fuchsia-700/90 px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-[0_0_28px_rgba(214,51,108,0.28)] disabled:opacity-50"
                 >
                   {purchasing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gem className="h-4 w-4" />}
                   Confirm buy

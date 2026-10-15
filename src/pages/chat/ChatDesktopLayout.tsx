@@ -319,7 +319,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
 
             <div
               className={cn(
-                "z-20 shrink-0 bg-gradient-to-t from-[#030208]/95 to-transparent px-2 sm:px-3",
+                "z-20 shrink-0 bg-gradient-to-t from-[#1B1620]/95 to-transparent px-2 sm:px-3",
                 sessionMode === "live_voice" ? "pb-0" : "pb-0 pt-0.5",
               )}
             >
@@ -367,7 +367,7 @@ export function ChatDesktopLayout(props: UseChatSessionControllerReturn) {
             <div
               className={
                 sessionMode === "live_voice"
-                  ? "z-20 shrink-0 bg-gradient-to-t from-[#030208] to-black/50 pb-[max(0.15rem,env(safe-area-inset-bottom))]"
+                  ? "z-20 shrink-0 bg-gradient-to-t from-[#1B1620] to-black/50 pb-[max(0.15rem,env(safe-area-inset-bottom))]"
                   : "z-20 shrink-0"
               }
             >

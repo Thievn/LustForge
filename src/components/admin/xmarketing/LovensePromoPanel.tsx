@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const NEON = "#FF2D7B";
+const NEON = "#D6336C";
 
 const TONES = ["Professional", "Teasing", "Elegant", "Aggressive Hype", "Mysterious"] as const;
 const POST_STYLES = ["Punchy one-liner", "Drop / FOMO", "Quote-bait"] as const;
