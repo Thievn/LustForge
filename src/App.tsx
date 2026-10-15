@@ -172,7 +172,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return () => listener?.subscription.unsubscribe();
   }, [navigate, location.pathname]);
 
-  if (location.pathname === "/account" && location.search.includes("preview=1")) {
+  if (
+    location.search.includes("preview=1") &&
+    (location.pathname === "/account" || location.pathname.startsWith("/chat/"))
+  ) {
     return <>{children}</>;
   }
 

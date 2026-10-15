@@ -25,6 +25,10 @@ export interface Companion {
   rarityBorderOverlayUrl?: string | null;
   /** Long-form profile copy when set in DB. */
   backstory?: string;
+  /** First-person teaser, about 160 characters. */
+  voiceTeaser?: string | null;
+  /** First-person story, 3–4 sentences. */
+  voiceStory?: string | null;
   /** Resolved still portrait (DB URL, static asset, or enriched from generated_images). */
   portraitUrl?: string | null;
   /**

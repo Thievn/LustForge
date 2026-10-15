@@ -36,6 +36,8 @@ export interface DbCompanion {
   updated_at: string;
   rarity: string;
   backstory: string;
+  voice_teaser?: string | null;
+  voice_story?: string | null;
   static_image_url: string | null;
   /** Optional still for Discover grid only; in-app portrait still uses static/image_url unless you align them. */
   discover_tile_image_url?: string | null;
@@ -105,6 +107,8 @@ function coerceStockRow(row: Record<string, unknown>): DbCompanion {
     kinks: parseStringList(row.kinks),
     rarity: normalizeCompanionRarity((row.rarity as string | undefined) ?? undefined),
     backstory: (row.backstory as string | undefined) ?? "",
+    voice_teaser: (row.voice_teaser as string | null | undefined) ?? null,
+    voice_story: (row.voice_story as string | null | undefined) ?? null,
     static_image_url: (row.static_image_url as string | null | undefined) ?? null,
     discover_tile_image_url: (row.discover_tile_image_url as string | null | undefined) ?? null,
     animated_image_url: (row.animated_image_url as string | null | undefined) ?? null,
@@ -169,6 +173,8 @@ export function mapSupabaseCustomCharacterRow(row: Record<string, unknown>): DbC
     gallery_credit_name: (row.gallery_credit_name as string | null) ?? null,
     rarity: normalizeCompanionRarity((row.rarity as string | undefined) ?? undefined),
     backstory: (row.backstory as string | undefined) ?? "",
+    voice_teaser: (row.voice_teaser as string | null | undefined) ?? null,
+    voice_story: (row.voice_story as string | null | undefined) ?? null,
     static_image_url: (row.static_image_url as string | null | undefined) ?? null,
     discover_tile_image_url: (row.discover_tile_image_url as string | null | undefined) ?? null,
     animated_image_url: (row.animated_image_url as string | null | undefined) ?? null,
@@ -341,6 +347,8 @@ export const dbToCompanion = (db: DbCompanion): Companion => ({
   rarity: normalizeCompanionRarity(db.rarity),
   rarityBorderOverlayUrl: db.rarity_border_overlay_url ?? null,
   backstory: db.backstory?.trim() ? db.backstory : undefined,
+  voiceTeaser: db.voice_teaser?.trim() ? db.voice_teaser : null,
+  voiceStory: db.voice_story?.trim() ? db.voice_story : null,
   portraitUrl: galleryStaticPortraitUrl(db, db.id) ?? null,
   isNexusHybrid: Boolean(db.is_nexus_hybrid),
   mergeStats: db.is_nexus_hybrid && db.merge_stats ? parseMergeStats(db.merge_stats) : undefined,

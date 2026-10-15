@@ -7,10 +7,13 @@ import {
   isIncomingCallPushSwMessage,
 } from "@/lib/companionCallNotifications";
 import { registerGlobalPwaInstallListener } from "@/lib/pwaTelemetry";
+import { installPwaCapture } from "@/lib/pwaInstall";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import App from "./App.tsx";
 import "./index.css";
+import "./styles/companion-shell.css";
 
+installPwaCapture();
 registerGlobalPwaInstallListener();
 registerSW({ immediate: true });
 

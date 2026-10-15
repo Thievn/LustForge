@@ -2,21 +2,9 @@
  * PWA / Web Push environment helpers for voice-call alerts.
  * iOS Web Push for websites is only reliable once the app is on the Home Screen (standalone).
  */
+import { isIosLike, isStandalonePwa } from "@/lib/pwaInstall";
 
-export function isStandalonePwa(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
-}
-
-export function isIosLike(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent || "";
-  if (/iPad|iPhone|iPod/.test(ua)) return true;
-  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-}
+export { isIosLike, isStandalonePwa };
 
 /** Safari on iPhone needs Add to Home Screen for Web Push to behave like an app. */
 export function needsInstallForIosWebPush(): boolean {

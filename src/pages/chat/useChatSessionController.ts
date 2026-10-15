@@ -652,8 +652,9 @@ export function useChatSessionController() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      const preview = new URLSearchParams(location.search).get("preview") === "1";
       if (!session?.user) {
-        navigate("/auth");
+        if (!preview) navigate("/auth");
         return;
       }
       if (id && isCompanionProfileTeaserMode() && !isPlatformAdmin(session.user)) {
@@ -665,7 +666,7 @@ export function useChatSessionController() {
       void fetchTokens(session.user.id);
       checkDevice(session.user.id);
     });
-  }, [navigate, id]);
+  }, [navigate, id, location.search]);
 
   useEffect(() => {
     if (!user?.id || !companion || companion.id !== id) return;
@@ -1181,10 +1182,34 @@ export function useChatSessionController() {
   const loadChatHistory = async (userId: string) => {
     setHistoryReady(false);
     try {
-      const { data } = await supabase
+      const historySelect = `
+          id,
+          role,
+          content,
+          lovense_command,
+          created_at,
+          tts_audio_url,
+          image_url,
+          image_prompt,
+          generated_image_id,
+          video_url,
+          private_photo,
+          private_storage_path,
+          generated_images ( saved_to_companion_gallery, saved_to_personal_gallery )
+        `;
+      let { data, error: historyError } = await supabase
         .from("chat_messages")
-        .select(
-          `
+        .select(historySelect)
+        .eq("user_id", userId)
+        .eq("companion_id", id)
+        .order("created_at", { ascending: true })
+        .limit(CHAT_SHARED_HISTORY_UI_LIMIT);
+
+      if (historyError && /private_photo|private_storage_path|PGRST204/i.test(historyError.message)) {
+        const fallback = await supabase
+          .from("chat_messages")
+          .select(
+            `
           id,
           role,
           content,
@@ -1197,11 +1222,13 @@ export function useChatSessionController() {
           video_url,
           generated_images ( saved_to_companion_gallery, saved_to_personal_gallery )
         `,
-        )
-        .eq("user_id", userId)
-        .eq("companion_id", id)
-        .order("created_at", { ascending: true })
-        .limit(CHAT_SHARED_HISTORY_UI_LIMIT);
+          )
+          .eq("user_id", userId)
+          .eq("companion_id", id)
+          .order("created_at", { ascending: true })
+          .limit(CHAT_SHARED_HISTORY_UI_LIMIT);
+        data = fallback.data as typeof data;
+      }
 
       if (data && data.length > 0) {
         setMessages(
@@ -1227,6 +1254,7 @@ export function useChatSessionController() {
               savedToCompanionGallery: inGallery ? (gi?.saved_to_companion_gallery ?? true) : undefined,
               savedToPersonalGallery: inGallery ? Boolean(gi?.saved_to_personal_gallery) : undefined,
               videoUrl: m.video_url ?? undefined,
+              privatePhoto: Boolean(m.private_photo),
             };
           }),
         );
@@ -2093,6 +2121,76 @@ export function useChatSessionController() {
     }
   };
 
+  const sendPrivatePhoto = async (file: File) => {
+    if (!user || !companion) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose a picture.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { fileToPrivateJpeg, PRIVATE_PHOTO_LABEL } = await import("@/lib/privateChatPhoto");
+      const { blob, dataUrl } = await fileToPrivateJpeg(file);
+      const path = `${user.id}/${companion.id}/${crypto.randomUUID()}.jpg`;
+      const { error: uploadError } = await supabase.storage.from("private-chat-photos").upload(path, blob, {
+        contentType: "image/jpeg",
+        upsert: false,
+      });
+      if (uploadError) {
+        toast.error("That picture couldn't be kept just for you. Try another.");
+        return;
+      }
+      const { data: inserted, error: insertError } = await supabase
+        .from("chat_messages")
+        .insert({
+          user_id: user.id,
+          companion_id: companion.id,
+          role: "user",
+          content: PRIVATE_PHOTO_LABEL,
+          private_photo: true,
+          private_storage_path: path,
+        })
+        .select("id")
+        .single();
+      if (insertError || !inserted?.id) {
+        toast.error("She didn't get that picture. Try again.");
+        return;
+      }
+      const userMsg: ChatMessage = {
+        id: inserted.id as string,
+        role: "user",
+        content: PRIVATE_PHOTO_LABEL,
+        privatePhoto: true,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      const { data, error } = await supabase.functions.invoke("grok-chat", {
+        body: {
+          intent: "private_photo_react",
+          companionId: companion.id,
+          systemPrompt: composeChatSystemPrompt(),
+          imageDataUrl: dataUrl,
+          messages: messagesRef.current.slice(-8).map((m) => ({
+            role: m.role,
+            content: m.privatePhoto ? PRIVATE_PHOTO_LABEL : m.content,
+          })),
+        },
+      });
+      if (error) throw new Error(await messageFromFunctionsInvoke(error, data));
+      const payload = data as { response?: string; error?: string } | null;
+      if (payload?.error && !payload.response) throw new Error(payload.error);
+      const text = payload?.response?.trim();
+      if (!text) throw new Error("She couldn't see that picture just now.");
+      const asstId = await insertAssistantMessage(text, null);
+      setMessages((prev) => [...prev, { id: asstId, role: "assistant", content: text, timestamp: new Date() }]);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "She couldn't see that picture just now.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const sendMessage = async (overrideText?: string, options?: SendMessageOptions) => {
     const messageText = overrideText?.trim() ?? input.trim();
     if (!messageText || !user || !companion) return;
@@ -2744,6 +2842,7 @@ export function useChatSessionController() {
     handleSaveImageBackup,
     confirmPendingImageGeneration,
     sendMessage,
+    sendPrivatePhoto,
     registerLiveRampAssistFeed,
     liveVoiceSendText,
     handleRampPill,
