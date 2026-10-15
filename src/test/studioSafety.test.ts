@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  appStorageSource,
   cameraExifReason,
   explicitByRegex,
+  isEnhanceRefusal,
+  publicStudioError,
   signImage,
   verifyImage,
   weakest,
@@ -13,6 +16,24 @@ describe("studio safety", () => {
     expect(explicitByRegex("strip mall at night")).toBeNull();
     expect(explicitByRegex("please undress her")).toMatch(/undress/i);
     expect(explicitByRegex("lingerie on the chair")).toMatch(/lingerie/i);
+  });
+
+  it("treats a model refusal as something that must not replace the prompt", () => {
+    expect(isEnhanceRefusal("I'm sorry, but I can't assist with requests involving nudity or undressing.")).toBe(true);
+    expect(isEnhanceRefusal("Remove the lace and leave her bare, warm lamp light, same room.")).toBe(false);
+  });
+
+  it("treats in-app storage as hers and keeps outside files as uploads", () => {
+    const user = "11111111-2222-3333-4444-555555555555";
+    expect(appStorageSource("companion-images", `${user}/1710000000-abc.png`, user)).toBe("lab");
+    expect(appStorageSource("companion-images", `chat-media/${user}/ivy/still.png`, user)).toBe("lab");
+    expect(appStorageSource("lf-chat-media", `${user}/studio/edit.png`, user)).toBe("lab");
+    expect(appStorageSource("companion-images", "someone-else/pic.png", user)).toBeNull();
+  });
+
+  it("hides machine wording from picture errors", () => {
+    expect(publicStudioError("Runpod run failed (502)")).toMatch(/couldn't start/i);
+    expect(publicStudioError("IMAGE_NOT_CONFIGURED")).toMatch(/couldn't start/i);
   });
 
   it("keeps the weakest source tag", () => {

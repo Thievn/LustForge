@@ -15,6 +15,8 @@ type Item = {
   neutral: string;
   pose_id: string | null;
   blurb: string;
+  image_url?: string | null;
+  thumb_url?: string | null;
   active: boolean;
   is_new?: boolean;
   pattern_payload?: unknown;
@@ -87,6 +89,8 @@ Deno.serve(async (req) => {
       weight: Number(item.weight),
       neutral: item.neutral,
       poseId: item.pose_id,
+      imageUrl: item.image_url,
+      thumbUrl: item.thumb_url,
       blurb: item.blurb,
       slot: isVibration(item) ? "vibration" : slotOf(item),
       isNew: Boolean(item.is_new),

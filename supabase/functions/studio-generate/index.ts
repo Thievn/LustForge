@@ -5,7 +5,7 @@ import { enhancePrompt } from "../_shared/studioGrok.ts";
 import { gate, json } from "../_shared/studioHttp.ts";
 import { isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { submitWorkflow } from "../_shared/studioRunpod.ts";
-import { ensureAdult, parseDataUrl } from "../_shared/studioSafety.ts";
+import { ENHANCE_KEPT_MESSAGE, ensureAdult, parseDataUrl, publicStudioError } from "../_shared/studioSafety.ts";
 import { zimage, zimagePose } from "../_shared/studioWorkflows.ts";
 
 const STYLES: Record<string, string> = {
@@ -35,9 +35,12 @@ Deno.serve(async (req) => {
       if (blocked) return json({ error: blocked, code: "MINOR_BLOCKED" }, 400);
       const mode = body.mode === "edit" ? "edit" : "create";
       const next = await enhancePrompt(prompt, mode);
-      const blockedNext = minorReason(next);
-      if (blockedNext) return json({ error: blockedNext, code: "MINOR_BLOCKED" }, 400);
-      return json({ prompt: next });
+      if (next.refused) {
+        return json({ prompt, refused: true, notice: ENHANCE_KEPT_MESSAGE });
+      }
+      const blockedNext = minorReason(next.prompt);
+      if (blockedNext) return json({ prompt, refused: true, notice: ENHANCE_KEPT_MESSAGE });
+      return json({ prompt: next.prompt, refused: false });
     }
 
     const variations = Math.max(1, Math.min(4, Number(body?.variations ?? 1) || 1));
@@ -119,12 +122,12 @@ Deno.serve(async (req) => {
       for (let i = submitted; i < variations; i++) await refundOne(svc, user.id, charge.mode);
       const message = err instanceof Error ? err.message : String(err);
       const status = message === "IMAGE_NOT_CONFIGURED" ? 503 : 502;
-      return json({ error: message, code: message === "IMAGE_NOT_CONFIGURED" ? message : "IMAGE_FAILED", jobs }, status);
+      return json({ error: publicStudioError(message), code: message === "IMAGE_NOT_CONFIGURED" ? message : "IMAGE_FAILED", jobs }, status);
     }
 
     return json({ jobs, credits: charge.credits, freeLeft: charge.freeLeft, prompt });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return json({ error: message.slice(0, 400) }, 500);
+    return json({ error: publicStudioError(message) }, 500);
   }
 });

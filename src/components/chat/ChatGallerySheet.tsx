@@ -7,6 +7,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companionName: string;
+  companionId?: string | null;
   images: CompanionGalleryRow[];
   loading: boolean;
   currentPortraitUrl: string | null | undefined;
@@ -19,6 +20,7 @@ export function ChatGallerySheet({
   open,
   onOpenChange,
   companionName,
+  companionId = null,
   images,
   loading,
   currentPortraitUrl,
@@ -44,6 +46,7 @@ export function ChatGallerySheet({
         <div className="pt-2 pb-6">
           <CompanionGalleryGrid
             companionName={companionName}
+            companionId={companionId}
             images={images}
             loading={loading}
             currentPortraitUrl={currentPortraitUrl}

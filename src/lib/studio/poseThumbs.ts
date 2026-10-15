@@ -1,3 +1,4 @@
+/** Wireframe stick figures rendered from pose keypoints. See scripts/render-pose-wireframes.mjs. */
 const modules = import.meta.glob("../../assets/pose-thumbs/*.webp", {
   eager: true,
   import: "default",

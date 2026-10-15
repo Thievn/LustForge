@@ -10,6 +10,8 @@ import { loadImageNaturalSize } from "@/lib/chatImageSettings";
 import { isAcceptableChatPortraitUpload } from "@/lib/portraitAspect";
 import type { SetPortraitFromGalleryHandler } from "@/lib/setPortraitFromGalleryTypes";
 import { cn } from "@/lib/utils";
+import { PictureComing } from "@/components/studio/PictureComing";
+import { sameCompanion, useStudioJobs } from "@/lib/studio/jobs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +33,7 @@ type Props = {
   selectedLoopSourceId?: string | null;
   onSelectForLoop?: (row: CompanionGalleryRow | null) => void;
   compact?: boolean;
+  companionId?: string | null;
   canDelete?: boolean;
   onDelete?: (row: CompanionGalleryRow) => Promise<void>;
 };
@@ -54,6 +57,7 @@ export function CompanionGalleryGrid({
   selectedLoopSourceId = null,
   onSelectForLoop,
   compact,
+  companionId = null,
   canDelete = false,
   onDelete,
 }: Props) {
@@ -62,6 +66,13 @@ export function CompanionGalleryGrid({
   const [pendingDelete, setPendingDelete] = useState<CompanionGalleryRow | null>(null);
   const [lightbox, setLightbox] = useState<CompanionGalleryRow | null>(null);
   const [filter, setFilter] = useState<GalleryFilter>("all");
+  const studio = useStudioJobs();
+  const pending = studio.pending.filter((job) => !companionId || sameCompanion(job.companionId, companionId));
+  const arrived = studio.jobs.filter((job) => {
+    if (job.status !== "COMPLETED" || !job.imageUrl) return false;
+    if (companionId && !sameCompanion(job.companionId, companionId)) return false;
+    return !images.some((row) => row.id === job.id || row.image_url === job.storageUrl || row.image_url === job.imageUrl);
+  });
 
   const normalizedCurrent = currentPortraitUrl ? stablePortraitDisplayUrl(currentPortraitUrl) : null;
 
@@ -154,7 +165,7 @@ export function CompanionGalleryGrid({
     );
   }
 
-  if (!images.length) {
+  if (!images.length && !pending.length && !arrived.length) {
     return (
       <div className="rounded-2xl border border-white/[0.08] bg-black/35 backdrop-blur-xl px-6 py-14 text-center">
         <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
@@ -204,6 +215,14 @@ export function CompanionGalleryGrid({
         compact ? "grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2" : "grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4",
       )}
     >
+      {pending.map((job) => (
+        <PictureComing key={job.id} src={job.subjectUrl} status={job.status} dense />
+      ))}
+      {arrived.map((job) => (
+        <motion.div key={job.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7 }} className="overflow-hidden rounded-2xl border border-white/10">
+          <img src={job.imageUrl} alt="" className="aspect-[3/4] w-full object-cover" />
+        </motion.div>
+      ))}
       {filtered.map((row) => {
           const display = stablePortraitDisplayUrl(row.image_url) ?? row.image_url;
           const isVideo = companionGalleryRowIsClip(row);

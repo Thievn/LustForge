@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Brush, Image as ImageIcon, Redo2, Shirt, Smile, Sparkles, Undo2 } from "lucide-react";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { parseStorageRef } from "@/lib/phone/storageUrl";
-import { pollStudioJobs, readFileAsJpeg, readStudioEdit, stitchOutfitRefs, studioEdit, studioEnhance, studioImport, StudioError } from "@/lib/studio/api";
-import { renderPosePng, type StudioPose } from "@/lib/studio/poses";
+import { readFileAsJpeg, readStudioEdit, stitchOutfitRefs, studioEdit, studioEnhance, studioImport, StudioError } from "@/lib/studio/api";
+import { studioMood } from "@/lib/studio/copy";
+import { studioJobOpen, useStudioJobs } from "@/lib/studio/jobs";
+import { renderPosePng, studioPoseById, type StudioPose } from "@/lib/studio/poses";
 import { poseThumbUrl } from "@/lib/studio/poseThumbs";
 import { quoteStackedEdit, stackedEditReady } from "../../../supabase/functions/_shared/stackedEdit";
+import { ENHANCE_KEPT_MESSAGE, isEnhanceRefusal } from "../../../supabase/functions/_shared/studioSafety";
 import { CompareSlider } from "@/components/studio/CompareSlider";
 import { MaskBrush } from "@/components/studio/MaskBrush";
+import { PictureComing } from "@/components/studio/PictureComing";
 import { PoseSheet } from "@/components/studio/PoseSheet";
 import { StudioSheet } from "@/components/studio/Sheet";
 import { StudioEditWand } from "@/components/studio/EditWand";
+import { VaultPicks, type VaultPick } from "@/components/studio/VaultPicks";
+import type { TreasureSlot } from "@/lib/vault/treasures";
 
 type Source = "lab" | "character" | "upload";
 type Frame = {
@@ -26,13 +32,58 @@ type Frame = {
 };
 
 const SOURCE_COPY: Record<Source, string> = {
-  lab: "Lab image · explicit edits OK",
-  character: "Character · explicit edits OK",
-  upload: "Upload · explicit edits stay off",
+  lab: "Lab image · explicit edits welcome",
+  character: "Her picture · explicit edits welcome",
+  upload: "Outside picture · explicit edits wait until she's a character",
 };
+
+const TRACK_KEY = "lf-studio-tracks";
+
+type Track = { id: string; before: string };
+
+function readTracks(): Track[] {
+  try {
+    const stored = localStorage.getItem(TRACK_KEY) ?? sessionStorage.getItem(TRACK_KEY);
+    const raw = JSON.parse(stored || "[]") as unknown;
+    if (!Array.isArray(raw)) return [];
+    const tracks = raw.filter((item): item is Track => Boolean(item) && typeof item.id === "string" && typeof item.before === "string");
+    if (!localStorage.getItem(TRACK_KEY) && tracks.length) writeTracks(tracks);
+    return tracks;
+  } catch {
+    return [];
+  }
+}
+
+function writeTracks(tracks: Track[]) {
+  try {
+    localStorage.setItem(TRACK_KEY, JSON.stringify(tracks));
+  } catch {
+    /* A very large before-picture can miss the store. The job itself still finishes. */
+  }
+}
+
+async function urlToJpeg(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 768 / Math.max(bitmap.width, bitmap.height));
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.86);
+  } catch {
+    return null;
+  }
+}
 
 export function EditTab() {
   const preview = usePhonePreview();
+  const studio = useStudioJobs();
   const { limits } = usePhoneRoster(preview);
   const stashed = readStudioEdit();
   const [frames, setFrames] = useState<Frame[]>(() =>
@@ -60,18 +111,18 @@ export function EditTab() {
   const [fix, setFix] = useState<"face" | "hands" | "touch">("face");
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [vaultIds, setVaultIds] = useState<Partial<Record<TreasureSlot, string>>>({});
+  const [vaultPieces, setVaultPieces] = useState<VaultPick[]>([]);
+  const [tracks, setTracks] = useState<Track[]>(() => readTracks());
+  const folded = useRef(new Set<string>());
   const [importOpen, setImportOpen] = useState(false);
   const [attest, setAttest] = useState(false);
   const [importFile, setImportFile] = useState<string | null>(null);
   const current = frames[index];
   const q = preview ? "?preview=1" : "";
   const quote = quoteStackedEdit({ admin: limits.catalogOwner, stacked: true });
-
-  function pushFrames(next: Frame[]) {
-    if (!next.length) return;
-    setFrames((prev) => [...prev.slice(0, index + 1), ...next]);
-    setIndex(index + 1);
-  }
+  const openHere = studio.jobs.filter((job) => tracks.some((track) => track.id === job.id) && studioJobOpen(job.status));
+  const mood = openHere[0] ? studioMood(openHere[0].status) : "";
 
   function subjectPayload(frame: Frame) {
     if (frame.assetId) return { assetId: frame.assetId };
@@ -93,6 +144,82 @@ export function EditTab() {
     }
   }
 
+  useEffect(() => {
+    const ready = studio.jobs.filter((job) => tracks.some((track) => track.id === job.id) && job.status === "COMPLETED" && job.imageUrl && !folded.current.has(job.id));
+    const failed = studio.jobs.filter((job) => tracks.some((track) => track.id === job.id) && (job.status === "FAILED" || job.status === "CANCELLED" || job.status === "TIMED_OUT"));
+    if (failed.length) {
+      setNotice(failed[0].error || "She couldn't finish that picture. If it took a credit, it comes back.");
+    }
+    if (ready.length) {
+      for (const job of ready) folded.current.add(job.id);
+      setFrames((prev) => {
+        const known = new Set(prev.map((frame) => frame.id));
+        const extra = ready.filter((job) => !known.has(job.id)).map((job) => ({
+          id: job.id,
+          url: job.imageUrl!,
+          storageUrl: job.storageUrl,
+          assetId: job.assetId,
+          tag: job.tag,
+          source: (job.source ?? "lab") as Source,
+          before: tracks.find((track) => track.id === job.id)?.before,
+        }));
+        if (!extra.length) return prev;
+        const next = [...prev, ...extra];
+        queueMicrotask(() => setIndex(next.length - 1));
+        return next;
+      });
+    }
+    const drop = new Set([...failed, ...ready].map((job) => job.id));
+    if (!drop.size) return;
+    setTracks((prev) => {
+      const next = prev.filter((track) => !drop.has(track.id));
+      writeTracks(next);
+      return next;
+    });
+  }, [studio.jobs, tracks]);
+
+  useEffect(() => {
+    if (frames.length > 0) return;
+    const openTrack = tracks.find((track) => {
+      const job = studio.jobs.find((item) => item.id === track.id);
+      return !job || studioJobOpen(job.status);
+    });
+    const openJob = studio.pending.find((job) => job.kind === "edit");
+    const url = openTrack?.before || openJob?.subjectUrl;
+    if (!url) return;
+    const stored = url.startsWith("http") || url.startsWith("storage://") ? url : undefined;
+    setFrames([{ id: "resume", url, storageUrl: stored, source: "lab" }]);
+  }, [frames.length, studio.jobs, studio.pending, tracks]);
+
+  async function enhance() {
+    if (!instruction.trim()) {
+      setNotice("Write what should change first.");
+      return;
+    }
+    setNotice(null);
+    try {
+      const next = await studioEnhance(instruction, "edit");
+      if (next.refused || !next.prompt || isEnhanceRefusal(next.prompt)) {
+        setNotice(next.notice || ENHANCE_KEPT_MESSAGE);
+        return;
+      }
+      setInstruction(next.prompt);
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : ENHANCE_KEPT_MESSAGE);
+    }
+  }
+
+  function onVault(next: Partial<Record<TreasureSlot, string>>, pieces: VaultPick[]) {
+    const posePick = pieces.find((item) => item.slot === "pose" && item.poseId);
+    if (posePick?.poseId) setPose(studioPoseById(posePick.poseId));
+    else if (vaultIds.pose) {
+      const previous = vaultPieces.find((item) => item.slot === "pose");
+      setPose((current) => (current && previous?.poseId && current.id === previous.poseId ? null : current));
+    }
+    setVaultIds(next);
+    setVaultPieces(pieces);
+  }
+
   async function runEdit() {
     const ready = stackedEditReady({
       hasImage: Boolean(current),
@@ -102,6 +229,7 @@ export function EditTab() {
       mask: Boolean(mask),
       includeFix: fixOn,
       background: Boolean(background.trim()),
+      treasureCount: vaultPieces.length,
     });
     if (!ready.ok) {
       setNotice(ready.error);
@@ -111,13 +239,25 @@ export function EditTab() {
       setNotice("Preview only. Sign in to edit.");
       return;
     }
-    setBusy("Starting the GPU…");
+    if (openHere.length) {
+      setNotice("She's still getting ready.");
+      return;
+    }
+    setBusy(studioMood(null));
     setNotice(null);
     try {
-      const outfitSheet = await stitchOutfitRefs(outfits);
+      const treasureUrls: string[] = [];
+      for (const piece of vaultPieces) {
+        if (piece.slot === "pose" || piece.slot === "mood" || !piece.imageUrl) continue;
+        const jpeg = await urlToJpeg(piece.imageUrl);
+        if (jpeg) treasureUrls.push(jpeg);
+      }
+      const outfitSheet = await stitchOutfitRefs([...outfits, ...treasureUrls].slice(0, 3));
       const poseDataUrl = pose ? await renderPosePng(pose) : null;
+      const subjectUrl = current?.storageUrl || (current && !current.url.startsWith("data:") ? current.url : "");
       const started = await studioEdit({
         subject: subjectPayload(current!),
+        subjectUrl,
         companionId: stashed?.companionId ?? null,
         stacked: true,
         tool: background.trim() ? "background" : "prompt",
@@ -131,24 +271,17 @@ export function EditTab() {
         poseDataUrl,
         outfitRefs: outfitSheet ? [{ dataUrl: outfitSheet }] : [],
         maskDataUrl: mask,
+        treasureIds: vaultPieces.map((piece) => piece.id),
       });
       const ids = (started.jobs ?? []).map((job) => job.id);
-      if (!ids.length) throw new StudioError("No edit was started");
-      const finished = await pollStudioJobs(ids, (label) => setBusy(label === "done" ? "Saving…" : label));
-      const ok = finished.filter((job) => job.status === "COMPLETED" && job.imageUrl);
-      if (!ok.length) throw new StudioError(finished.find((job) => job.error)?.error || "Edit failed");
-      pushFrames(ok.map((job) => ({
-        id: job.id,
-        url: job.imageUrl!,
-        storageUrl: job.storageUrl,
-        assetId: job.assetId,
-        tag: job.tag,
-        source: job.source ?? started.source ?? current!.source,
-        before: current!.url,
-      })));
+      if (!ids.length) throw new StudioError("She couldn't start that edit.");
+      const nextTracks = [...tracks, ...ids.map((id) => ({ id, before: current!.url }))];
+      writeTracks(nextTracks);
+      setTracks(nextTracks);
+      studio.notePending(ids);
     } catch (err) {
       const code = err instanceof StudioError ? err.code : undefined;
-      setNotice(err instanceof Error ? err.message : "Edit failed");
+      setNotice(err instanceof Error ? err.message : "She couldn't start that edit.");
       if (code === "EXPLICIT_UPLOAD") setImportOpen(true);
     } finally {
       setBusy("");
@@ -164,17 +297,17 @@ export function EditTab() {
       setNotice("Check the box first.");
       return;
     }
-    setBusy("Checking the image…");
+    setBusy("Looking her over…");
     try {
       const saved = await studioImport({ dataUrl: importFile, attestation: true });
-      if (!saved.imageUrl || !saved.assetId) throw new StudioError("Import did not save");
+      if (!saved.imageUrl || !saved.assetId) throw new StudioError("She didn't stay.");
       const frame: Frame = { id: saved.assetId, url: saved.imageUrl, assetId: saved.assetId, tag: saved.tag, source: "character" };
       setFrames([frame]);
       setIndex(0);
       setImportOpen(false);
-      setNotice("Imported as a character. Explicit edits are allowed on this image.");
+      setNotice("She's in as a character now. Explicit edits are welcome on this picture.");
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Import failed");
+      setNotice(err instanceof Error ? err.message : "She couldn't come in just yet.");
     } finally {
       setBusy("");
     }
@@ -191,8 +324,10 @@ export function EditTab() {
               <button type="button" aria-label="Redo" disabled={index >= frames.length - 1} onClick={() => setIndex((value) => Math.min(frames.length - 1, value + 1))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border disabled:opacity-30"><Redo2 className="h-4 w-4" /></button>
             </div>
           </div>
-          {current ? (
-            <div className="relative">
+          {openHere.length || busy ? (
+            <PictureComing src={current?.url || openHere[0]?.subjectUrl} status={openHere[0]?.status} />
+          ) : current ? (
+            <div key={current.id} className="relative animate-in fade-in duration-700">
               <CompareSlider before={current.before} after={current.url} />
               <StudioEditWand imageUrl={current.url} storageUrl={current.storageUrl} assetId={current.assetId} tag={current.tag} source={current.source} companionId={stashed?.companionId} />
             </div>
@@ -213,7 +348,7 @@ export function EditTab() {
         <aside className="space-y-3 rounded-[1.4rem] border border-white/10 bg-card/70 p-4">
           <p className="text-[10px] uppercase tracking-[0.2em] text-primary">This edit</p>
           <textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} rows={3} placeholder="What should change?" className="w-full rounded-2xl border border-border bg-background px-3 py-3 text-sm" />
-          <button type="button" className="inline-flex h-10 items-center gap-2 text-sm text-primary" onClick={() => void studioEnhance(instruction, "edit").then((next) => next.prompt && setInstruction(next.prompt)).catch((err) => setNotice(err instanceof Error ? err.message : "Enhance failed"))}>
+          <button type="button" className="inline-flex h-10 items-center gap-2 text-sm text-primary" onClick={() => void enhance()}>
             <Sparkles className="h-4 w-4" /> Grok Enhance
           </button>
           <label className="block text-xs text-muted-foreground">
@@ -235,6 +370,7 @@ export function EditTab() {
               <input type="file" accept="image/*" className="sr-only" disabled={outfits.length >= 3} onChange={(event) => void onUpload(event.target.files?.[0], "outfit")} />
             </label>
           </div>
+          <VaultPicks picks={vaultIds} onChange={onVault} />
           <button type="button" onClick={() => setPoseOpen(true)} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-border bg-background text-sm">
             {pose && poseThumbUrl(pose.id) ? (
               <img src={poseThumbUrl(pose.id) ?? ""} alt="" className="h-9 w-7 rounded-md bg-black object-contain" />
@@ -271,10 +407,10 @@ export function EditTab() {
               {notice} {notice.includes("credit") || notice.includes("Upgrade") ? <Link className="text-primary underline" to={`/plans${q}`}>Plans</Link> : null}
             </p>
           ) : null}
-          {busy ? <p className="text-center text-xs text-primary" role="status">{busy}</p> : null}
-          <p className="text-center text-xs text-muted-foreground">{quote.label}. Charged when it finishes. A failed edit comes back.</p>
-          <button type="button" disabled={Boolean(busy)} onClick={() => void runEdit()} className="h-12 w-full rounded-2xl bg-primary font-semibold text-primary-foreground disabled:opacity-60">
-            {busy || "Apply"}
+          {mood || busy ? <p className="text-center text-xs text-primary" role="status">{mood || busy}</p> : null}
+          <p className="text-center text-xs text-muted-foreground">{quote.label}. She takes it when the picture is ready. If it doesn't come through, it comes back.</p>
+          <button type="button" disabled={Boolean(busy || mood)} onClick={() => void runEdit()} className="h-12 w-full rounded-2xl bg-primary font-semibold text-primary-foreground disabled:opacity-60">
+            {mood || busy || "Apply"}
           </button>
         </aside>
       </div>
@@ -283,7 +419,7 @@ export function EditTab() {
       {current ? <MaskBrush src={current.url} open={brushOpen} onClose={() => setBrushOpen(false)} onDone={(url) => { setMask(url); setBrushOpen(false); }} /> : null}
 
       <StudioSheet open={importOpen} title="Import as character" onClose={() => setImportOpen(false)} footer={<button type="button" onClick={() => void runImport()} className="h-12 w-full rounded-2xl bg-primary font-semibold text-primary-foreground">Import</button>}>
-        <p className="text-sm text-muted-foreground">Explicit edits stay off for uploads. Import is for a fictional adult character, not a real photo.</p>
+        <p className="text-sm text-muted-foreground">Explicit edits stay off for a picture brought in from outside. Bring her in when she's a fictional adult, not a real photo.</p>
         <label className="mt-3 block text-sm text-primary">
           Choose image
           <input type="file" accept="image/*" className="sr-only" onChange={(event) => void onUpload(event.target.files?.[0], "import")} />

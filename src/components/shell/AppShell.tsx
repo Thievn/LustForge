@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { cn } from "@/lib/utils";
+import { useStudioJobs } from "@/lib/studio/jobs";
 
 const LINKS = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -18,7 +19,7 @@ const LINKS = [
   { to: "/account", label: "Account", icon: UserRound },
 ] as const;
 
-function Item({ to, label, icon: Icon, end = false }: { to: string; label: string; icon: typeof Gem; end?: boolean }) {
+function Item({ to, label, icon: Icon, end = false, dot = false }: { to: string; label: string; icon: typeof Gem; end?: boolean; dot?: boolean }) {
   return (
     <NavLink
       to={to}
@@ -33,7 +34,8 @@ function Item({ to, label, icon: Icon, end = false }: { to: string; label: strin
       }
     >
       <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={1.75} />
-      <span>{label}</span>
+      <span className="flex-1">{label}</span>
+      {dot ? <span className="h-2 w-2 rounded-full bg-[#F57AA3]" aria-label="She's getting ready" /> : null}
     </NavLink>
   );
 }
@@ -42,6 +44,8 @@ export function AppShell({ children }: { children?: ReactNode }) {
   const preview = usePhonePreview();
   const location = useLocation();
   const { limits } = usePhoneRoster(preview);
+  const { pending } = useStudioJobs();
+  const pictureWaiting = pending.length > 0;
   const [ready, setReady] = useState(preview);
   const [authed, setAuthed] = useState(preview);
   const [more, setMore] = useState(false);
@@ -88,7 +92,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
         </NavLink>
         <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto">
           {LINKS.map((link) => (
-            <Item key={link.to} to={`${link.to}${q}`} label={link.label} icon={link.icon} end={link.to === "/messages" || link.to === "/lab"} />
+            <Item key={link.to} to={`${link.to}${q}`} label={link.label} icon={link.icon} end={link.to === "/messages" || link.to === "/lab"} dot={pictureWaiting && (link.to === "/gallery" || link.to === "/messages")} />
           ))}
           <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-white/10 pl-3">
             <NavLink to={`/lab${q}`} end className="min-h-10 text-sm text-[#B8A9BC] hover:text-foreground">Create</NavLink>
@@ -144,12 +148,18 @@ export function AppShell({ children }: { children?: ReactNode }) {
               )
             }
           >
-            <link.icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
+            <span className="relative">
+              <link.icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
+              {pictureWaiting && link.to === "/messages" ? <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#F57AA3]" /> : null}
+            </span>
             {link.label}
           </NavLink>
         ))}
         <button type="button" className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] font-semibold text-[#B8A9BC]" onClick={() => setMore(true)}>
-          <Users className="h-[22px] w-[22px]" strokeWidth={1.75} />
+          <span className="relative">
+            <Users className="h-[22px] w-[22px]" strokeWidth={1.75} />
+            {pictureWaiting ? <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#F57AA3]" /> : null}
+          </span>
           More
         </button>
       </nav>
@@ -165,7 +175,8 @@ export function AppShell({ children }: { children?: ReactNode }) {
               ].map((link) => (
                 <NavLink key={link.label} to={link.to} onClick={() => setMore(false)} className="flex min-h-12 items-center gap-3 rounded-[14px] px-3 text-sm font-medium text-[#2A2030] hover:bg-black/5">
                   <link.icon className="h-5 w-5" strokeWidth={1.75} />
-                  {link.label}
+                  <span className="flex-1">{link.label}</span>
+                  {pictureWaiting && link.to.startsWith("/gallery") ? <span className="h-2 w-2 rounded-full bg-[#D6336C]" aria-label="She's getting ready" /> : null}
                 </NavLink>
               ))}
               {limits.catalogOwner ? (

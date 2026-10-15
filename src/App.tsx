@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { initAnalytics, trackPageView } from "@/lib/analytics";
 import { dismissAllProfileLoopToasts } from "@/lib/invokeGenerateProfileLoopVideo";
 import { AppShell } from "@/components/shell/AppShell";
+import { StudioJobsProvider } from "@/lib/studio/jobs";
 import AgeGate from "./components/AgeGate";
 import InstallPrompt from "./components/InstallPrompt";
 import Index from "./pages/Index";
@@ -217,6 +218,7 @@ function App() {
           <ProfileLoopToastRouteGuard />
           <IncomingCallPushBanner />
           {!ageConfirmed && <AgeGate onConfirm={handleAgeConfirm} />}
+          <StudioJobsProvider>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -317,6 +319,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          </StudioJobsProvider>
           <MobileToaster />
           <MobileNavGate />
           {ageConfirmed ? <InstallPrompt /> : null}
