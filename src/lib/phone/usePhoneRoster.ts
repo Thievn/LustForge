@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { isPlatformAdmin } from "@/config/auth";
-import { dbToCompanion, mapSupabaseCustomCharacterRow, type DbCompanion } from "@/hooks/useCompanions";
+import { dbToCompanion, mapSupabaseCustomCharacterRow, mapSupabaseStockCompanionRow } from "@/hooks/useCompanions";
 import type { Companion } from "@/data/companions";
 import { isLoopVideoStorageUrl } from "@/lib/companionMedia";
 import { PREVIEW_COMPANIONS } from "@/lib/phone/previewData";
@@ -135,11 +135,16 @@ async function loadRoster(userId: string, catalogOwner: boolean): Promise<Roster
     .from("custom_characters")
     .select("*")
     .eq("user_id", userId)
+    .eq("hidden_from_dashboard", false)
     .order("created_at", { ascending: false });
 
   let rows = (own.data ?? []) as Record<string, unknown>[];
   if (catalogOwner) {
-    const all = await supabase.from("custom_characters").select("*").order("created_at", { ascending: false });
+    const all = await supabase
+      .from("custom_characters")
+      .select("*")
+      .eq("hidden_from_dashboard", false)
+      .order("created_at", { ascending: false });
     if (!all.error && all.data && all.data.length >= rows.length) {
       rows = all.data as Record<string, unknown>[];
     }
@@ -150,16 +155,33 @@ async function loadRoster(userId: string, catalogOwner: boolean): Promise<Roster
     loopVideoUrl: loopVideoFromRow(row),
   }));
   const seen = new Set(mapped.map((item) => item.id));
-  const stock = await supabase.from("companions").select("*").eq("is_active", true);
+  const stock = await supabase.from("companions").select("*").eq("is_active", true).eq("hidden_from_dashboard", false);
   if (!stock.error && stock.data?.length) {
     for (const row of stock.data as Record<string, unknown>[]) {
-      const companion = dbToCompanion({
-        ...(row as unknown as DbCompanion),
-        tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
-        kinks: Array.isArray(row.kinks) ? (row.kinks as string[]) : [],
-      });
+      const companion = dbToCompanion(mapSupabaseStockCompanionRow(row));
       if (!seen.has(companion.id)) mapped.push({ ...companion, loopVideoUrl: loopVideoFromRow(row) });
     }
   }
   return mapped;
+}
+
+/**
+ * Resolve one companion for an existing thread, bond, or gallery reference.
+ * Does not apply `hidden_from_dashboard` — a hidden companion must still show name and avatar.
+ */
+export async function fetchRosterCompanionById(id: string): Promise<RosterCompanion | null> {
+  if (!id) return null;
+  if (id.startsWith("cc-")) {
+    const { data, error } = await supabase.from("custom_characters").select("*").eq("id", id.slice(3)).maybeSingle();
+    if (error || !data) return null;
+    const row = data as Record<string, unknown>;
+    return { ...dbToCompanion(mapSupabaseCustomCharacterRow(row)), loopVideoUrl: loopVideoFromRow(row) };
+  }
+  const { data, error } = await supabase.from("companions").select("*").eq("id", id).maybeSingle();
+  if (error || !data) return null;
+  const row = data as Record<string, unknown>;
+  return {
+    ...dbToCompanion(mapSupabaseStockCompanionRow(row)),
+    loopVideoUrl: loopVideoFromRow(row),
+  };
 }

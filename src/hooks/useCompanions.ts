@@ -99,7 +99,7 @@ function parseStringList(raw: unknown): string[] {
   return [];
 }
 
-function coerceStockRow(row: Record<string, unknown>): DbCompanion {
+export function mapSupabaseStockCompanionRow(row: Record<string, unknown>): DbCompanion {
   const r = row as unknown as DbCompanion;
   return {
     ...r,
@@ -244,6 +244,7 @@ async function fetchPublicCustomCharacters(): Promise<DbCompanion[]> {
     .select("*")
     .eq("is_public", true)
     .eq("approved", true)
+    .eq("hidden_from_dashboard", false)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -260,6 +261,7 @@ async function fetchMyCustomCharacters(userId: string): Promise<DbCompanion[]> {
     .from("custom_characters")
     .select("*")
     .eq("user_id", userId)
+    .eq("hidden_from_dashboard", false)
     .or("exclude_from_personal_vault.is.null,exclude_from_personal_vault.eq.false")
     .order("created_at", { ascending: false });
 
@@ -388,7 +390,7 @@ export const useCompanions = () => {
       const uid = session?.user?.id ?? null;
 
       const [companionsRes, publicCustoms, mineRes] = await Promise.all([
-        supabase.from("companions").select("*").eq("is_active", true).order("name"),
+        supabase.from("companions").select("*").eq("is_active", true).eq("hidden_from_dashboard", false).order("name"),
         fetchPublicCustomCharacters(),
         uid ? fetchMyCustomCharacters(uid) : Promise.resolve([] as DbCompanion[]),
       ]);
@@ -402,7 +404,7 @@ export const useCompanions = () => {
         return [...staticDb, ...mineRes, ...publicOthers];
       }
 
-      const stock = ((companionsRes.data || []) as Record<string, unknown>[]).map(coerceStockRow);
+      const stock = ((companionsRes.data || []) as Record<string, unknown>[]).map(mapSupabaseStockCompanionRow);
       return [...stock, ...mineRes, ...publicOthers];
     },
     staleTime: 60 * 1000,
@@ -411,7 +413,7 @@ export const useCompanions = () => {
   });
 };
 
-// Admin hook - fetches ALL companions including inactive
+// Admin hook — every catalog row, including inactive and hidden_from_dashboard.
 export const useAdminCompanions = () => {
   return useQuery({
     queryKey: ["admin-companions"],
@@ -419,7 +421,7 @@ export const useAdminCompanions = () => {
       const { data, error } = await supabase.from("companions").select("*").order("name");
 
       if (error) throw error;
-      return ((data || []) as Record<string, unknown>[]).map(coerceStockRow);
+      return ((data || []) as Record<string, unknown>[]).map(mapSupabaseStockCompanionRow);
     },
   });
 };

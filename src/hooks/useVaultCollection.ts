@@ -53,6 +53,7 @@ export function useVaultCollection(userId: string | null, dbCompanions: DbCompan
           .from("custom_characters")
           .select("id")
           .eq("user_id", uid)
+          .eq("hidden_from_dashboard", false)
           .or("exclude_from_personal_vault.is.null,exclude_from_personal_vault.eq.false"),
       ]);
 

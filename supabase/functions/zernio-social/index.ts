@@ -47,6 +47,7 @@ async function pickWeeklyDropCandidates(
     .from("companions")
     .select("id, name, rarity, image_url, created_at")
     .eq("active", true)
+    .eq("hidden_from_dashboard", false)
     .order("created_at", { ascending: false })
     .limit(100);
   if (stockErr) throw stockErr;
@@ -56,6 +57,7 @@ async function pickWeeklyDropCandidates(
     .select("id, name, rarity, image_url, created_at")
     .eq("is_public", true)
     .eq("approved", true)
+    .eq("hidden_from_dashboard", false)
     .order("created_at", { ascending: false })
     .limit(200);
   if (customErr) throw customErr;

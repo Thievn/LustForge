@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatTypingIndicator } from "@/components/chat/ChatTypingIndicator";
 import { PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
 import "@/components/phone/phone.css";
-import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
+import { fetchRosterCompanionById, usePhoneRoster, type RosterCompanion } from "@/lib/phone/usePhoneRoster";
 import { minorReason } from "@/lib/phone/adultGuard";
 import { looksLikePictureAsk, parseStructuredReply } from "@/lib/phone/bubbles";
 import { buildGrokPhoneRequest, replyTextFromGrok } from "@/lib/phone/grokPhoneChat";
@@ -41,8 +41,12 @@ type Bubble = {
 export default function PhoneThread() {
   const { id = "" } = useParams();
   const preview = usePhonePreview();
-  const { companions, user, limits } = usePhoneRoster(preview);
-  const companion = companions.find((item) => item.id === id) ?? null;
+  const { companions, user, limits, loading: rosterLoading } = usePhoneRoster(preview);
+  const listed = companions.find((item) => item.id === id) ?? null;
+  const [resolved, setResolved] = useState<RosterCompanion | null>(null);
+  const [resolving, setResolving] = useState(false);
+  const [lookupMiss, setLookupMiss] = useState(false);
+  const companion = listed ?? resolved;
   const [messages, setMessages] = useState<Bubble[]>(preview ? PREVIEW_THREAD : []);
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
@@ -57,6 +61,34 @@ export default function PhoneThread() {
   const [looksOpen, setLooksOpen] = useState(false);
   const [looks, setLooks] = useState<LookRow[]>([]);
   const voice = useVoiceInput(setDraft);
+
+  useEffect(() => {
+    if (preview || !id || listed || rosterLoading) {
+      setResolved(null);
+      setResolving(false);
+      setLookupMiss(!preview && !rosterLoading && !id);
+      return;
+    }
+    let cancelled = false;
+    setLookupMiss(false);
+    setResolving(true);
+    void fetchRosterCompanionById(id)
+      .then((row) => {
+        if (cancelled) return;
+        setResolved(row);
+        setLookupMiss(row == null);
+        setResolving(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setResolved(null);
+        setLookupMiss(true);
+        setResolving(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [preview, id, listed, rosterLoading]);
 
   useEffect(() => {
     if (preview || !user || !id) {
@@ -360,7 +392,7 @@ export default function PhoneThread() {
         </header>
 
         <div ref={scroller} className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
-          {loading ? (
+          {loading || rosterLoading || resolving || (!companion && !lookupMiss && !preview) ? (
             <div className="space-y-2">
               <div className="ml-auto h-12 w-40 animate-pulse rounded-2xl bg-primary/20" />
               <div className="h-16 w-52 animate-pulse rounded-2xl bg-card" />

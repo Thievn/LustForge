@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneEmpty, PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
-import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
+import { fetchRosterCompanionById, usePhoneRoster, type RosterCompanion } from "@/lib/phone/usePhoneRoster";
 
 type PreviewRow = { companionId: string; content: string; at: string };
 
@@ -11,6 +11,7 @@ export default function MessagesList() {
   const preview = usePhonePreview();
   const { companions, user, loading } = usePhoneRoster(preview);
   const [previews, setPreviews] = useState<Record<string, PreviewRow>>({});
+  const [threadOnly, setThreadOnly] = useState<RosterCompanion[]>([]);
 
   useEffect(() => {
     if (preview || !user) return;
@@ -39,6 +40,28 @@ export default function MessagesList() {
     };
   }, [preview, user]);
 
+  useEffect(() => {
+    const known = new Set(companions.map((item) => item.id));
+    const missing = Object.keys(previews).filter((id) => !known.has(id));
+    if (missing.length === 0) {
+      setThreadOnly([]);
+      return;
+    }
+    let cancelled = false;
+    void Promise.all(missing.map((id) => fetchRosterCompanionById(id))).then((rows) => {
+      if (cancelled) return;
+      setThreadOnly(rows.filter((row): row is RosterCompanion => row != null));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [previews, companions]);
+
+  const inbox = useMemo(() => {
+    const seen = new Set(companions.map((item) => item.id));
+    return [...companions, ...threadOnly.filter((item) => !seen.has(item.id))];
+  }, [companions, threadOnly]);
+
   const q = preview ? "?preview=1" : "";
 
   return (
@@ -56,11 +79,11 @@ export default function MessagesList() {
               <div key={index} className="h-16 animate-pulse rounded-2xl bg-card" />
             ))}
           </div>
-        ) : companions.length === 0 ? (
+        ) : inbox.length === 0 ? (
           <PhoneEmpty title="Quiet inbox" body="When a companion is on your home screen, her thread lives here." />
         ) : (
           <ul className="space-y-2">
-            {companions.map((companion) => {
+            {inbox.map((companion) => {
               const last = preview
                 ? { content: companion.tagline, at: new Date().toISOString() }
                 : previews[companion.id];

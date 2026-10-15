@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ImagePlus, Phone, Sparkles, Users } from "lucide-react";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
-import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
+import { fetchRosterCompanionById, usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { ComingSoon } from "@/components/shell/ComingSoon";
 import { subscribeCurrentDeviceToWebPush } from "@/lib/webPushUserRegistration";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,8 +42,20 @@ export default function HomeDashboard() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(240)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (cancelled || !data) return;
+        const known = new Map(companions.map((item) => [item.id, item]));
+        const missing = new Set<string>();
+        for (const row of data) {
+          if (row.companion_id && !known.has(row.companion_id)) missing.add(row.companion_id);
+        }
+        if (missing.size > 0) {
+          const extras = await Promise.all([...missing].map((id) => fetchRosterCompanionById(id)));
+          if (cancelled) return;
+          for (const extra of extras) {
+            if (extra) known.set(extra.id, extra);
+          }
+        }
         const seen: Record<string, string> = {};
         const missedRows: Missed[] = [];
         const picRows: Pic[] = [];
@@ -52,7 +64,7 @@ export default function HomeDashboard() {
           if (!seen[row.companion_id] && row.role === "assistant") seen[row.companion_id] = row.created_at;
           if (row.role === "user") answered.add(row.companion_id);
           if (row.role === "assistant" && !answered.has(row.companion_id) && missedRows.length < 4 && !missedRows.some((item) => item.id === row.companion_id)) {
-            const companion = companions.find((item) => item.id === row.companion_id);
+            const companion = known.get(row.companion_id);
             missedRows.push({
               id: row.companion_id,
               name: companion?.name ?? "Her",
@@ -62,7 +74,7 @@ export default function HomeDashboard() {
             });
           }
           if (row.image_url && picRows.length < 6) {
-            const companion = companions.find((item) => item.id === row.companion_id);
+            const companion = known.get(row.companion_id);
             picRows.push({ id: row.id, url: row.image_url, name: companion?.name ?? "Her" });
           }
         }
