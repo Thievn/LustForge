@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 type Feature = {
   icon: LucideIcon;
   title: string;
-  body: string;
+  body?: string;
   soon?: boolean;
 };
 
@@ -45,7 +45,6 @@ const CURRENT: Feature[] = [
   { icon: Sun, title: "Morning and night notes", body: "She can reach out at the times you choose." },
   { icon: Users, title: "Group chat", body: "Bring more than one companion into the same conversation." },
   { icon: Heart, title: "Memories and dates", body: "Keep what matters, and pick a scene to spend time in." },
-  { icon: Orbit, title: "The Nexus", body: "Bring two companions together and meet who they become." },
   { icon: Gamepad2, title: "Optional toys", body: "Connect a toy if you want. The chat works without one." },
   { icon: Shield, title: "Safe word", body: "One word, or the stop button, ends the scene." },
   { icon: Bell, title: "Discreet alerts", body: "A notification can show her name, or only LustForge." },
@@ -58,6 +57,7 @@ const SOON: Feature[] = [
   { icon: Sparkles, title: "Challenges", body: "Little dares between you and her.", soon: true },
   { icon: Gift, title: "Gift shop", body: "Something to send when words are not enough.", soon: true },
   { icon: ImageIcon, title: "Creator showcase", body: "A room for the faces you want to keep in view.", soon: true },
+  { icon: Orbit, title: "The Nexus", soon: true },
 ];
 
 function Tile({ feature, index }: { feature: Feature; index: number }) {
@@ -84,7 +84,7 @@ function Tile({ feature, index }: { feature: Feature; index: number }) {
         ) : null}
       </div>
       <h3 className="mt-3 text-sm font-semibold text-[#F4EEF2]">{feature.title}</h3>
-      <p className="mt-1 text-xs leading-relaxed text-[#B8A9BC]">{feature.body}</p>
+      {feature.body ? <p className="mt-1 text-xs leading-relaxed text-[#B8A9BC]">{feature.body}</p> : null}
     </Reveal>
   );
 }

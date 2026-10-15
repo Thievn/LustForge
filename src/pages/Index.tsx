@@ -7,7 +7,6 @@ import { LandingFaq } from "@/components/landing/LandingFaq";
 import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { LandingPricing } from "@/components/landing/LandingPricing";
 import { LandingStory } from "@/components/landing/LandingStory";
 import { LandingExampleTexts } from "@/components/landing/LandingExampleTexts";
 import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
@@ -35,7 +34,6 @@ const Index = () => {
             <LandingFeatures />
             <LandingExampleTexts />
             <LandingTestimonials />
-            <LandingPricing />
             <LandingFaq />
             <WaitlistSection />
           </main>

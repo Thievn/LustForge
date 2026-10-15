@@ -77,18 +77,15 @@ export default function WaitlistSection() {
             Join the <span className="lf-gradient-text">waitlist</span>
           </h2>
 
-          <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
             Adults 18+ only. Leave your email. We will write when you can make a companion.
-          </p>
-          <p className="mb-6 text-xs leading-relaxed text-muted-foreground">
-            Credits are available once you are in. You can add more credits later. This form does not charge you.
           </p>
 
           {isSuccess ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle className="h-12 w-12 text-primary" />
               <p className="font-gothic text-2xl text-foreground">You&apos;re on the list.</p>
-              <p className="text-sm text-muted-foreground">We&apos;ll email you when you can sign up.</p>
+              <p className="text-sm text-muted-foreground">We saved your email. We&apos;ll write when you can come in.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">

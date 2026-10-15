@@ -24,12 +24,6 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
       "Join the waitlist with your email. We will email you when you can create an account. Sign in is only for people who already have access.",
   },
   {
-    id: "cost",
-    question: "What does it cost?",
-    answer:
-      "The waitlist does not charge you. Credits are available once you are in, and you can add more credits later. This page does not ask for a card.",
-  },
-  {
     id: "voice",
     question: "Can I hear them and see pictures?",
     answer:
@@ -51,7 +45,7 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
     id: "privacy",
     question: "What happens to my chats and my data?",
     answer:
-      "Chats are saved to your account so you can leave and come back. We use your email for the waitlist or your account. We do not sell personal data. LustForge does not store card numbers. The Privacy Policy has the details.",
+      "Chats are saved to your account so you can leave and come back. We use your email for the waitlist or your account. We do not sell personal data. The Privacy Policy has the details.",
   },
   {
     id: "discreet",
