@@ -1,9 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireSessionUser, isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { ADULT_ANCHOR, minorReason } from "../_shared/adultGuard.ts";
-import { SKELETON_POSE_SET } from "../_shared/studioPoseIds.ts";
-import { bytesFromImageUrl } from "../_shared/storageArchive.ts";
+import { chatImageErrorPayload } from "../_shared/chatImageCopy.ts";
+import { buildChatImageRun, pollRunpodBytes } from "../_shared/chatImageRun.ts";
 import { persistImageBytes } from "../_shared/persistChatImage.ts";
+import { bytesFromRunpodOutput, readRunpod, submitWorkflow } from "../_shared/studioRunpod.ts";
+import { SKELETON_POSE_SET } from "../_shared/studioPoseIds.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,85 +37,9 @@ function matchPose(text: string): string | null {
 }
 
 async function runpodImage(prompt: string, seed: number, poseId: string | null): Promise<Uint8Array> {
-  const key = Deno.env.get("RUNPOD_API_KEY")?.trim();
-  const endpoint = Deno.env.get("RUNPOD_ENDPOINT_ID")?.trim() || "knag1yvb1tlqk3";
-  if (!key) throw new Error("IMAGE_NOT_CONFIGURED");
-
-  const started = await fetch(`https://api.runpod.ai/v2/${endpoint}/run`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      input: {
-        prompt,
-        negative_prompt: "child, teen, underage, minor, lowres, deformed",
-        seed,
-        width: 768,
-        height: 1024,
-        steps: 8,
-        engine: "zimage",
-        pose_id: poseId,
-      },
-    }),
-  });
-  const startedJson = (await started.json().catch(() => null)) as { id?: string; error?: string } | null;
-  if (!started.ok || !startedJson?.id) {
-    throw new Error(startedJson?.error || `Runpod run failed (${started.status})`);
-  }
-
-  const deadline = Date.now() + 55_000;
-  while (Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const statusRes = await fetch(`https://api.runpod.ai/v2/${endpoint}/status/${startedJson.id}`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    const statusJson = (await statusRes.json().catch(() => null)) as {
-      status?: string;
-      output?: unknown;
-      error?: string;
-    } | null;
-    const state = statusJson?.status ?? "";
-    if (state === "FAILED" || state === "CANCELLED" || state === "TIMED_OUT") {
-      throw new Error(statusJson?.error || state);
-    }
-    if (state === "COMPLETED") return decodeRunpodOutput(statusJson?.output);
-  }
-  throw new Error("Runpod timed out");
-}
-
-async function decodeRunpodOutput(output: unknown): Promise<Uint8Array> {
-  const candidate = pickImagePayload(output);
-  if (!candidate) throw new Error("Runpod returned no image");
-  if (candidate.startsWith("http") || candidate.startsWith("data:")) {
-    const downloaded = await bytesFromImageUrl(candidate);
-    return downloaded.bytes;
-  }
-  const clean = candidate.replace(/^data:image\/\w+;base64,/, "");
-  const binary = atob(clean);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-function pickImagePayload(output: unknown): string | null {
-  if (!output) return null;
-  if (typeof output === "string") return output;
-  if (typeof output !== "object") return null;
-  const row = output as Record<string, unknown>;
-  for (const key of ["image", "image_url", "url", "image_base64"]) {
-    if (typeof row[key] === "string" && row[key]) return String(row[key]);
-  }
-  const images = row.images;
-  if (Array.isArray(images) && images.length) {
-    const first = images[0];
-    if (typeof first === "string") return first;
-    if (first && typeof first === "object") {
-      const nested = first as Record<string, unknown>;
-      for (const key of ["image", "url", "data"]) {
-        if (typeof nested[key] === "string") return String(nested[key]);
-      }
-    }
-  }
-  return null;
+  const { workflow, images } = await buildChatImageRun(prompt, seed, poseId);
+  const jobId = await submitWorkflow(workflow, images);
+  return pollRunpodBytes(jobId, { read: readRunpod, bytes: bytesFromRunpodOutput });
 }
 
 Deno.serve(async (req) => {
@@ -196,8 +122,8 @@ Deno.serve(async (req) => {
       bytes = await runpodImage(prompt, seed, poseId);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      const status = message === "IMAGE_NOT_CONFIGURED" ? 503 : 502;
-      return json({ error: message, code: message === "IMAGE_NOT_CONFIGURED" ? message : "IMAGE_FAILED" }, status);
+      const failed = chatImageErrorPayload(message);
+      return json({ error: failed.error, code: failed.code }, failed.status);
     }
 
     const fileStem = crypto.randomUUID();
@@ -270,6 +196,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return json({ error: message.slice(0, 400) }, 500);
+    return json({ error: chatImageErrorPayload(message).error }, 500);
   }
 });

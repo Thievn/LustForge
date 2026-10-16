@@ -20,6 +20,7 @@ import {
 } from "@/lib/companionMedia";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { CHAT_IMAGE_FAILURE_LINE, friendlyChatImageFailure, shouldSendChatImage } from "@/lib/chatImageFailure";
 import { invokeGenerateImage } from "@/lib/invokeGenerateImage";
 import { invokeGenerateLiveCallOptions } from "@/lib/invokeGenerateLiveCallOptions";
 import { matchesSafeWord } from "@/lib/matchesSafeWord";
@@ -268,6 +269,8 @@ export function useChatSessionController() {
   const messagesRef = useRef<ChatMessage[]>([]);
   const sendMessageRef = useRef<(text?: string, opts?: SendMessageOptions) => Promise<void>>(async () => {});
   const queuedSendRef = useRef<string | null>(null);
+  /** Last picture failed; the next turn must not send another unless the user asks again. */
+  const imageAttemptFailedRef = useRef(false);
   const connectedToysRef = useRef(connectedToys);
   const userIdRef = useRef(user?.id);
   useEffect(() => {
@@ -951,13 +954,13 @@ export function useChatSessionController() {
       };
     } catch (err: any) {
       console.error("Image generation error:", err);
-      const msg =
+      const raw =
         err?.message ||
         (typeof err === "object" && err !== null && "error" in err && typeof (err as any).error === "string"
           ? (err as any).error
           : null) ||
-        "Failed to generate image";
-      toast.error(msg);
+        "";
+      toast.error(friendlyChatImageFailure(raw));
       return null;
     }
   };
@@ -1889,6 +1892,7 @@ export function useChatSessionController() {
           menuImagePrompt: null,
         });
         if (result) {
+          imageAttemptFailedRef.current = false;
           const cap = `*${companion.name} sends you a still — just for you.*`;
           const rowId = await insertAssistantImageMessage({
             content: cap,
@@ -1912,6 +1916,8 @@ export function useChatSessionController() {
             },
           ]);
           void queryClient.invalidateQueries({ queryKey: ["companion-generated-images", user.id, companion.id] });
+        } else {
+          imageAttemptFailedRef.current = true;
         }
       } else if (!CHAT_IN_SESSION_VIDEO_CLIPS_COMING_SOON) {
         await generateChatVideoClip({ mood: req.mood ?? "lewd", silent: true });
@@ -2087,6 +2093,7 @@ export function useChatSessionController() {
         menuTileLabel,
       });
       if (imageResult) {
+        imageAttemptFailedRef.current = false;
         const rowId = await insertAssistantImageMessage({
           content: CHAT_STILL_DELIVERY_CAPTION,
           imageUrl: imageResult.imageUrl,
@@ -2112,10 +2119,24 @@ export function useChatSessionController() {
         });
         clearOpeningStarterContext();
         await applyChatAffectionAfterExchange();
+      } else {
+        imageAttemptFailedRef.current = true;
+        setImageGenPending(null);
+        try {
+          const failId = await insertAssistantMessage(CHAT_IMAGE_FAILURE_LINE, null);
+          setMessages((prev) => [
+            ...prev,
+            { id: failId, role: "assistant", content: CHAT_IMAGE_FAILURE_LINE, timestamp: new Date() },
+          ]);
+        } catch (saveErr) {
+          console.error(saveErr);
+        }
       }
     } catch (err: unknown) {
+      imageAttemptFailedRef.current = true;
+      setImageGenPending(null);
       const raw = err instanceof Error ? err.message : "Could not save image to chat";
-      toast.error(raw.length > 200 ? `${raw.slice(0, 197)}…` : raw);
+      toast.error(friendlyChatImageFailure(raw));
     } finally {
       setLoading(false);
     }
@@ -2407,6 +2428,7 @@ export function useChatSessionController() {
         });
 
         if (imageResult) {
+          imageAttemptFailedRef.current = false;
           const rowId = await insertAssistantImageMessage({
             content: CHAT_STILL_DELIVERY_CAPTION,
             imageUrl: imageResult.imageUrl,
@@ -2436,13 +2458,13 @@ export function useChatSessionController() {
           await applyChatAffectionAfterExchange();
         } else {
           /** Image pipeline failed (toast already from `generateImage`). Do NOT call chat with the raw image brief — it breaks immersion. */
-          const fallback =
-            "*The picture didn't come through — try the + menu again, or ask in your own words.*";
-          const asstId = await insertAssistantMessage(fallback, null);
+          imageAttemptFailedRef.current = true;
+          setImageGenPending(null);
+          const asstId = await insertAssistantMessage(CHAT_IMAGE_FAILURE_LINE, null);
           const assistantMsg: ChatMessage = {
             id: asstId,
             role: "assistant",
-            content: fallback,
+            content: CHAT_IMAGE_FAILURE_LINE,
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev, assistantMsg]);
@@ -2492,7 +2514,13 @@ export function useChatSessionController() {
 
         setMessages((prev) => [...prev, assistantMsg]);
 
-        if (mediaRequest) {
+        const imageDecision = shouldSendChatImage(
+          imageAttemptFailedRef.current,
+          requestingImage,
+          mediaRequest?.kind === "image",
+        );
+        imageAttemptFailedRef.current = imageDecision.failed;
+        if (mediaRequest && (imageDecision.send || mediaRequest.kind === "video")) {
           void runDeferredLustforgeMedia(mediaRequest);
         }
 
@@ -2525,11 +2553,13 @@ export function useChatSessionController() {
       if (userMsg) {
         setMessages((prev) => prev.filter((m) => m.id !== userMsg!.id));
       }
+      if (requestingImage) imageAttemptFailedRef.current = true;
       setImageGenPending(null);
       setInput(messageText);
       if (overrideText) starterSentRef.current = false;
       const raw = err instanceof Error ? err.message : "Failed to process your request.";
-      toast.error(raw.length > 240 ? `${raw.slice(0, 237)}…` : raw);
+      const shown = requestingImage ? friendlyChatImageFailure(raw) : raw.length > 240 ? `${raw.slice(0, 237)}…` : raw;
+      toast.error(shown);
     } finally {
       setLoading(false);
     }
