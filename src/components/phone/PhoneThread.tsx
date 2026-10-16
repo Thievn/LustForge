@@ -8,6 +8,7 @@ import { PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
 import "@/components/phone/phone.css";
 import { fetchRosterCompanionById, usePhoneRoster, type RosterCompanion } from "@/lib/phone/usePhoneRoster";
 import { minorReason } from "@/lib/phone/adultGuard";
+import { CHAT_IMAGE_FAILURE_LINE, clearedFailedImageBubble, shouldSendChatImage } from "@/lib/chatImageFailure";
 import { looksLikePictureAsk, parseStructuredReply } from "@/lib/phone/bubbles";
 import { buildGrokPhoneRequest, replyTextFromGrok } from "@/lib/phone/grokPhoneChat";
 import { messageFromFunctionsInvoke } from "@/lib/supabaseFunctionsError";
@@ -61,6 +62,7 @@ export default function PhoneThread() {
   const [looksOpen, setLooksOpen] = useState(false);
   const [looks, setLooks] = useState<LookRow[]>([]);
   const voice = useVoiceInput(setDraft);
+  const imageAttemptFailedRef = useRef(false);
 
   useEffect(() => {
     if (preview || !id || listed || rosterLoading) {
@@ -244,7 +246,10 @@ export default function PhoneThread() {
       return;
     }
     const parsed = parseStructuredReply(replyText);
-    const wantImage = Boolean(parsed.imageRequest) || looksLikePictureAsk(content);
+    const userAsked = looksLikePictureAsk(content);
+    const imageDecision = shouldSendChatImage(imageAttemptFailedRef.current, userAsked, Boolean(parsed.imageRequest));
+    imageAttemptFailedRef.current = imageDecision.failed;
+    const wantImage = imageDecision.send;
     await revealBubbles(parsed.bubbles, companion.name);
     const pushed = parsed.bubbles.filter(Boolean).join(" ");
     if (pushed) {
@@ -263,62 +268,80 @@ export default function PhoneThread() {
     if (wantImage) {
       const pendingId = pushPending();
       const request = parsed.imageRequest;
-      const image = await supabase.functions.invoke("image-dispatch", {
-        body: {
-          companionId: companion.id,
-          descriptor: companion.characterReference || companion.appearanceReference || companion.appearance,
-          seed: hashSeed(companion.id),
-          scene: request?.scene || content,
-          outfit: request?.outfit || "",
-          framing: request?.framing || "half-body",
-          expression: request?.expression || "",
-          poseHint: request?.poseHint || "",
-          poseId: matchPoseId(`${content}\n${request?.scene || ""}\n${request?.poseHint || ""}`),
-          userText: content,
-        },
-      });
-      const payload = image.data as {
-        imageUrl?: string | null;
-        blurred?: boolean;
-        error?: string;
-        storageBucket?: string;
-        storagePath?: string;
-      } | null;
-      if (image.error || payload?.error) {
-        setNotice(await messageFromFunctionsInvoke(image.error, image.data));
-      }
-      const src = payload?.imageUrl ? await displayUrl(payload.imageUrl, payload.storageBucket, payload.storagePath) : null;
-      const stored = payload?.storageBucket && payload.storagePath ? storageUri(payload.storageBucket, payload.storagePath) : null;
-      setMessages((current) =>
-        current.map((item) =>
-          item.id === pendingId
-            ? {
-                ...item,
-                pendingImage: false,
-                blurred: Boolean(payload?.blurred) || !src,
-                imageUrl: src,
-                storageUrl: stored,
-                content: payload?.error
-                  ? "My camera is being weird. I will send it in a bit."
-                  : payload?.blurred
-                    ? "I took it. Unlock it with a pass."
-                    : "Here.",
-              }
-            : item,
-        ),
-      );
-      if (src && user) {
-        await insertMessage({
-          user_id: user.id,
-          companion_id: companion.id,
-          role: "assistant",
-          content: payload?.blurred ? "Locked photo" : "Photo",
-          image_url: payload?.imageUrl,
-          kind: "image",
-          origin: "reply",
-          storage_bucket: payload?.storageBucket,
-          storage_path: payload?.storagePath,
+      try {
+        const image = await supabase.functions.invoke("image-dispatch", {
+          body: {
+            companionId: companion.id,
+            descriptor: companion.characterReference || companion.appearanceReference || companion.appearance,
+            seed: hashSeed(companion.id),
+            scene: request?.scene || content,
+            outfit: request?.outfit || "",
+            framing: request?.framing || "half-body",
+            expression: request?.expression || "",
+            poseHint: request?.poseHint || "",
+            poseId: matchPoseId(`${content}\n${request?.scene || ""}\n${request?.poseHint || ""}`),
+            userText: content,
+          },
         });
+        const payload = image.data as {
+          imageUrl?: string | null;
+          blurred?: boolean;
+          error?: string;
+          storageBucket?: string;
+          storagePath?: string;
+        } | null;
+        if (image.error || payload?.error) {
+          imageAttemptFailedRef.current = true;
+          setNotice(CHAT_IMAGE_FAILURE_LINE);
+          setMessages((current) =>
+            current.map((item) => (item.id === pendingId ? clearedFailedImageBubble(item) : item)),
+          );
+          await insertMessage({
+            user_id: user.id,
+            companion_id: companion.id,
+            role: "assistant",
+            content: CHAT_IMAGE_FAILURE_LINE,
+            origin: "reply",
+            kind: "text",
+          });
+        } else {
+          imageAttemptFailedRef.current = false;
+          const src = payload?.imageUrl ? await displayUrl(payload.imageUrl, payload.storageBucket, payload.storagePath) : null;
+          const stored = payload?.storageBucket && payload.storagePath ? storageUri(payload.storageBucket, payload.storagePath) : null;
+          setMessages((current) =>
+            current.map((item) =>
+              item.id === pendingId
+                ? {
+                    ...item,
+                    pendingImage: false,
+                    blurred: Boolean(payload?.blurred) || !src,
+                    imageUrl: src,
+                    storageUrl: stored,
+                    content: payload?.blurred ? "I took it. Unlock it with a pass." : "Here.",
+                  }
+                : item,
+            ),
+          );
+          if (src && user) {
+            await insertMessage({
+              user_id: user.id,
+              companion_id: companion.id,
+              role: "assistant",
+              content: payload?.blurred ? "Locked photo" : "Photo",
+              image_url: payload?.imageUrl,
+              kind: "image",
+              origin: "reply",
+              storage_bucket: payload?.storageBucket,
+              storage_path: payload?.storagePath,
+            });
+          }
+        }
+      } catch {
+        imageAttemptFailedRef.current = true;
+        setNotice(CHAT_IMAGE_FAILURE_LINE);
+        setMessages((current) =>
+          current.map((item) => (item.id === pendingId ? clearedFailedImageBubble(item) : item)),
+        );
       }
     }
     setTyping(false);
