@@ -6,22 +6,22 @@ const BADGES = [
   {
     icon: BadgeCheck,
     title: "18+ only",
-    body: "An age gate sits in front of the app. Companions are fictional AI, not real people.",
+    body: "Adults only, 18 and over.",
   },
   {
     icon: Shield,
     title: "Safe word",
-    body: "Set in Preferences. It stops the scene and Toy Control, same as the emergency stop in chat.",
+    body: "One word ends the scene.",
   },
   {
     icon: UserRound,
     title: "Your account",
-    body: "Chats stay on your account so the thread can continue. We don't sell personal data.",
+    body: "Chats stay with you. We don't sell personal data.",
   },
   {
     icon: Bell,
     title: "Discreet",
-    body: "A notification can show her name, or only the word LustForge.",
+    body: "Her name, or only LustForge.",
   },
 ] as const;
 
@@ -37,7 +37,7 @@ export function LandingTrust() {
               Private on purpose, <span className="gradient-vice-text">adult on purpose</span>
             </>
           }
-          lede="A short version of the rules. The policies are the full version."
+          lede="Adults only, kept between you."
         />
         <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {BADGES.map((badge, index) => {
@@ -63,7 +63,7 @@ export function LandingTrust() {
           </Link>
           {" · "}
           <Link to="/18-plus-disclaimer" className="text-foreground/90 underline-offset-4 hover:underline">
-            18+ disclaimer
+            Adult content
           </Link>
         </p>
       </div>

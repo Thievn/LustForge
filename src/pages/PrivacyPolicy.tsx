@@ -1,178 +1,115 @@
-import React from 'react';
+import { Link } from "react-router-dom";
+import { LegalPage } from "@/components/legal/LegalPage";
 
-const PrivacyPolicy: React.FC = () => {
+const PrivacyPolicy = () => {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#1a1a1a',
-        color: '#e0e0e0',
-        fontFamily: "'Cinzel', serif",
-        padding: '2rem',
-        lineHeight: '1.6',
-        maxWidth: '800px',
-        margin: '0 auto',
-      }}
-    >
-      <h1
-        style={{
-          color: '#ff4500',
-          textAlign: 'center',
-          fontSize: '2.5rem',
-          marginBottom: '2rem',
-          textShadow: '0 0 10px #ff4500',
-        }}
-      >
-        Privacy Policy
-      </h1>
+    <LegalPage title="Privacy Policy">
       <p>
-        <strong>Effective Date: [Insert Date]</strong>
-      </p>
-      <p>
-        At LustForge ("we," "us," or "our"), we respect your privacy. This Privacy Policy explains how we collect, use, and protect information when you use our website (the "Site"), services, AI companions, and Lovense integrations (collectively, the "Services"). By using the Services, you consent to this policy.
+        This policy describes how LustForge (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) handles personal information when you use the
+        LustForge website, app, and related services (the &quot;Service&quot;). It should be read with our{" "}
+        <Link to="/terms-of-service">Terms of Service</Link>.
       </p>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        1. Information We Collect
-      </h2>
-      <p>
-        <strong>Personal Information:</strong> We collect minimal data, such as email for waitlist signups or account creation. No payment details are stored directly.
-      </p>
-      <p>
-        <strong>Usage Data:</strong> IP address, browser type, and interaction logs (e.g., session timestamps) for security and analytics. Private chats are ephemeral and not stored post-session to protect sensitive adult content.
-      </p>
-      <p>
-        <strong>Lovense Integration:</strong> No toy-specific data (e.g., vibration patterns) is stored; commands are session-only.
-      </p>
-      <p>We do not collect age verification documents or sensitive personal info beyond what's necessary.</p>
+      <section className="space-y-3">
+        <h2>Data we collect</h2>
+        <ul>
+          <li>Account and waitlist details, such as your email address and a display name.</li>
+          <li>Content you create, including messages, pictures, companion settings, and files you upload.</li>
+          <li>Messages you send to support.</li>
+          <li>Device and log information, such as browser type, IP address, and the pages or screens you use.</li>
+          <li>
+            Payment status, if you buy a paid feature. Card numbers are handled by our payment processor. We do not store
+            them.
+          </li>
+          <li>Information kept on your device, including whether you confirmed that you are 18 or older.</li>
+        </ul>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        2. How We Use Information
-      </h2>
-      <p>
-        Data is used to: provide Services (e.g., AI responses), improve functionality, enforce 18+ restrictions, and comply with laws. We do not store private NSFW chats or fantasies long-term. Aggregated, anonymized data may be used for analytics.
-      </p>
+      <section className="space-y-3">
+        <h2>How we use information</h2>
+        <p>We use this information to:</p>
+        <ul>
+          <li>provide the Service, including saving chats and pictures to your account</li>
+          <li>send waitlist updates and service messages you ask for</li>
+          <li>reply to support requests</li>
+          <li>keep the Service secure and enforce our Terms</li>
+          <li>limit the Service to adults only, 18 and over</li>
+          <li>understand, in aggregate, how the Service is used</li>
+          <li>meet legal duties</li>
+        </ul>
+        <p>We do not sell your personal information.</p>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        3. Sharing Information
-      </h2>
-      <p>
-        We do not sell or share personal data. Sharing occurs only: with service providers (e.g., cloud hosting) under strict agreements, for legal compliance, or if the business is sold (with notice). No third-party marketing.
-      </p>
+      <section className="space-y-3">
+        <h2>Cookies</h2>
+        <p>
+          We use cookies and similar storage that the Service needs in order to work, such as keeping you signed in,
+          remembering that you passed the age check, and storing preferences. You can block cookies in your browser. If
+          you do, parts of the Service may not work.
+        </p>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        4. Cookies and Tracking
-      </h2>
-      <p>
-        We use essential cookies for functionality (e.g., age gate localStorage). No tracking cookies for ads. You can manage via browser settings.
-      </p>
+      <section className="space-y-3">
+        <h2>Third-party processors</h2>
+        <p>
+          We use other companies to host the Service, deliver email, process sign-in, process payments, and measure basic
+          usage. They may handle personal information only to do that work for us, and not for their own marketing. The
+          companies we use can change, so we do not list them here. They may store information in a country other than
+          yours. We do not sell your information to them.
+        </p>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        5. Data Security
-      </h2>
-      <p>
-        We implement reasonable security (e.g., encryption, access controls) but cannot guarantee absolute security. Report breaches to [insert email].
-      </p>
+      <section className="space-y-3">
+        <h2>Retention</h2>
+        <p>
+          We keep personal information while your account or waitlist entry is active, and for a limited time after that
+          for support, security, and legal duties. You may ask us to delete your account. We delete or de-identify
+          information when we no longer need it, unless the law requires us to keep it.
+        </p>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        6. Your Rights
-      </h2>
-      <p>
-        Under applicable laws (e.g., GDPR/CCPA), you may access, correct, delete, or opt-out of data processing. Contact us for requests. For EU users, we are the data controller.
-      </p>
+      <section className="space-y-3">
+        <h2>Security</h2>
+        <p>
+          We use reasonable technical and organizational measures to protect personal information. No method of storage or
+          transmission is completely secure.
+        </p>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        7. Children's Privacy
-      </h2>
-      <p>
-        Services are 18+ only. We do not knowingly collect data from minors.
-      </p>
+      <section className="space-y-3">
+        <h2>Your rights</h2>
+        <p>
+          Depending on where you live, you may have the right to access, correct, delete, or receive a copy of your
+          personal information, or to object to certain uses of it. Email{" "}
+          <a href="mailto:support@lustforge.app">support@lustforge.app</a> to make a request. We may need to confirm that
+          the request is yours. You may also have the right to complain to a privacy regulator.
+        </p>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        8. International Transfers
-      </h2>
-      <p>
-        Data may be processed in [Insert Locations, e.g., US/EU]. We ensure adequate protections.
-      </p>
+      <section className="space-y-3">
+        <h2>Children</h2>
+        <p>
+          The Service is not for children. Adults only, 18 and over. We do not knowingly collect personal information
+          from anyone under 18. If you believe someone under 18 has used the Service, email{" "}
+          <a href="mailto:support@lustforge.app">support@lustforge.app</a> and we will delete that information.
+        </p>
+      </section>
 
-      <h2
-        style={{
-          color: '#ff4500',
-          borderBottom: '1px solid #8b0000',
-          paddingBottom: '0.5rem',
-          marginTop: '2rem',
-        }}
-      >
-        9. Changes to Policy
-      </h2>
-      <p>
-        Updates will be posted here; significant changes notified via Site.
-      </p>
+      <section className="space-y-3">
+        <h2>Changes</h2>
+        <p>
+          We may update this policy from time to time. We will post the new version on this page and change the date at
+          the top. If a change is important, we will also give notice on the Service or by email.
+        </p>
+      </section>
 
-      <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: '#ccc' }}>
-        For questions, contact [insert email]. See our{' '}
-        <a href="/terms-of-service" style={{ color: '#ff1493', textDecoration: 'none' }}>
-          Terms of Service
-        </a>{' '}
-        for more.
-      </p>
-    </div>
+      <section className="space-y-3">
+        <h2>Contact</h2>
+        <p>
+          Privacy questions: <a href="mailto:support@lustforge.app">support@lustforge.app</a>
+        </p>
+      </section>
+    </LegalPage>
   );
 };
 

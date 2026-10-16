@@ -64,7 +64,8 @@ describe("landing content", () => {
     expect(blob).not.toMatch(/\$\s?\d/);
     expect(blob).not.toMatch(/\+\s?\d+\s?%/);
     expect(blob).not.toMatch(/credit|payment|\bpay\b|charge|embers|forge coin/i);
-    expect(blob).toMatch(/Leave your email/);
+    expect(blob).toMatch(/Leave your email\. We&apos;ll write when it&apos;s your turn\./);
+    expect(blob).not.toMatch(/Adults 18\+ only/);
     expect(blob).toMatch(/Join the waitlist to get your beta access/);
     expect(blob).toMatch(/Join the waitlist/);
     expect(blob).not.toMatch(/beta key|your key|have a key/i);
@@ -87,7 +88,51 @@ describe("landing content", () => {
     expect(nav).not.toMatch(/\bkey\b/i);
     expect(blob).not.toMatch(/\bseamless\b|\bleverage\b|unlock the power/i);
     expect(blob).toMatch(/18/);
-    expect(blob).toMatch(/21/);
+    expect(blob).toMatch(/Adults only, 18 and over/);
+    expect(blob).not.toMatch(/\b21\b|21 or older/);
+    expect(blob).not.toMatch(/fictional/i);
+    const hero = readFileSync(resolve(process.cwd(), "src/components/landing/LandingHero.tsx"), "utf8");
+    expect(hero).toMatch(/Private companions/);
+    expect(hero).toMatch(/Someone who answers late, stays with you, and sends the picture you asked for/);
+    expect(hero).not.toMatch(/Adults 18\+/);
+    const footer = readFileSync(resolve(process.cwd(), "src/components/landing/LandingFooter.tsx"), "utf8");
+    expect(footer).toMatch(/Terms/);
+    expect(footer).toMatch(/Privacy/);
+    expect(footer).toMatch(/>\s*Contact\s*</);
+    expect(footer).toMatch(/mailto:support@lustforge\.app/);
+    expect(footer).toMatch(/LustForge/);
+    expect(footer).not.toMatch(/18\+ disclaimer|Join the waitlist/);
+  });
+
+  it("uses plain 18+ legal pages with no age-21 wording or vendor names", () => {
+    const files = [
+      "src/pages/TermsOfService.tsx",
+      "src/pages/PrivacyPolicy.tsx",
+      "src/pages/EighteenPlusDisclaimer.tsx",
+    ];
+    const blob = files.map((file) => readFileSync(resolve(process.cwd(), file), "utf8")).join("\n");
+    expect(blob).toMatch(/Adults only, 18 and over/);
+    expect(blob).toMatch(/support@lustforge\.app/);
+    expect(blob).toMatch(/Eligibility/);
+    expect(blob).toMatch(/Acceptable use/);
+    expect(blob).toMatch(/User content/);
+    expect(blob).toMatch(/AI-generated content/);
+    expect(blob).toMatch(/Payments and subscriptions/);
+    expect(blob).toMatch(/Intellectual property/);
+    expect(blob).toMatch(/Limitation of liability/);
+    expect(blob).toMatch(/Governing law/);
+    expect(blob).toMatch(/Data we collect/);
+    expect(blob).toMatch(/How we use information/);
+    expect(blob).toMatch(/Cookies/);
+    expect(blob).toMatch(/Third-party processors/);
+    expect(blob).toMatch(/Retention/);
+    expect(blob).toMatch(/Security/);
+    expect(blob).toMatch(/Your rights/);
+    expect(blob).toMatch(/Children/);
+    expect(blob).toMatch(/Adult content notice/);
+    expect(blob).not.toMatch(/\b21\b|21 or older/);
+    expect(blob).not.toMatch(/Lovense|Grok|Stripe|Supabase|OpenAI|Vibe Lover|\[Insert|\[Your Jurisdiction\]/i);
+    expect(blob).not.toMatch(/\$\s?\d/);
   });
 
   it("answers the basic product questions without invented user counts or public prices", () => {
