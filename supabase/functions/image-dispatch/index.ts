@@ -6,6 +6,7 @@ import { buildChatImageRun, pollRunpodBytes } from "../_shared/chatImageRun.ts";
 import { persistImageBytes } from "../_shared/persistChatImage.ts";
 import { bytesFromRunpodOutput, readRunpod, submitWorkflow } from "../_shared/studioRunpod.ts";
 import { SKELETON_POSE_SET } from "../_shared/studioPoseIds.ts";
+import { decideImageCharge, LOCKED_PHOTO_PROMPT } from "../_shared/pictureAllowance.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,33 +78,36 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !serviceKey) return json({ error: "Server misconfigured" }, 500);
     const svc = createClient(supabaseUrl, serviceKey);
 
-    let blurred = false;
-    if (!admin) {
-      const { data: profile } = await svc
-        .from("profiles")
-        .select("plan, pics_left, credits, is_catalog_owner")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      const plan = String(profile?.plan ?? "free");
-      const owner = Boolean(profile?.is_catalog_owner);
-      const pics = Number(profile?.pics_left ?? 0);
-      const credits = Number(profile?.credits ?? 0);
-      if (!owner && (plan === "free" || (pics <= 0 && credits < 10))) {
-        blurred = true;
-      } else if (!owner && pics > 0) {
-        await svc.from("profiles").update({ pics_left: pics - 1 }).eq("user_id", user.id);
-      } else if (!owner && credits >= 10) {
-        await svc.from("profiles").update({ credits: credits - 10 }).eq("user_id", user.id);
-      }
-    }
-
-    if (blurred) {
+    const profile = admin
+      ? null
+      : (
+          await svc
+            .from("profiles")
+            .select("pics_left, credits, is_catalog_owner")
+            .eq("user_id", user.id)
+            .maybeSingle()
+        ).data;
+    const pics = Number(profile?.pics_left ?? 0);
+    const credits = Number(profile?.credits ?? 0);
+    const decision = decideImageCharge({
+      admin,
+      catalogOwner: Boolean(profile?.is_catalog_owner),
+      picsLeft: pics,
+      credits,
+    });
+    if (decision.action === "locked") {
       return json({
         blurred: true,
         locked: true,
+        picture: "locked",
         imageUrl: null,
-        message: "Pictures stay blurred on the free tier.",
+        message: LOCKED_PHOTO_PROMPT,
       });
+    }
+    if (decision.charge === "pic") {
+      await svc.from("profiles").update({ pics_left: pics - 1 }).eq("user_id", user.id);
+    } else if (decision.charge === "credits") {
+      await svc.from("profiles").update({ credits: credits - 10 }).eq("user_id", user.id);
     }
 
     const descriptor = String(body?.descriptor ?? "adult woman").slice(0, 800);

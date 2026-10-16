@@ -1,22 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ImagePlus, Loader2, Mic, Phone, Send, Shirt } from "lucide-react";
+import { Check, CheckCheck, ChevronLeft, ImagePlus, Loader2, Mic, Phone, Send, Shirt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatTypingIndicator } from "@/components/chat/ChatTypingIndicator";
 import { PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
 import "@/components/phone/phone.css";
 import { fetchRosterCompanionById, usePhoneRoster, type RosterCompanion } from "@/lib/phone/usePhoneRoster";
 import { minorReason } from "@/lib/phone/adultGuard";
-import { CHAT_IMAGE_FAILURE_LINE, clearedFailedImageBubble, shouldSendChatImage } from "@/lib/chatImageFailure";
-import { looksLikePictureAsk, parseStructuredReply } from "@/lib/phone/bubbles";
-import { buildGrokPhoneRequest, replyTextFromGrok } from "@/lib/phone/grokPhoneChat";
+import { CHAT_IMAGE_FAILURE_LINE, clearedFailedImageBubble } from "@/lib/chatImageFailure";
+import {
+  annotateReceipts,
+  chatFailureNote,
+  isLockedPhotoMessage,
+  isStoredMessageId,
+  LOCKED_PHOTO_LABEL,
+  LOCKED_PHOTO_PROMPT,
+  looksLikePictureAsk,
+  parseStructuredReply,
+  phoneSendGate,
+  planChatPicture,
+  visibleTicks,
+  type ImageRequest,
+  type Receipt,
+} from "@/lib/phone/bubbles";
+import { buildGrokPhoneRequest, pictureSignalFromGrok, replyTextFromGrok } from "@/lib/phone/grokPhoneChat";
 import { messageFromFunctionsInvoke } from "@/lib/supabaseFunctionsError";
 import { PREVIEW_THREAD } from "@/lib/phone/previewData";
 import { readPhoneSkin } from "@/lib/phone/skin";
 import { parseStorageRef, storageUri } from "@/lib/phone/storageUrl";
 import { StudioEditWand } from "@/components/studio/EditWand";
-import { planAllowsClearPictures } from "@/lib/phone/pricing";
 import { cn } from "@/lib/utils";
 import { useVoiceInput } from "@/lib/voice/useVoiceInput";
 import { loadBondPrompt } from "@/lib/bond/context";
@@ -35,8 +48,12 @@ type Bubble = {
   storageUrl?: string | null;
   pendingImage?: boolean;
   blurred?: boolean;
+  locked?: boolean;
   deliveredAt?: string | null;
   readAt?: string | null;
+  receipt?: Receipt;
+  saved?: boolean;
+  failureNote?: string;
 };
 
 export default function PhoneThread() {
@@ -48,7 +65,7 @@ export default function PhoneThread() {
   const [resolving, setResolving] = useState(false);
   const [lookupMiss, setLookupMiss] = useState(false);
   const companion = listed ?? resolved;
-  const [messages, setMessages] = useState<Bubble[]>(preview ? PREVIEW_THREAD : []);
+  const [messages, setMessages] = useState<Bubble[]>(() => (preview ? annotateReceipts(PREVIEW_THREAD) : []));
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
   const [sending, setSending] = useState(false);
@@ -63,6 +80,10 @@ export default function PhoneThread() {
   const [looks, setLooks] = useState<LookRow[]>([]);
   const voice = useVoiceInput(setDraft);
   const imageAttemptFailedRef = useRef(false);
+  const messagesRef = useRef<Bubble[]>(messages);
+  messagesRef.current = messages;
+  const sendingRef = useRef(false);
+  const queuedRef = useRef<{ text: string; retryId?: string } | null>(null);
 
   useEffect(() => {
     if (preview || !id || listed || rosterLoading) {
@@ -108,16 +129,21 @@ export default function PhoneThread() {
       .then(async ({ data }) => {
         if (cancelled) return;
         const rows = await Promise.all(
-          (data ?? []).map(async (row) => ({
-            id: row.id,
-            role: row.role === "assistant" ? "assistant" as const : "user" as const,
-            content: row.content,
-            createdAt: row.created_at,
-            imageUrl: await displayUrl(row.image_url),
-            storageUrl: row.image_url && parseStorageRef(row.image_url) ? row.image_url : null,
-          })),
+          (data ?? []).map(async (row) => {
+            const imageUrl = await displayUrl(row.image_url);
+            return {
+              id: row.id,
+              role: row.role === "assistant" ? "assistant" as const : "user" as const,
+              content: row.content,
+              createdAt: row.created_at,
+              imageUrl,
+              storageUrl: row.image_url && parseStorageRef(row.image_url) ? row.image_url : null,
+              locked: isLockedPhotoMessage(row.content, imageUrl),
+              saved: true,
+            };
+          }),
         );
-        setMessages(rows);
+        setMessages(annotateReceipts(rows));
         setLoading(false);
       });
     return () => {
@@ -147,205 +173,319 @@ export default function PhoneThread() {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
 
-  const clearPictures = limits.catalogOwner || planAllowsClearPictures(limits.plan) || limits.picsLeft > 0 || limits.credits >= 10;
+  function patchBubble(id: string, patch: Partial<Bubble>) {
+    setMessages((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
 
-  async function send(text: string) {
+  function deliverUserTurn(activeId: string) {
+    setMessages((current) =>
+      current.map((item) =>
+        item.role === "user" && (item.id === activeId || item.receipt !== "delivered")
+          ? { ...item, receipt: "delivered", failureNote: undefined, saved: item.saved || item.id === activeId }
+          : item,
+      ),
+    );
+  }
+
+  async function send(text: string, opts?: { retryId?: string }) {
     const content = text.trim();
-    if (!content || !companion || sending) return;
+    if (!content || !companion) return;
     const blocked = minorReason(content);
     if (blocked) {
       setNotice(blocked);
       return;
     }
-    setNotice(null);
-    setDraft("");
+    if (sendingRef.current) {
+      queuedRef.current = { text: content, retryId: opts?.retryId };
+      if (!opts?.retryId) setDraft("");
+      return;
+    }
+    sendingRef.current = true;
     setSending(true);
-    const userBubble: Bubble = {
-      id: `local-${Date.now()}`,
-      role: "user",
-      content,
-      createdAt: new Date().toISOString(),
-      deliveredAt: new Date().toISOString(),
-    };
-    setMessages((current) => [...current, userBubble]);
-    window.setTimeout(() => {
-      setMessages((current) =>
-        current.map((item) => (item.id === userBubble.id ? { ...item, readAt: new Date().toISOString() } : item)),
-      );
-      setTyping(true);
-    }, 700);
+    setNotice(null);
+    if (!opts?.retryId) setDraft("");
 
-    if (preview) {
-      await wait(900 + Math.min(2400, content.length * 28));
-      const bubbles = content.match(/pic|photo|picture|selfie/i)
-        ? ["Give me a second.", "Fixing my hair."]
-        : ["I like that.", "Tell me more."];
-      await revealBubbles(bubbles, companion.name);
-      if (looksLikePictureAsk(content)) {
-        const pending = pushPending();
-        await wait(1200);
-        setMessages((current) =>
-          current.map((item) =>
-            item.id === pending
-              ? { ...item, pendingImage: false, blurred: !clearPictures, content: clearPictures ? "Here." : "Unlock this one with a pass." }
-              : item,
-          ),
-        );
-      }
-      setTyping(false);
-      setSending(false);
-      return;
+    const person = companion;
+    let activeId = opts?.retryId ?? `local-${Date.now()}`;
+    const existing = opts?.retryId ? messagesRef.current.find((item) => item.id === opts.retryId) : undefined;
+    const alreadySaved = Boolean(existing?.saved || (existing && isStoredMessageId(existing.id)));
+    if (opts?.retryId) {
+      patchBubble(opts.retryId, { receipt: "pending", failureNote: undefined });
+    } else {
+      const userBubble: Bubble = {
+        id: activeId,
+        role: "user",
+        content,
+        createdAt: new Date().toISOString(),
+        receipt: "pending",
+        saved: false,
+      };
+      setMessages((current) => [...current, userBubble]);
     }
 
-    if (!user) {
-      setSending(false);
-      setTyping(false);
-      return;
-    }
-
-    await insertMessage({
-      user_id: user.id,
-      companion_id: companion.id,
-      role: "user",
-      content,
-      origin: "user",
-      kind: "text",
-      delivered_at: new Date().toISOString(),
-      read_at: new Date().toISOString(),
-    });
-
-    let wearNote = "";
-    if (user) {
-      const wornName = matchOutfitName(content, TREASURES.map((item) => item.name));
-      const worn = TREASURES.find((item) => item.name === wornName);
-      if (worn) {
-        const wornResult = await vaultCall({ action: "wear", companionId: companion.id, itemId: worn.id });
-        if (wornResult.error) {
-          wearNote = "She does not own that treasure. Do not claim she put it on. Tell him to find it in the Vault.";
-          setNotice(wornResult.error);
-        } else {
-          setNotice(`${companion.name} is wearing ${worn.name}.`);
-        }
-      }
-    }
-    const history = [...messages, userBubble].map((item) => ({ role: item.role, content: item.content }));
-    const { data, error } = await supabase.functions.invoke(
-      "grok-chat",
-      { body: buildGrokPhoneRequest({
-        companionId: companion.id,
-        companionName: companion.name,
-        systemPrompt: buildSystem(companion, [bond, wearNote].filter(Boolean).join("\n"), sceneBg),
-        messages: history,
-      }) },
-    );
-    const replyText = replyTextFromGrok(data);
-    if (error || !replyText) {
-      setNotice(await messageFromFunctionsInvoke(error, data));
-      setTyping(false);
-      setSending(false);
-      return;
-    }
-    const parsed = parseStructuredReply(replyText);
-    const userAsked = looksLikePictureAsk(content);
-    const imageDecision = shouldSendChatImage(imageAttemptFailedRef.current, userAsked, Boolean(parsed.imageRequest));
-    imageAttemptFailedRef.current = imageDecision.failed;
-    const wantImage = imageDecision.send;
-    await revealBubbles(parsed.bubbles, companion.name);
-    const pushed = parsed.bubbles.filter(Boolean).join(" ");
-    if (pushed) {
-      void invokeWebPushSend({ title: companion.name, body: pushed.slice(0, 140), url: `/messages/${companion.id}`, kind: "message", tag: `message-${companion.id}` });
-    }
-    for (const bubble of parsed.bubbles) {
-      await insertMessage({
-        user_id: user.id,
-        companion_id: companion.id,
-        role: "assistant",
-        content: bubble,
-        origin: "reply",
-        kind: "text",
-      });
-    }
-    if (wantImage) {
-      const pendingId = pushPending();
-      const request = parsed.imageRequest;
-      try {
-        const image = await supabase.functions.invoke("image-dispatch", {
-          body: {
-            companionId: companion.id,
-            descriptor: companion.characterReference || companion.appearanceReference || companion.appearance,
-            seed: hashSeed(companion.id),
-            scene: request?.scene || content,
-            outfit: request?.outfit || "",
-            framing: request?.framing || "half-body",
-            expression: request?.expression || "",
-            poseHint: request?.poseHint || "",
-            poseId: matchPoseId(`${content}\n${request?.scene || ""}\n${request?.poseHint || ""}`),
-            userText: content,
-          },
+    let savedId = alreadySaved;
+    let grokDone = false;
+    try {
+      if (preview) {
+        patchBubble(activeId, { receipt: "sent" });
+        setTyping(true);
+        await wait(900 + Math.min(2400, content.length * 28));
+        const bubbles = looksLikePictureAsk(content)
+          ? ["Give me a second.", "Fixing my hair."]
+          : ["I like that.", "Tell me more."];
+        deliverUserTurn(activeId);
+        await revealBubbles(bubbles, person.name);
+        const previewPlan = planChatPicture({
+          userAsked: looksLikePictureAsk(content),
+          modelAsked: false,
+          previousFailed: false,
+          serverPicture: null,
+          picsLeft: limits.picsLeft,
+          credits: limits.credits,
+          catalogOwner: limits.catalogOwner,
         });
-        const payload = image.data as {
-          imageUrl?: string | null;
-          blurred?: boolean;
-          error?: string;
-          storageBucket?: string;
-          storagePath?: string;
-        } | null;
-        if (image.error || payload?.error) {
-          imageAttemptFailedRef.current = true;
-          setNotice(CHAT_IMAGE_FAILURE_LINE);
-          setMessages((current) =>
-            current.map((item) => (item.id === pendingId ? clearedFailedImageBubble(item) : item)),
-          );
-          await insertMessage({
-            user_id: user.id,
-            companion_id: companion.id,
-            role: "assistant",
-            content: CHAT_IMAGE_FAILURE_LINE,
-            origin: "reply",
-            kind: "text",
-          });
-        } else {
-          imageAttemptFailedRef.current = false;
-          const src = payload?.imageUrl ? await displayUrl(payload.imageUrl, payload.storageBucket, payload.storagePath) : null;
-          const stored = payload?.storageBucket && payload.storagePath ? storageUri(payload.storageBucket, payload.storagePath) : null;
-          setMessages((current) =>
-            current.map((item) =>
-              item.id === pendingId
-                ? {
-                    ...item,
-                    pendingImage: false,
-                    blurred: Boolean(payload?.blurred) || !src,
-                    imageUrl: src,
-                    storageUrl: stored,
-                    content: payload?.blurred ? "I took it. Unlock it with a pass." : "Here.",
-                  }
-                : item,
-            ),
-          );
-          if (src && user) {
-            await insertMessage({
-              user_id: user.id,
-              companion_id: companion.id,
-              role: "assistant",
-              content: payload?.blurred ? "Locked photo" : "Photo",
-              image_url: payload?.imageUrl,
-              kind: "image",
-              origin: "reply",
-              storage_bucket: payload?.storageBucket,
-              storage_path: payload?.storagePath,
-            });
+        if (previewPlan.image === "locked") await showLockedPhoto(person.id);
+        else if (previewPlan.image === "dispatch") await showPreviewPhoto();
+        return;
+      }
+
+      const gate = phoneSendGate({ text: content, signedIn: Boolean(user), minor: null });
+      if (gate.callGrok === false) {
+        patchBubble(activeId, { receipt: "failed", saved: false, failureNote: gate.message || "She didn't get that." });
+        return;
+      }
+      if (!user) return;
+
+      if (!alreadySaved) {
+        const inserted = await insertMessage({
+          user_id: user.id,
+          companion_id: person.id,
+          role: "user",
+          content,
+          origin: "user",
+          kind: "text",
+        });
+        if (inserted.error || !inserted.id) {
+          patchBubble(activeId, { receipt: "failed", saved: false, failureNote: chatFailureNote(inserted.error) });
+          return;
+        }
+        const dbId = inserted.id;
+        setMessages((current) =>
+          current.map((item) => (item.id === activeId ? { ...item, id: dbId, saved: true, receipt: "sent" } : item)),
+        );
+        activeId = dbId;
+        savedId = true;
+      } else {
+        patchBubble(activeId, { receipt: "sent", saved: true, failureNote: undefined });
+      }
+
+      let wearNote = "";
+      try {
+        const wornName = matchOutfitName(content, TREASURES.map((item) => item.name));
+        const worn = TREASURES.find((item) => item.name === wornName);
+        if (worn) {
+          const wornResult = await vaultCall({ action: "wear", companionId: person.id, itemId: worn.id });
+          if (wornResult.error) {
+            wearNote = "She does not own that treasure. Do not claim she put it on. Tell him to find it in the Vault.";
+            setNotice(wornResult.error);
+          } else {
+            setNotice(`${person.name} is wearing ${worn.name}.`);
           }
         }
       } catch {
-        imageAttemptFailedRef.current = true;
-        setNotice(CHAT_IMAGE_FAILURE_LINE);
-        setMessages((current) =>
-          current.map((item) => (item.id === pendingId ? clearedFailedImageBubble(item) : item)),
-        );
+        wearNote = "";
       }
+
+      setTyping(true);
+      const prior = messagesRef.current.filter((item) => item.id !== activeId && !item.id.startsWith("local-") && !item.pendingImage);
+      const history = [...prior.map((item) => ({ role: item.role, content: item.content })), { role: "user" as const, content }];
+      const { data, error } = await supabase.functions.invoke("grok-chat", {
+        body: buildGrokPhoneRequest({
+          companionId: person.id,
+          companionName: person.name,
+          systemPrompt: buildSystem(person, [bond, wearNote].filter(Boolean).join("\n"), sceneBg),
+          messages: history,
+        }),
+      });
+      const replyText = replyTextFromGrok(data);
+      if (error || !replyText) {
+        patchBubble(activeId, {
+          receipt: "failed",
+          saved: true,
+          failureNote: chatFailureNote(await messageFromFunctionsInvoke(error, data)),
+        });
+        return;
+      }
+
+      const parsed = parseStructuredReply(replyText);
+      const imagePlan = planChatPicture({
+        userAsked: looksLikePictureAsk(content),
+        modelAsked: Boolean(parsed.imageRequest),
+        previousFailed: imageAttemptFailedRef.current,
+        serverPicture: pictureSignalFromGrok(data),
+        picsLeft: limits.picsLeft,
+        credits: limits.credits,
+        catalogOwner: limits.catalogOwner,
+      });
+      imageAttemptFailedRef.current = imagePlan.failed;
+      deliverUserTurn(activeId);
+      grokDone = true;
+      await revealBubbles(parsed.bubbles, person.name);
+      const pushed = parsed.bubbles.filter(Boolean).join(" ");
+      if (pushed) {
+        void invokeWebPushSend({
+          title: person.name,
+          body: pushed.slice(0, 140),
+          url: `/messages/${person.id}`,
+          kind: "message",
+          tag: `message-${person.id}`,
+        });
+      }
+      for (const bubble of parsed.bubbles) {
+        await insertMessage({
+          user_id: user.id,
+          companion_id: person.id,
+          role: "assistant",
+          content: bubble,
+          origin: "reply",
+          kind: "text",
+        });
+      }
+      if (imagePlan.image === "locked") {
+        await showLockedPhoto(person.id);
+      } else if (imagePlan.image === "dispatch") {
+        await dispatchPicture(person, content, parsed.imageRequest);
+      }
+    } catch (err) {
+      if (!grokDone) {
+        patchBubble(activeId, {
+          receipt: "failed",
+          saved: savedId || isStoredMessageId(activeId),
+          failureNote: chatFailureNote(err instanceof Error ? err.message : null),
+        });
+      }
+    } finally {
+      setTyping(false);
+      setSending(false);
+      sendingRef.current = false;
+      const next = queuedRef.current;
+      queuedRef.current = null;
+      if (next) void send(next.text, next.retryId ? { retryId: next.retryId } : undefined);
     }
-    setTyping(false);
-    setSending(false);
+  }
+
+  async function showLockedPhoto(companionId: string) {
+    const id = `photo-${Date.now()}`;
+    setMessages((current) => [
+      ...current,
+      {
+        id,
+        role: "assistant",
+        content: LOCKED_PHOTO_LABEL,
+        createdAt: new Date().toISOString(),
+        locked: true,
+        receipt: "delivered",
+      },
+    ]);
+    if (!user) return;
+    const saved = await insertMessage({
+      user_id: user.id,
+      companion_id: companionId,
+      role: "assistant",
+      content: LOCKED_PHOTO_LABEL,
+      origin: "reply",
+      kind: "image",
+    });
+    if (saved.id) {
+      setMessages((current) => current.map((item) => (item.id === id ? { ...item, id: saved.id ?? item.id } : item)));
+    }
+  }
+
+  async function showPreviewPhoto() {
+    const pending = pushPending();
+    await wait(1200);
+    setMessages((current) =>
+      current.map((item) => (item.id === pending ? { ...item, pendingImage: false, content: "Here." } : item)),
+    );
+  }
+
+  async function dispatchPicture(person: RosterCompanion, content: string, request: ImageRequest | null) {
+    if (!user) return;
+    const pendingId = pushPending();
+    const fail = async () => {
+      imageAttemptFailedRef.current = true;
+      setMessages((current) => current.map((item) => (item.id === pendingId ? clearedFailedImageBubble(item) : item)));
+      await insertMessage({
+        user_id: user.id,
+        companion_id: person.id,
+        role: "assistant",
+        content: CHAT_IMAGE_FAILURE_LINE,
+        origin: "reply",
+        kind: "text",
+      });
+    };
+    try {
+      const image = await supabase.functions.invoke("image-dispatch", {
+        body: {
+          companionId: person.id,
+          descriptor: person.characterReference || person.appearanceReference || person.appearance,
+          seed: hashSeed(person.id),
+          scene: request?.scene || content,
+          outfit: request?.outfit || "",
+          framing: request?.framing || "half-body",
+          expression: request?.expression || "",
+          poseHint: request?.poseHint || "",
+          poseId: matchPoseId(`${content}\n${request?.scene || ""}\n${request?.poseHint || ""}`),
+          userText: content,
+        },
+      });
+      const payload = image.data as {
+        imageUrl?: string | null;
+        blurred?: boolean;
+        locked?: boolean;
+        picture?: string;
+        error?: string;
+        storageBucket?: string;
+        storagePath?: string;
+      } | null;
+      if (payload?.locked || payload?.picture === "locked" || (payload?.blurred && !payload?.imageUrl)) {
+        imageAttemptFailedRef.current = false;
+        setMessages((current) => current.filter((item) => item.id !== pendingId));
+        await showLockedPhoto(person.id);
+        return;
+      }
+      if (image.error || payload?.error) {
+        await fail();
+        return;
+      }
+      const src = payload?.imageUrl ? await displayUrl(payload.imageUrl, payload.storageBucket, payload.storagePath) : null;
+      if (!src) {
+        await fail();
+        return;
+      }
+      imageAttemptFailedRef.current = false;
+      const stored = payload?.storageBucket && payload.storagePath ? storageUri(payload.storageBucket, payload.storagePath) : null;
+      setMessages((current) =>
+        current.map((item) =>
+          item.id === pendingId
+            ? { ...item, pendingImage: false, blurred: false, imageUrl: src, storageUrl: stored, content: "Here." }
+            : item,
+        ),
+      );
+      await insertMessage({
+        user_id: user.id,
+        companion_id: person.id,
+        role: "assistant",
+        content: "Photo",
+        image_url: payload?.imageUrl,
+        kind: "image",
+        origin: "reply",
+        storage_bucket: payload?.storageBucket,
+        storage_path: payload?.storagePath,
+      });
+    } catch {
+      await fail();
+    }
   }
 
   function pushPending() {
@@ -428,6 +568,8 @@ export default function PhoneThread() {
             grouped.map((message, index) => {
               const previous = grouped[index - 1];
               const showTime = !previous || new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() > 1000 * 60 * 8;
+              const lastFailedId = [...grouped].reverse().find((item) => item.role === "user" && item.receipt === "failed")?.id;
+              const showRetry = message.role === "user" && message.receipt === "failed" && message.id === lastFailedId;
               return (
                 <div key={message.id}>
                   {showTime ? (
@@ -449,7 +591,9 @@ export default function PhoneThread() {
                       )}
                     >
                       {message.pendingImage ? <PhotoPlaceholder name={companion.name} /> : null}
-                      {message.imageUrl ? (
+                      {message.locked ? (
+                        <LockedPhoto />
+                      ) : message.imageUrl ? (
                         <div className="relative mb-2">
                           <img
                             src={message.imageUrl}
@@ -465,16 +609,24 @@ export default function PhoneThread() {
                             />
                           )}
                         </div>
-                      ) : message.blurred ? (
-                        <div className="mb-2 flex h-40 items-center justify-center rounded-xl bg-primary/20 text-xs uppercase tracking-[0.18em] text-primary">
-                          Locked
+                      ) : null}
+                      {message.locked ? null : <p className="whitespace-pre-wrap">{message.content}</p>}
+                      {message.role === "user" && message.receipt === "failed" ? (
+                        <div className="mt-2 border-t border-primary-foreground/25 pt-2">
+                          <p className="text-xs">{message.failureNote || "She didn't get that."}</p>
+                          {showRetry ? (
+                            <button
+                              type="button"
+                              className="mt-1 text-xs font-semibold underline"
+                              onClick={() => void send(message.content, { retryId: message.id })}
+                            >
+                              Retry
+                            </button>
+                          ) : null}
                         </div>
                       ) : null}
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                      {message.role === "user" && message.readAt ? (
-                        <p className="mt-1 text-right text-[10px] text-primary-foreground/70">Read</p>
-                      ) : message.role === "user" && message.deliveredAt ? (
-                        <p className="mt-1 text-right text-[10px] text-primary-foreground/70">Delivered</p>
+                      {message.role === "user" ? (
+                        <ReceiptMarks receipt={message.receipt ?? "sent"} saved={Boolean(message.saved)} />
                       ) : null}
                     </div>
                   </motion.div>
@@ -622,23 +774,53 @@ function buildSystem(
     .join("\n");
 }
 
-async function insertMessage(row: Record<string, unknown>) {
+async function insertMessage(row: Record<string, unknown>): Promise<{ id: string | null; error: string | null }> {
+  const id = crypto.randomUUID();
   const client = supabase as unknown as {
     from: (table: string) => {
       insert: (value: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
     };
   };
-  const first = await client.from("chat_messages").insert(row);
-  if (first.error && /column/i.test(first.error.message)) {
+  const first = await client.from("chat_messages").insert({ ...row, id });
+  if (!first.error) return { id, error: null };
+  if (/column/i.test(first.error.message)) {
     const base = {
+      id,
       user_id: row.user_id,
       companion_id: row.companion_id,
       role: row.role,
       content: row.content,
-      image_url: row.image_url,
+      image_url: row.image_url ?? null,
     };
-    await client.from("chat_messages").insert(base);
+    const second = await client.from("chat_messages").insert(base);
+    if (!second.error) return { id, error: null };
+    return { id: null, error: second.error?.message ?? "Could not save that message." };
   }
+  return { id: null, error: first.error.message };
+}
+
+function ReceiptMarks({ receipt, saved }: { receipt: Receipt; saved: boolean }) {
+  const ticks = visibleTicks(receipt, saved);
+  if (!ticks) return null;
+  const delivered = ticks === 2;
+  return (
+    <span className="mt-1 flex items-center justify-end text-primary-foreground/85" aria-label={delivered ? "Delivered" : "Sent"}>
+      {delivered ? <CheckCheck className="h-4 w-4" strokeWidth={2.5} /> : <Check className="h-4 w-4" strokeWidth={2.5} />}
+    </span>
+  );
+}
+
+function LockedPhoto() {
+  return (
+    <div className="overflow-hidden rounded-xl border border-primary/30 bg-primary/10">
+      <div className="flex h-40 flex-col items-center justify-center gap-2 px-4 text-center">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-primary">{LOCKED_PHOTO_LABEL}</p>
+        <Link to="/plans" className="text-sm text-foreground underline-offset-2 hover:underline">
+          {LOCKED_PHOTO_PROMPT}
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 async function displayUrl(url: string | null | undefined, bucket?: string | null, path?: string | null) {
