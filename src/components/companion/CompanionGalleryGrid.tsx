@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImageIcon, Loader2, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -11,7 +11,11 @@ import { isAcceptableChatPortraitUpload } from "@/lib/portraitAspect";
 import type { SetPortraitFromGalleryHandler } from "@/lib/setPortraitFromGalleryTypes";
 import { cn } from "@/lib/utils";
 import { PictureComing } from "@/components/studio/PictureComing";
+import { CompareSlider } from "@/components/studio/CompareSlider";
+import { StudioEditWand } from "@/components/studio/EditWand";
 import { sameCompanion, useStudioJobs } from "@/lib/studio/jobs";
+import { presentGalleryRows, type PresentedGalleryRow } from "@/lib/studio/galleryListing";
+import { signDisplayUrl } from "@/lib/phone/signMedia";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,7 +68,7 @@ export function CompanionGalleryGrid({
   const [settingId, setSettingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<CompanionGalleryRow | null>(null);
-  const [lightbox, setLightbox] = useState<CompanionGalleryRow | null>(null);
+  const [lightbox, setLightbox] = useState<PresentedGalleryRow<CompanionGalleryRow> | null>(null);
   const [filter, setFilter] = useState<GalleryFilter>("all");
   const studio = useStudioJobs();
   const pending = studio.pending.filter((job) => !companionId || sameCompanion(job.companionId, companionId));
@@ -75,16 +79,36 @@ export function CompanionGalleryGrid({
   });
 
   const normalizedCurrent = currentPortraitUrl ? stablePortraitDisplayUrl(currentPortraitUrl) : null;
+  const presented = useMemo(() => presentGalleryRows(images), [images]);
+  const [signed, setSigned] = useState<Record<string, { src: string; before?: string }>>({});
+
+  useEffect(() => {
+    let cancel = false;
+    void (async () => {
+      const next: Record<string, { src: string; before?: string }> = {};
+      await Promise.all(presented.map(async (row) => {
+        if (companionGalleryRowIsClip(row)) return;
+        const raw = row.afterUrl || row.image_url;
+        const src = await signDisplayUrl(raw);
+        const before = row.beforeUrl ? await signDisplayUrl(row.beforeUrl) : null;
+        if (src) next[row.id] = { src, before: before && before !== src ? before : undefined };
+      }));
+      if (!cancel) setSigned(next);
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [presented]);
 
   const { stills, clips, showFilterTabs, filtered } = useMemo(() => {
-    const st = images.filter((r) => !companionGalleryRowIsClip(r));
-    const cl = images.filter((r) => companionGalleryRowIsClip(r));
-    const tabs = Boolean(compact && images.length > 6 && (cl.length > 0 || images.length > 10));
-    let list = images as CompanionGalleryRow[];
+    const st = presented.filter((r) => !companionGalleryRowIsClip(r));
+    const cl = presented.filter((r) => companionGalleryRowIsClip(r));
+    const tabs = Boolean(compact && presented.length > 6 && (cl.length > 0 || presented.length > 10));
+    let list = presented;
     if (filter === "stills") list = st;
     else if (filter === "clips") list = cl;
     return { stills: st, clips: cl, showFilterTabs: tabs, filtered: list };
-  }, [images, compact, filter]);
+  }, [presented, compact, filter]);
 
   const deleteWarning = useMemo(() => {
     if (!pendingDelete || !onDelete) return null;
@@ -196,7 +220,7 @@ export function CompanionGalleryGrid({
   const toolbar = showFilterTabs ? (
     <div className="sticky top-0 z-[1] -mx-1 mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] bg-[#07060a]/95 px-1 pb-2 pt-0.5 backdrop-blur-md">
       <div className="flex flex-wrap gap-1.5">
-        {filterPill("all", "All", images.length)}
+        {filterPill("all", "All", presented.length)}
         {filterPill("stills", "Stills", stills.length)}
         {clips.length ? filterPill("clips", "Clips", clips.length) : null}
       </div>
@@ -204,7 +228,7 @@ export function CompanionGalleryGrid({
     </div>
   ) : compact ? (
     <p className="mb-2 text-[10px] text-muted-foreground/80 tabular-nums">
-      {images.length} item{images.length === 1 ? "" : "s"} · newest first
+      {presented.length} item{presented.length === 1 ? "" : "s"} · newest first
     </p>
   ) : null;
 
@@ -224,7 +248,9 @@ export function CompanionGalleryGrid({
         </motion.div>
       ))}
       {filtered.map((row) => {
-          const display = stablePortraitDisplayUrl(row.image_url) ?? row.image_url;
+          const raw = row.afterUrl || row.image_url;
+          const painted = signed[row.id]?.src;
+          const display = painted || (raw.startsWith("storage://") ? "" : (stablePortraitDisplayUrl(raw) ?? raw));
           const isVideo = companionGalleryRowIsClip(row);
           const isActive =
             !isVideo &&
@@ -253,12 +279,14 @@ export function CompanionGalleryGrid({
                     preload="metadata"
                     className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
                   />
-                ) : (
+                ) : display ? (
                   <img
                     src={display}
                     alt=""
                     className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
                   />
+                ) : (
+                  <div className="h-full w-full animate-pulse bg-card" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
               </button>
@@ -459,7 +487,7 @@ export function CompanionGalleryGrid({
               >
                 <X className="h-5 w-5" />
               </button>
-              <div className="w-full rounded-2xl border border-white/10 bg-black/30 overflow-hidden max-h-[min(78vh,800px)]">
+              <div className="relative w-full rounded-2xl border border-white/10 bg-black/30 overflow-hidden max-h-[min(78vh,800px)]">
                 {companionGalleryRowIsClip(lightbox) ? (
                   <video
                     src={stablePortraitDisplayUrl(lightbox.image_url) ?? lightbox.image_url}
@@ -468,16 +496,31 @@ export function CompanionGalleryGrid({
                     autoPlay
                     className="w-full max-h-[min(78vh,800px)] object-contain bg-black"
                   />
+                ) : signed[lightbox.id]?.before && signed[lightbox.id]?.src ? (
+                  <div>
+                    <p className="py-2 text-center text-[10px] uppercase tracking-[0.18em] text-white">Compare</p>
+                    <CompareSlider before={signed[lightbox.id]!.before!} after={signed[lightbox.id]!.src} frameClass="max-h-[70vh]" />
+                  </div>
                 ) : (
                   <ZoomableImageViewport
-                    src={stablePortraitDisplayUrl(lightbox.image_url) ?? lightbox.image_url}
+                    src={signed[lightbox.id]?.src || stablePortraitDisplayUrl(lightbox.image_url) || lightbox.image_url}
                     alt=""
                     className="min-h-[min(65vh,640px)]"
+                  />
+                )}
+                {companionGalleryRowIsClip(lightbox) ? null : (
+                  <StudioEditWand
+                    imageUrl={signed[lightbox.id]?.src || stablePortraitDisplayUrl(lightbox.afterUrl || lightbox.image_url) || lightbox.image_url}
+                    storageUrl={lightbox.afterUrl || lightbox.image_url}
+                    companionId={companionId}
+                    source="character"
                   />
                 )}
               </div>
               {companionGalleryRowIsClip(lightbox) ? (
                 <p className="text-[10px] text-center text-muted-foreground/90">Native video controls</p>
+              ) : signed[lightbox.id]?.before ? (
+                <p className="text-[10px] text-center text-muted-foreground/90">Drag to reveal and re-dress</p>
               ) : (
                 <p className="text-[10px] text-center text-muted-foreground/90">
                   Pinch or scroll to zoom · double-click to reset

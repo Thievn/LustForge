@@ -27,7 +27,7 @@ import {
 } from "../../supabase/functions/_shared/studioJobOutcome";
 import { bytesFromRunpodOutput, readRunpod } from "../../supabase/functions/_shared/studioRunpod";
 import { saveStudioImage } from "../../supabase/functions/_shared/studioStore";
-import { editSourceImageUrl, settleStudioJob, sweepOpenStudioJobs } from "../../supabase/functions/_shared/studioSettle";
+import { editGalleryListingFromJob, editSourceImageUrl, settleStudioJob, sweepOpenStudioJobs } from "../../supabase/functions/_shared/studioSettle";
 
 const refund = vi.mocked(refundOne);
 const read = vi.mocked(readRunpod);
@@ -179,8 +179,10 @@ describe("studio sweep", () => {
     expect(save).toHaveBeenCalledWith(svc, expect.objectContaining({
       kind: "edit",
       sourceImageUrl: source,
+      galleryListing: "compare",
       userId: "user-1",
     }));
+    expect(settled.listing).toBe("compare");
 
     save.mockClear();
     outputBytes.mockResolvedValue(new Uint8Array([4]));
@@ -190,7 +192,7 @@ describe("studio sweep", () => {
       job({ kind: "generate", subject_url: source }),
       { status: "COMPLETED", output: {} },
     );
-    expect(save).toHaveBeenCalledWith(generateSvc, expect.objectContaining({ kind: "generate", sourceImageUrl: null }));
+    expect(save).toHaveBeenCalledWith(generateSvc, expect.objectContaining({ kind: "generate", sourceImageUrl: null, galleryListing: null }));
   });
 });
 
@@ -204,6 +206,9 @@ describe("edit source link", () => {
     })).toBe(stored);
     expect(editSourceImageUrl({ kind: "generate", subject_url: stored })).toBeNull();
     expect(editSourceImageUrl({ kind: "edit", subject_url: "" })).toBeNull();
+    expect(editGalleryListingFromJob({ kind: "edit", gallery_listing: "picture" })).toBe("picture");
+    expect(editGalleryListingFromJob({ kind: "edit" })).toBe("compare");
+    expect(editGalleryListingFromJob({ kind: "generate", gallery_listing: "picture" })).toBeNull();
   });
 });
 

@@ -9,6 +9,7 @@ import { CompareSlider } from "@/components/studio/CompareSlider";
 import { PictureComing } from "@/components/studio/PictureComing";
 import { sameCompanion, useStudioJobs } from "@/lib/studio/jobs";
 import { displayableMediaUrl, parseStorageRef, sameStorageObject } from "@/lib/phone/storageUrl";
+import { presentGalleryRows } from "@/lib/studio/galleryListing";
 
 type Source = "lab" | "character" | "upload";
 type Tile = {
@@ -28,6 +29,7 @@ type GeneratedRow = {
   created_at: string;
   is_video: boolean | null;
   source_image_url?: string | null;
+  gallery_listing?: string | null;
 };
 
 const PREVIEW_TILES: Tile[] = [
@@ -57,7 +59,7 @@ export default function GalleryView() {
       const [generatedResult, messages, portraits, overrides, loops, characters] = await Promise.all([
         supabase
           .from("generated_images")
-          .select("id, image_url, companion_id, created_at, is_video, source_image_url")
+          .select("id, image_url, companion_id, created_at, is_video, source_image_url, gallery_listing")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(500),
@@ -92,7 +94,7 @@ export default function GalleryView() {
       ]);
       if (cancelled) return;
       let generatedRows: GeneratedRow[] = generatedResult.data ?? [];
-      if (generatedResult.error && /source_image_url|column|schema cache/i.test(generatedResult.error.message)) {
+      if (generatedResult.error && /gallery_listing|source_image_url|column|schema cache/i.test(generatedResult.error.message)) {
         const basic = await supabase
           .from("generated_images")
           .select("id, image_url, companion_id, created_at, is_video")
@@ -117,9 +119,9 @@ export default function GalleryView() {
         }
         next.push({ id, src, storageUrl, companionId, createdAt, source, before });
       };
-      for (const row of generatedRows) {
+      for (const row of presentGalleryRows(generatedRows)) {
         if (row.is_video) continue;
-        await push(row.id, row.image_url, row.companion_id, row.created_at, "lab", row.source_image_url);
+        await push(row.id, row.afterUrl || row.image_url, row.companion_id, row.created_at, "lab", row.beforeUrl);
       }
       for (const row of portraits.data ?? []) {
         await push(row.id, row.image_url, null, row.created_at, "character");
@@ -155,7 +157,7 @@ export default function GalleryView() {
       for (const job of done) {
         const src = job.imageUrl!;
         if (seen.has(src) || (job.storageUrl && seen.has(job.storageUrl))) continue;
-        const before = job.kind === "edit" ? compareUrl(job.subjectUrl, src, job.storageUrl) : undefined;
+        const before = job.kind === "edit" && job.listing !== "picture" ? compareUrl(job.subjectUrl, src, job.storageUrl) : undefined;
         extra.push({
           id: job.id,
           src,

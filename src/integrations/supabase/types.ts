@@ -709,6 +709,7 @@ export type Database = {
           original_prompt: string | null
           prompt: string
           saved_to_companion_gallery: boolean | null
+          gallery_listing: string | null
           saved_to_personal_gallery: boolean | null
           source_image_url: string | null
           style: string | null
@@ -724,6 +725,7 @@ export type Database = {
           original_prompt?: string | null
           prompt: string
           saved_to_companion_gallery?: boolean | null
+          gallery_listing?: string | null
           saved_to_personal_gallery?: boolean | null
           source_image_url?: string | null
           style?: string | null
@@ -739,6 +741,7 @@ export type Database = {
           original_prompt?: string | null
           prompt?: string
           saved_to_companion_gallery?: boolean | null
+          gallery_listing?: string | null
           saved_to_personal_gallery?: boolean | null
           source_image_url?: string | null
           style?: string | null

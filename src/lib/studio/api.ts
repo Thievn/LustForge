@@ -16,6 +16,7 @@ export type StudioJob = {
   companionId?: string | null;
   subjectUrl?: string | null;
   createdAt?: string;
+  listing?: "compare" | "picture" | null;
 };
 
 export class StudioError extends Error {

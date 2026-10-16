@@ -23,6 +23,7 @@ export type SettledJob = {
   companionId?: string | null;
   subjectUrl?: string | null;
   createdAt?: string;
+  listing?: "compare" | "picture" | null;
 };
 
 const TERMINAL_FAIL = new Set(["FAILED", "CANCELLED", "TIMED_OUT"]);
@@ -33,6 +34,12 @@ function isOpen(job: Record<string, unknown>): boolean {
   if (TERMINAL_FAIL.has(status)) return false;
   if (status === "COMPLETED" && job.asset_id) return false;
   return Boolean(job.runpod_id);
+}
+
+/** Pose edits are their own picture. Every other edit compares against the source. Missing column stays a compare. */
+export function editGalleryListingFromJob(job: Record<string, unknown>): "compare" | "picture" | null {
+  if (String(job.kind ?? "") !== "edit") return null;
+  return job.gallery_listing === "picture" ? "picture" : "compare";
 }
 
 /** Gallery compare source for an edit. Storage URLs are normalized so a signed link cannot expire. */
@@ -80,6 +87,7 @@ export function jobView(job: Record<string, unknown>, extra: Partial<SettledJob>
     companionId: job.companion_id == null ? null : String(job.companion_id),
     subjectUrl: extra.subjectUrl ?? (typeof job.subject_url === "string" ? job.subject_url : null),
     createdAt: typeof job.created_at === "string" ? job.created_at : undefined,
+    listing: extra.listing ?? editGalleryListingFromJob(job),
   };
 }
 
@@ -133,6 +141,7 @@ export async function settleStudioJob(
         prompt: String(job.prompt ?? "Studio"),
         kind: job.kind === "edit" ? "edit" : "generate",
         sourceImageUrl: editSourceImageUrl(job),
+        galleryListing: editGalleryListingFromJob(job),
       });
       await svc.from("studio_jobs").update({
         status: "COMPLETED",

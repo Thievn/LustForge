@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Brush, Image as ImageIcon, Redo2, Shirt, Smile, Sparkles, Undo2 } from "lucide-react";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
+import { usePurchasedCompanionIds } from "@/hooks/usePurchasedCompanionIds";
 import { parseStorageRef } from "@/lib/phone/storageUrl";
 import { readFileAsJpeg, readStudioEdit, stitchOutfitRefs, studioEdit, studioEnhance, studioImport, StudioError } from "@/lib/studio/api";
 import { studioMood } from "@/lib/studio/copy";
@@ -17,6 +18,7 @@ import { PictureComing } from "@/components/studio/PictureComing";
 import { PoseSheet } from "@/components/studio/PoseSheet";
 import { StudioSheet } from "@/components/studio/Sheet";
 import { StudioEditWand } from "@/components/studio/EditWand";
+import { CompanionPick } from "@/components/studio/CompanionPick";
 import { VaultPicks, type VaultPick } from "@/components/studio/VaultPicks";
 import type { TreasureSlot } from "@/lib/vault/treasures";
 
@@ -29,6 +31,7 @@ type Frame = {
   tag?: string;
   source: Source;
   before?: string;
+  companionId?: string | null;
 };
 
 const SOURCE_COPY: Record<Source, string> = {
@@ -84,8 +87,10 @@ async function urlToJpeg(url: string): Promise<string | null> {
 export function EditTab() {
   const preview = usePhonePreview();
   const studio = useStudioJobs();
-  const { limits } = usePhoneRoster(preview);
+  const { limits, user, companions } = usePhoneRoster(preview);
+  const purchased = usePurchasedCompanionIds(preview ? null : user?.id ?? null);
   const stashed = readStudioEdit();
+  const [selectedCompanion, setSelectedCompanion] = useState<string | null>(stashed?.companionId ?? null);
   const [frames, setFrames] = useState<Frame[]>(() =>
     stashed?.imageUrl
       ? [{
@@ -95,6 +100,7 @@ export function EditTab() {
           assetId: stashed.assetId,
           tag: stashed.tag,
           source: stashed.source ?? "upload",
+          companionId: stashed.companionId ?? null,
         }]
       : [],
   );
@@ -135,7 +141,7 @@ export function EditTab() {
     if (!file) return;
     const url = await readFileAsJpeg(file);
     if (into === "subject") {
-      setFrames([{ id: crypto.randomUUID(), url, source: "upload" }]);
+      setFrames([{ id: crypto.randomUUID(), url, source: "upload", companionId: selectedCompanion }]);
       setIndex(0);
     } else if (into === "outfit") {
       setOutfits((prev) => [...prev, url].slice(-3));
@@ -162,6 +168,7 @@ export function EditTab() {
           tag: job.tag,
           source: (job.source ?? "lab") as Source,
           before: tracks.find((track) => track.id === job.id)?.before,
+          companionId: job.companionId ?? selectedCompanion,
         }));
         if (!extra.length) return prev;
         const next = [...prev, ...extra];
@@ -176,7 +183,7 @@ export function EditTab() {
       writeTracks(next);
       return next;
     });
-  }, [studio.jobs, tracks]);
+  }, [studio.jobs, tracks, selectedCompanion]);
 
   useEffect(() => {
     if (frames.length > 0) return;
@@ -258,7 +265,7 @@ export function EditTab() {
       const started = await studioEdit({
         subject: subjectPayload(current!),
         subjectUrl,
-        companionId: stashed?.companionId ?? null,
+        companionId: selectedCompanion || current.companionId || stashed?.companionId || null,
         stacked: true,
         tool: background.trim() ? "background" : "prompt",
         instruction,
@@ -324,12 +331,32 @@ export function EditTab() {
               <button type="button" aria-label="Redo" disabled={index >= frames.length - 1} onClick={() => setIndex((value) => Math.min(frames.length - 1, value + 1))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border disabled:opacity-30"><Redo2 className="h-4 w-4" /></button>
             </div>
           </div>
+          <CompanionPick
+            preview={preview}
+            userId={user?.id ?? null}
+            roster={companions}
+            purchasedIds={purchased.data ?? null}
+            purchasedReady={preview || purchased.isFetched}
+            selectedId={selectedCompanion}
+            onSelect={setSelectedCompanion}
+            onUpload={(file) => void onUpload(file, "subject")}
+            onPickImage={(shot) => {
+              setFrames([{
+                id: shot.id,
+                url: shot.url,
+                storageUrl: shot.storageUrl,
+                source: "character",
+                companionId: selectedCompanion,
+              }]);
+              setIndex(0);
+            }}
+          />
           {openHere.length || busy ? (
             <PictureComing src={current?.url || openHere[0]?.subjectUrl} status={openHere[0]?.status} />
           ) : current ? (
             <div key={current.id} className="relative animate-in fade-in duration-700">
               <CompareSlider before={current.before} after={current.url} />
-              <StudioEditWand imageUrl={current.url} storageUrl={current.storageUrl} assetId={current.assetId} tag={current.tag} source={current.source} companionId={stashed?.companionId} />
+              <StudioEditWand imageUrl={current.url} storageUrl={current.storageUrl} assetId={current.assetId} tag={current.tag} source={current.source} companionId={current.companionId || selectedCompanion} />
             </div>
           ) : (
             <label className="grid h-80 cursor-pointer place-items-center rounded-[1.4rem] border border-dashed border-primary/40 bg-card/70 text-center text-sm text-muted-foreground">
@@ -337,12 +364,6 @@ export function EditTab() {
               <input type="file" accept="image/*" className="sr-only" onChange={(event) => void onUpload(event.target.files?.[0], "subject")} />
             </label>
           )}
-          {current ? (
-            <label className="mt-3 block text-center text-xs text-primary">
-              Replace image
-              <input type="file" accept="image/*" className="sr-only" onChange={(event) => void onUpload(event.target.files?.[0], "subject")} />
-            </label>
-          ) : null}
         </div>
 
         <aside className="space-y-3 rounded-[1.4rem] border border-white/10 bg-card/70 p-4">

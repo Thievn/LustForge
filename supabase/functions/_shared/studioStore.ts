@@ -207,6 +207,7 @@ export async function saveStudioImage(
     parentId?: string | null;
     kind?: string;
     sourceImageUrl?: string | null;
+    galleryListing?: "compare" | "picture" | null;
   },
 ): Promise<{ assetId: string; imageUrl: string; signedUrl: string; tag: string; bucket: string; path: string }> {
   const secret = signingSecret();
@@ -261,11 +262,16 @@ export async function saveStudioImage(
     source_sig: tag,
     studio_asset_id: assetId,
     source_image_url: input.sourceImageUrl || null,
+    gallery_listing: input.galleryListing ?? null,
   };
   let imageId: string | null = null;
-  const inserted = await svc.from("generated_images").insert(fullRow).select("id").single();
+  let inserted = await svc.from("generated_images").insert(fullRow).select("id").single();
+  if (inserted.error && /gallery_listing/i.test(inserted.error.message ?? "")) {
+    const { gallery_listing: _listing, ...withoutListing } = fullRow;
+    inserted = await svc.from("generated_images").insert(withoutListing).select("id").single();
+  }
   if (inserted.error) {
-    const { source_tag: _a, source_sig: _b, studio_asset_id: _c, storage_bucket: _d, storage_path: _e, source_image_url: _f, ...basic } = fullRow;
+    const { source_tag: _a, source_sig: _b, studio_asset_id: _c, storage_bucket: _d, storage_path: _e, source_image_url: _f, gallery_listing: _g, ...basic } = fullRow;
     const retry = await svc.from("generated_images").insert(basic).select("id").single();
     imageId = (retry.data?.id as string) ?? null;
   } else {
