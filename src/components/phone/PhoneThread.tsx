@@ -523,7 +523,7 @@ export default function PhoneThread() {
             ) : (
               <p className="text-xs text-muted-foreground">No looks yet. Style her, then they show up here.</p>
             )}
-            <Link to={`/companions/${id}/bond${q}`} className="mt-1 inline-block text-xs text-primary">Style her</Link>
+            <Link to={`/companions/${id}${q}`} className="mt-1 inline-block text-xs text-primary">Style her</Link>
           </div>
         ) : null}
         <form

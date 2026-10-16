@@ -60,10 +60,7 @@ export function VaultSheet({
         return;
       }
     }
-    const next = new URLSearchParams();
-    if (preview) next.set("preview", "1");
-    next.set("tab", "style");
-    navigate(`/companions/${companionId}/bond?${next.toString()}`);
+    navigate(`/companions/${companionId}${query}`);
     onClose();
   }
 

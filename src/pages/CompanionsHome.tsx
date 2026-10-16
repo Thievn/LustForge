@@ -24,7 +24,7 @@ export default function CompanionsHome() {
               <h2 className="font-gothic text-2xl">{companion.name}</h2>
               <p className="line-clamp-2 text-sm text-muted-foreground">{companion.tagline || companion.personality}</p>
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <Link to={`/companions/${companion.id}/bond${q}`} className="h-10 rounded-xl border border-border leading-10">Her</Link>
+                <Link to={`/companions/${companion.id}${q}`} className="h-10 rounded-xl border border-border leading-10">Her</Link>
                 <Link to={`/messages/${companion.id}${q}`} className="h-10 rounded-xl bg-primary leading-10 text-primary-foreground">Text</Link>
                 <Link to={`/live-call/${companion.id}`} className="h-10 rounded-xl border border-border leading-10">Call</Link>
               </div>
