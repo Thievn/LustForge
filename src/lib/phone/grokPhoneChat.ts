@@ -23,3 +23,10 @@ export function replyTextFromGrok(data: unknown): string {
   }
   return "";
 }
+
+export function pictureSignalFromGrok(data: unknown): "none" | "open" | "locked" | null {
+  if (!data || typeof data !== "object") return null;
+  const value = (data as { picture?: unknown }).picture;
+  if (value === "none" || value === "open" || value === "locked") return value;
+  return null;
+}

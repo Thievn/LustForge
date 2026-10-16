@@ -15,6 +15,12 @@ import { lustforgeNarrowUserScopeBlock } from "../_shared/lustforgeNarrowUserSco
 import { lustforgeChatServerSystemPrefix } from "../_shared/lustforgeChatSystemPrefix.ts";
 import { GROK_VOICE_UNCENSORED_SYSTEM_PREFIX } from "../_shared/grokVoiceUncensoredPrefix.ts";
 import { grokVisionImageModelCandidates } from "../_shared/grokVisionModels.ts";
+import {
+  LOCKED_PICTURE_REPLY_HINT,
+  looksLikePictureAsk,
+  pictureSignal,
+  type PictureSignal,
+} from "../_shared/pictureAllowance.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,6 +116,28 @@ async function xaiChat(opts: {
   }
   const content = (raw as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]?.message?.content?.trim() || "";
   return { ok: true, content };
+}
+
+async function loadPictureSignal(userId: string, admin: boolean, lastUserText: string): Promise<PictureSignal> {
+  if (!looksLikePictureAsk(lastUserText)) return "none";
+  if (admin) return "open";
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!supabaseUrl || !svcKey) return "open";
+  const svc = createClient(supabaseUrl, svcKey);
+  const { data: profile, error } = await svc
+    .from("profiles")
+    .select("pics_left, credits, is_catalog_owner")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !profile) return "open";
+  return pictureSignal({
+    asked: true,
+    admin: false,
+    catalogOwner: Boolean(profile.is_catalog_owner),
+    picsLeft: Number(profile.pics_left ?? 0),
+    credits: Number(profile.credits ?? 0),
+  });
 }
 
 Deno.serve(async (req) => {
@@ -359,6 +387,18 @@ Each string max 72 characters. Match thread energy: flirty, playful, or explicit
       ];
     }
 
+    let picture: PictureSignal = "none";
+    if (intent === "classic_chat") {
+      const lastUser = [...threadRaw].reverse().find((row) => row.role !== "assistant");
+      picture = await loadPictureSignal(sessionUser.id, adminUnrestricted, String(lastUser?.content ?? ""));
+      if (picture === "locked" && messages[0]?.role === "system") {
+        messages[0] = {
+          ...messages[0],
+          content: `${messages[0].content}\n${LOCKED_PICTURE_REPLY_HINT}`.slice(0, 120_000),
+        };
+      }
+    }
+
     const model = defaultGrokProductChatModel((n) => Deno.env.get(n));
 
     const headers: Record<string, string> = {
@@ -398,10 +438,10 @@ Each string max 72 characters. Match thread energy: flirty, playful, or explicit
     }
 
     const obj = raw as { choices?: Array<{ message?: { content?: string } }> };
-    const content = obj.choices?.[0]?.message?.content?.trim() || "…";
+    const contentRaw = obj.choices?.[0]?.message?.content?.trim() || "";
 
     if (intent === "smart_replies") {
-      const parsed = extractJsonObject(content);
+      const parsed = extractJsonObject(contentRaw);
       let suggestions: string[] = [];
       if (parsed && typeof parsed === "object" && parsed !== null && "suggestions" in parsed) {
         const arr = (parsed as { suggestions: unknown }).suggestions;
@@ -415,7 +455,16 @@ Each string max 72 characters. Match thread energy: flirty, playful, or explicit
       return json({ suggestions, model, usage: (raw as { usage?: unknown })?.usage ?? null });
     }
 
-    return json({ response: content, model, usage: (raw as { usage?: unknown })?.usage ?? null });
+    if (intent === "classic_chat" && !contentRaw) {
+      return json({ error: "She didn't get that." }, 502);
+    }
+
+    return json({
+      response: contentRaw || "…",
+      model,
+      picture,
+      usage: (raw as { usage?: unknown })?.usage ?? null,
+    });
   } catch (err) {
     console.error("grok-chat:", err);
     const msg = err instanceof Error ? err.message : String(err);
