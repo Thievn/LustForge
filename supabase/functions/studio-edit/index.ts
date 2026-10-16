@@ -5,9 +5,9 @@ import { classifyEditText } from "../_shared/studioGrok.ts";
 import { gate, json } from "../_shared/studioHttp.ts";
 import { isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { submitWorkflow } from "../_shared/studioRunpod.ts";
-import { bytesFromImageUrl } from "../_shared/storageArchive.ts";
+import { bytesFromImageUrl, durableImageRef } from "../_shared/storageArchive.ts";
 import { EXPLICIT_UPLOAD_MESSAGE, parseDataUrl, publicStudioError, type SourceTag } from "../_shared/studioSafety.ts";
-import { poseCountsAsUpload, resolveImage, weakest } from "../_shared/studioStore.ts";
+import { archiveSourceBytes, poseCountsAsUpload, resolveImage, weakest } from "../_shared/studioStore.ts";
 import { POSE_SET } from "../_shared/studioPoseIds.ts";
 import { editLocksPixels, isClothingEdit, ORIENTATION_NEGATIVE, qwenEdit, withOrientationGuard } from "../_shared/studioWorkflows.ts";
 import { resolveStackedEdit } from "../_shared/stackedEdit.ts";
@@ -135,6 +135,16 @@ Deno.serve(async (req) => {
     const strength = Math.max(0.2, Math.min(1, Number(body.strength ?? 1) || 1));
     const charge = await chargeStudio(svc, user, variations);
     if (!charge.ok) return json({ error: charge.error, code: charge.code }, charge.status);
+    let subjectUrl = durableImageRef(String(body.subjectUrl ?? ""));
+    if (!subjectUrl) {
+      try {
+        subjectUrl = await archiveSourceBytes(svc, user.id, subject.bytes, subject.contentType);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`studio edit source archive failed: ${message}`);
+        subjectUrl = null;
+      }
+    }
 
     const images = [{ name: "subject.png", image: b64(subject.bytes) }];
     if (outfits[0]) images.push({ name: "outfit.png", image: b64(outfits[0].bytes) });
@@ -157,10 +167,6 @@ Deno.serve(async (req) => {
         const seed = baseSeed + i;
         const workflow = qwenEdit(prompt, { seed, denoise: strength, images: flags, lock, negative });
         const runpodId = await submitWorkflow(workflow, images);
-        const subjectUrlRaw = String(body.subjectUrl ?? "").trim();
-        const subjectUrl = subjectUrlRaw.startsWith("http") || subjectUrlRaw.startsWith("storage://")
-          ? subjectUrlRaw.slice(0, 2000)
-          : null;
         const jobRow = {
           user_id: user.id,
           runpod_id: runpodId,

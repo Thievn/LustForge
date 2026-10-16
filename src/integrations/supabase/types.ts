@@ -710,6 +710,7 @@ export type Database = {
           prompt: string
           saved_to_companion_gallery: boolean | null
           saved_to_personal_gallery: boolean | null
+          source_image_url: string | null
           style: string | null
           updated_at: string
           user_id: string
@@ -724,6 +725,7 @@ export type Database = {
           prompt: string
           saved_to_companion_gallery?: boolean | null
           saved_to_personal_gallery?: boolean | null
+          source_image_url?: string | null
           style?: string | null
           updated_at?: string
           user_id: string
@@ -738,6 +740,7 @@ export type Database = {
           prompt?: string
           saved_to_companion_gallery?: boolean | null
           saved_to_personal_gallery?: boolean | null
+          source_image_url?: string | null
           style?: string | null
           updated_at?: string
           user_id?: string

@@ -206,6 +206,7 @@ export async function saveStudioImage(
     prompt: string;
     parentId?: string | null;
     kind?: string;
+    sourceImageUrl?: string | null;
   },
 ): Promise<{ assetId: string; imageUrl: string; signedUrl: string; tag: string; bucket: string; path: string }> {
   const secret = signingSecret();
@@ -259,11 +260,12 @@ export async function saveStudioImage(
     source_tag: input.source,
     source_sig: tag,
     studio_asset_id: assetId,
+    source_image_url: input.sourceImageUrl || null,
   };
   let imageId: string | null = null;
   const inserted = await svc.from("generated_images").insert(fullRow).select("id").single();
   if (inserted.error) {
-    const { source_tag: _a, source_sig: _b, studio_asset_id: _c, storage_bucket: _d, storage_path: _e, ...basic } = fullRow;
+    const { source_tag: _a, source_sig: _b, studio_asset_id: _c, storage_bucket: _d, storage_path: _e, source_image_url: _f, ...basic } = fullRow;
     const retry = await svc.from("generated_images").insert(basic).select("id").single();
     imageId = (retry.data?.id as string) ?? null;
   } else {
@@ -281,6 +283,24 @@ export async function saveStudioImage(
   });
 
   return { assetId, imageUrl, signedUrl, tag, bucket: "lf-chat-media", path };
+}
+
+/** Keep the picture an edit started from, without adding a second gallery tile. */
+export async function archiveSourceBytes(
+  svc: Svc,
+  userId: string,
+  bytes: Uint8Array,
+  contentType: string,
+): Promise<string> {
+  const type = contentType.split(";")[0]?.trim() || "image/png";
+  const ext = type.includes("jpeg") || type.includes("jpg") ? "jpg" : type.includes("webp") ? "webp" : "png";
+  const path = `${userId}/studio/src-${crypto.randomUUID()}.${ext}`;
+  const uploaded = await svc.storage.from("lf-chat-media").upload(path, bytes, {
+    contentType: type === "image/png" || type === "image/jpeg" || type === "image/webp" ? type : "image/png",
+    upsert: false,
+  });
+  if (uploaded.error) throw new Error(uploaded.error.message);
+  return storageUri("lf-chat-media", path);
 }
 
 export function importExifOrThrow(bytes: Uint8Array) {

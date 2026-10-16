@@ -3,7 +3,7 @@ import { Wand2 } from "lucide-react";
 import { stashStudioEdit, type StashedEdit } from "@/lib/studio/api";
 import { usePhonePreview } from "@/components/phone/PhoneStage";
 
-export function StudioEditWand({ imageUrl, companionId, assetId, tag, source }: StashedEdit) {
+export function StudioEditWand({ imageUrl, storageUrl, companionId, assetId, tag, source }: StashedEdit) {
   const navigate = useNavigate();
   const preview = usePhonePreview();
   if (!imageUrl) return null;
@@ -15,7 +15,7 @@ export function StudioEditWand({ imageUrl, companionId, assetId, tag, source }: 
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        stashStudioEdit({ imageUrl, companionId, assetId, tag, source });
+        stashStudioEdit({ imageUrl, storageUrl, companionId, assetId, tag, source });
         navigate(preview ? "/lab?tab=edit&preview=1" : "/lab?tab=edit");
       }}
     >

@@ -47,6 +47,13 @@ export function storageUri(bucket: string, path: string): string {
   return `storage://${bucket}/${path}`;
 }
 
+/** Stable storage:// ref. Signed Supabase URLs collapse to the object path so compare links do not expire. */
+export function durableImageRef(url: string | null | undefined): string | null {
+  const ref = parseStorageRef(url);
+  if (!ref?.bucket || !ref.path) return null;
+  return storageUri(ref.bucket, ref.path);
+}
+
 export async function bytesFromImageUrl(url: string): Promise<{ bytes: Uint8Array; contentType: string }> {
   if (url.startsWith("data:")) {
     const match = url.match(/^data:([^;,]+)?;base64,(.+)$/);

@@ -3,6 +3,7 @@ import { isRunpodMissingMessage, STUDIO_JOB_FAILED_LINE, studioJobExpired } from
 import { sendStudioPush } from "./studioPush.ts";
 import { bytesFromRunpodOutput, readRunpod } from "./studioRunpod.ts";
 import { isSourceTag } from "./studioSafety.ts";
+import { durableImageRef } from "./storageArchive.ts";
 import { saveStudioImage } from "./studioStore.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -34,15 +35,34 @@ function isOpen(job: Record<string, unknown>): boolean {
   return Boolean(job.runpod_id);
 }
 
+/** Gallery compare source for an edit. Storage URLs are normalized so a signed link cannot expire. */
+export function editSourceImageUrl(job: Record<string, unknown>): string | null {
+  if (String(job.kind ?? "") !== "edit") return null;
+  const raw = typeof job.subject_url === "string" ? job.subject_url.trim() : "";
+  if (!raw) return null;
+  return durableImageRef(raw) || raw;
+}
+
 async function presentUrl(svc: Svc, url: unknown): Promise<string | null> {
-  const value = typeof url === "string" ? url : "";
+  const value = typeof url === "string" ? url.trim() : "";
   if (!value) return null;
-  if (value.startsWith("storage://lf-chat-media/")) {
-    const path = value.slice("storage://lf-chat-media/".length);
-    const signed = await svc.storage.from("lf-chat-media").createSignedUrl(path, 60 * 60);
-    return signed.data?.signedUrl ?? null;
+  if (!value.startsWith("storage://")) return value;
+  const rest = value.slice("storage://".length);
+  const slash = rest.indexOf("/");
+  if (slash <= 0) return null;
+  const bucket = rest.slice(0, slash);
+  let path = rest.slice(slash + 1);
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    /* Keep the raw path when it is not encoded. */
   }
-  return value;
+  const bucketApi = svc.storage.from(bucket);
+  if (bucket === "companion-images" && typeof bucketApi.getPublicUrl === "function") {
+    return bucketApi.getPublicUrl(path)?.data?.publicUrl ?? null;
+  }
+  const signed = await bucketApi.createSignedUrl(path, 60 * 60);
+  return signed?.data?.signedUrl ?? null;
 }
 
 export function jobView(job: Record<string, unknown>, extra: Partial<SettledJob> = {}): SettledJob {
@@ -112,6 +132,7 @@ export async function settleStudioJob(
         source,
         prompt: String(job.prompt ?? "Studio"),
         kind: job.kind === "edit" ? "edit" : "generate",
+        sourceImageUrl: editSourceImageUrl(job),
       });
       await svc.from("studio_jobs").update({
         status: "COMPLETED",

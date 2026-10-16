@@ -5,9 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { PhoneEmpty, PhoneStage, usePhonePreview } from "@/components/phone/PhoneStage";
 import { usePhoneRoster } from "@/lib/phone/usePhoneRoster";
 import { StudioEditWand } from "@/components/studio/EditWand";
+import { CompareSlider } from "@/components/studio/CompareSlider";
 import { PictureComing } from "@/components/studio/PictureComing";
 import { sameCompanion, useStudioJobs } from "@/lib/studio/jobs";
-import { displayableMediaUrl, parseStorageRef } from "@/lib/phone/storageUrl";
+import { displayableMediaUrl, parseStorageRef, sameStorageObject } from "@/lib/phone/storageUrl";
 
 type Source = "lab" | "character" | "upload";
 type Tile = {
@@ -17,6 +18,16 @@ type Tile = {
   companionId: string | null;
   createdAt: string;
   source: Source;
+  before?: string;
+};
+
+type GeneratedRow = {
+  id: string;
+  image_url: string;
+  companion_id: string | null;
+  created_at: string;
+  is_video: boolean | null;
+  source_image_url?: string | null;
 };
 
 const PREVIEW_TILES: Tile[] = [
@@ -43,10 +54,10 @@ export default function GalleryView() {
     }
     let cancelled = false;
     void (async () => {
-      const [generated, messages, portraits, overrides, loops, characters] = await Promise.all([
+      const [generatedResult, messages, portraits, overrides, loops, characters] = await Promise.all([
         supabase
           .from("generated_images")
-          .select("id, image_url, companion_id, created_at, is_video")
+          .select("id, image_url, companion_id, created_at, is_video, source_image_url")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(500),
@@ -80,19 +91,35 @@ export default function GalleryView() {
           .eq("user_id", user.id),
       ]);
       if (cancelled) return;
+      let generatedRows: GeneratedRow[] = generatedResult.data ?? [];
+      if (generatedResult.error && /source_image_url|column|schema cache/i.test(generatedResult.error.message)) {
+        const basic = await supabase
+          .from("generated_images")
+          .select("id, image_url, companion_id, created_at, is_video")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(500);
+        generatedRows = basic.data ?? [];
+      }
       const seen = new Set<string>();
       const next: Tile[] = [];
-      const push = async (id: string, raw: string | null | undefined, companionId: string | null, createdAt: string, source: Source) => {
+      const push = async (id: string, raw: string | null | undefined, companionId: string | null, createdAt: string, source: Source, sourceRaw?: string | null) => {
         const chosen = displayableMediaUrl(raw);
         const src = await resolveSrc(chosen);
         if (!src || seen.has(src)) return;
         seen.add(src);
         const storageUrl = raw && parseStorageRef(raw) ? raw : chosen && parseStorageRef(chosen) ? chosen : undefined;
-        next.push({ id, src, storageUrl, companionId, createdAt, source });
+        let before: string | undefined;
+        const origin = sourceRaw?.trim() || "";
+        if (origin && origin !== raw && !sameStorageObject(origin, raw) && !sameStorageObject(origin, storageUrl)) {
+          const resolved = await resolveSrc(origin);
+          if (resolved && resolved !== src) before = resolved;
+        }
+        next.push({ id, src, storageUrl, companionId, createdAt, source, before });
       };
-      for (const row of generated.data ?? []) {
+      for (const row of generatedRows) {
         if (row.is_video) continue;
-        await push(row.id, row.image_url, row.companion_id, row.created_at, "lab");
+        await push(row.id, row.image_url, row.companion_id, row.created_at, "lab", row.source_image_url);
       }
       for (const row of portraits.data ?? []) {
         await push(row.id, row.image_url, null, row.created_at, "character");
@@ -128,6 +155,7 @@ export default function GalleryView() {
       for (const job of done) {
         const src = job.imageUrl!;
         if (seen.has(src) || (job.storageUrl && seen.has(job.storageUrl))) continue;
+        const before = job.kind === "edit" ? compareUrl(job.subjectUrl, src, job.storageUrl) : undefined;
         extra.push({
           id: job.id,
           src,
@@ -135,6 +163,7 @@ export default function GalleryView() {
           companionId: job.companionId ?? null,
           createdAt: job.createdAt ?? new Date().toISOString(),
           source: "lab",
+          before,
         });
       }
       return extra.length ? [...extra, ...prev] : prev;
@@ -200,7 +229,14 @@ export default function GalleryView() {
       {active ? (
         <div className="absolute inset-0 z-20 flex items-center bg-black/70 p-4" onClick={() => setActive(null)}>
           <div className="relative mx-auto w-full" onClick={(event) => event.stopPropagation()}>
-            <img src={active.src} alt="" className="max-h-[70vh] w-full rounded-2xl object-contain" />
+            {active.before ? (
+              <div>
+                <p className="mb-2 text-center text-[10px] uppercase tracking-[0.18em] text-white">Compare</p>
+                <CompareSlider before={active.before} after={active.src} frameClass="max-h-[70vh]" />
+              </div>
+            ) : (
+              <img src={active.src} alt="" className="max-h-[70vh] w-full rounded-2xl object-contain" />
+            )}
             <StudioEditWand imageUrl={active.src} storageUrl={active.storageUrl} companionId={active.companionId} source={active.source} />
           </div>
         </div>
@@ -219,6 +255,13 @@ function FilterChip({ label, on, onClick }: { label: string; on: boolean; onClic
       {label}
     </button>
   );
+}
+
+function compareUrl(subject?: string | null, after?: string | null, stored?: string | null): string | undefined {
+  if (!subject) return undefined;
+  if (subject === after || sameStorageObject(subject, after) || sameStorageObject(subject, stored)) return undefined;
+  if (subject.startsWith("http://") || subject.startsWith("https://") || subject.startsWith("data:") || subject.startsWith("/")) return subject;
+  return undefined;
 }
 
 async function resolveSrc(url: string | null) {

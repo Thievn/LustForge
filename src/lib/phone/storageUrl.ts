@@ -57,6 +57,15 @@ export function storageUri(bucket: string, path: string): string {
   return `storage://${bucket}/${path}`;
 }
 
+/** True when both URLs point at the same Storage object, including a signed URL vs storage://. */
+export function sameStorageObject(a?: string | null, b?: string | null): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const left = parseStorageRef(a);
+  const right = parseStorageRef(b);
+  return Boolean(left && right && left.bucket === right.bucket && left.path === right.path);
+}
+
 /** Temporary provider links. Gallery must prefer the Storage public_url instead. */
 export function isTemporaryProviderUrl(url: string | null | undefined): boolean {
   const value = (url ?? "").trim();
