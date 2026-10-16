@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Bell, ChevronDown, Expand, Lock, MessageCircle, Phone, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BOND_TIERS, moodFor, tierForXp } from "@/lib/bond/logic";
@@ -60,6 +60,8 @@ export function BoudoirProfile({
   acquire,
   extras,
 }: Props) {
+  const [params] = useSearchParams();
+  const bondTo = `/companions/${companion.id}/bond${params.get("preview") === "1" ? "?preview=1" : ""}`;
   const source: VoiceSource = {
     name: companion.name,
     tagline: companion.tagline,
@@ -267,6 +269,7 @@ export function BoudoirProfile({
               <Bell className="i s" /> Incoming
             </button>
           </div>
+          <Link className="bond-jump" to={bondTo}>Bond</Link>
           {acquire ? (
             <button type="button" className="btn" style={{ width: "100%", marginBottom: 16 }} onClick={acquire.onClick}>
               {acquire.label}

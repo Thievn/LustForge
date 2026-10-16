@@ -416,7 +416,7 @@ export default function CompanionBond() {
             <h2 className="mt-2 font-gothic text-5xl">{name}</h2>
             <p className="mt-2 text-sm text-muted-foreground">{mood}. She wants you now.</p>
             <div className="mt-8 flex justify-center gap-4">
-              <button type="button" className="grid h-16 w-16 place-items-center rounded-full bg-red-600" aria-label="Decline" onClick={() => { setCalling(false); void invokeWebPushSend({ title: name, body: "You missed her.", url: `/companions/${id}/bond`, kind: "call", tag: `lf-incoming-${id}` }); }}><PhoneOff /></button>
+              <button type="button" className="grid h-16 w-16 place-items-center rounded-full bg-red-600" aria-label="Decline" onClick={() => { setCalling(false); void invokeWebPushSend({ title: name, body: "You missed her.", url: `/companions/${id}`, kind: "call", tag: `lf-incoming-${id}` }); }}><PhoneOff /></button>
               <button type="button" className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500" aria-label="Accept" onClick={() => navigate(`/live-call/${id}`)}><Phone /></button>
             </div>
           </div>

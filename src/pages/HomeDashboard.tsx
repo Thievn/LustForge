@@ -123,7 +123,7 @@ export default function HomeDashboard() {
         {loading ? <p className="text-sm text-muted-foreground">Looking for her…</p> : null}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {companions.map((companion) => (
-            <Link key={companion.id} to={`/companions/${companion.id}/bond${q}`} className="flex items-center gap-3 rounded-[1.4rem] border border-white/10 bg-card/80 p-3">
+            <Link key={companion.id} to={`/companions/${companion.id}${q}`} className="flex items-center gap-3 rounded-[1.4rem] border border-white/10 bg-card/80 p-3">
               {companion.portraitUrl ? (
                 <img src={companion.portraitUrl} alt="" className="h-16 w-16 rounded-2xl object-cover" />
               ) : (
