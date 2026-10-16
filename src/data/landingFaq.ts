@@ -1,11 +1,3 @@
-import {
-  CHAT_IMAGE_LEWD_FC,
-  CHAT_MESSAGE_FC_AFTER_DAILY_FREE,
-  DAILY_FREE_CHAT_MESSAGES,
-  FORGE_CREATE_COMPANION_FC,
-  LIVE_VOICE_FC_PER_MINUTE,
-} from "@/lib/forgeEconomy";
-
 export type LandingFaqItem = {
   id: string;
   question: string;
@@ -17,7 +9,7 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
     id: "what",
     question: "What is LustForge?",
     answer:
-      "LustForge is an AI companion app for adults. You make a fictional companion, then text them, ask for pictures, and call them.",
+      "LustForge is an AI companion app for adults. You make a fictional companion, then text them and ask for pictures.",
   },
   {
     id: "who",
@@ -29,17 +21,13 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
     id: "access",
     question: "How do I get in?",
     answer:
-      "Join the waitlist with your email. We will email you when you can create an account. Sign in is only for people who already have access.",
-  },
-  {
-    id: "cost",
-    question: "What does it cost?",
-    answer: `At launch the plans are Ember $14.99, Blaze $24.99, and Inferno $39.99 a month, plus credit packs. The waitlist does not charge you. The app also uses Forge Coins: ${DAILY_FREE_CHAT_MESSAGES} free texts a day, then ${CHAT_MESSAGE_FC_AFTER_DAILY_FREE} FC each. Making a companion costs ${FORGE_CREATE_COMPANION_FC} FC. A picture costs ${CHAT_IMAGE_LEWD_FC} FC. A live call costs ${LIVE_VOICE_FC_PER_MINUTE} FC per started minute.`,
+      "Join the waitlist to get your beta access.",
   },
   {
     id: "voice",
     question: "Can I hear them and see pictures?",
-    answer: `Yes. You can call them, and you can ask for a picture in the chat. A call costs ${LIVE_VOICE_FC_PER_MINUTE} FC per started minute. A picture costs ${CHAT_IMAGE_LEWD_FC} FC and uses the face you made.`,
+    answer:
+      "You can ask for a picture in the chat, and it uses the face you made. Voice calls are on the way.",
   },
   {
     id: "toy",
@@ -57,7 +45,7 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
     id: "privacy",
     question: "What happens to my chats and my data?",
     answer:
-      "Chats are saved to your account so you can leave and come back. We use your email for the waitlist or your account. We do not sell personal data. LustForge does not store card numbers. The Privacy Policy has the details.",
+      "Chats are saved to your account so you can leave and come back. We use your email for the waitlist or your account. We do not sell personal data. The Privacy Policy has the details.",
   },
   {
     id: "discreet",

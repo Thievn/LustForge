@@ -37,7 +37,7 @@ type HeadingProps = {
 export function LandingHeading({ id, eyebrow, title, lede, className }: HeadingProps) {
   return (
     <Reveal className={cn("mx-auto max-w-2xl text-center", className)}>
-      <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-primary/80">{eyebrow}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[#f1c45e]">{eyebrow}</p>
       <h2 id={id} className="mt-3 font-gothic text-3xl leading-tight text-foreground sm:text-4xl">
         {title}
       </h2>

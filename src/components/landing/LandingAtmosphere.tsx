@@ -51,21 +51,21 @@ export function LandingAtmosphere() {
       <div
         className="absolute -left-[18%] -top-[8%] h-[48vh] w-[78vw] rounded-full"
         style={{
-          background: "radial-gradient(circle, hsl(var(--primary) / 0.2), transparent 68%)",
+          background: "radial-gradient(circle, rgba(224,40,127,0.22), transparent 68%)",
           transform: "translate3d(0, var(--landing-parallax), 0)",
         }}
       />
       <div
         className="absolute -right-[12%] top-[28%] h-[42vh] w-[58vw] rounded-full"
         style={{
-          background: "radial-gradient(circle, hsl(var(--velvet-purple) / 0.18), transparent 70%)",
+          background: "radial-gradient(circle, rgba(241,196,94,0.12), transparent 70%)",
           transform: "translate3d(0, calc(var(--landing-parallax) * -0.55), 0)",
         }}
       />
       <div
         className="absolute bottom-[8%] left-[18%] h-[36vh] w-[48vw] rounded-full"
         style={{
-          background: "radial-gradient(circle, hsl(var(--electric-teal) / 0.1), transparent 70%)",
+          background: "radial-gradient(circle, rgba(255,111,176,0.14), transparent 70%)",
           transform: "translate3d(0, calc(var(--landing-parallax) * 0.28), 0)",
         }}
       />

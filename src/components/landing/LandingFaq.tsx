@@ -12,7 +12,7 @@ export function LandingFaq() {
           title="Questions"
           lede="Short answers. The policies have the longer version."
         />
-        <Accordion type="single" collapsible className="mt-8 rounded-[1.4rem] border border-border bg-card/80 px-4 sm:px-6">
+        <Accordion type="single" collapsible className="mt-8 rounded-[1.4rem] border border-[#f1c45e]/20 bg-white/[0.04] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] sm:px-6">
           {LANDING_FAQ.map((item) => (
             <AccordionItem key={item.id} value={item.id} className="border-border">
               <AccordionTrigger className="text-left font-gothic text-base font-normal text-foreground hover:no-underline sm:text-lg">

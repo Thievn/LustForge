@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getEdgeFunctionInvokeMessage } from "@/lib/edgeFunction";
 import { trackEvent } from "@/lib/analytics";
+import { LandingActions } from "@/components/landing/LandingCta";
 
 export default function WaitlistSection() {
   const [email, setEmail] = useState("");
@@ -36,12 +37,12 @@ export default function WaitlistSection() {
 
       if (res.status === "duplicate") {
         toast.success("That email is already on the list.", {
-          description: "We'll email you when you can sign up.",
+          description: "We'll email you when beta access is ready.",
           duration: 5000,
         });
       } else {
         toast.success("You're on the list.", {
-          description: "We'll email you when you can sign up.",
+          description: "We'll email you when beta access is ready.",
           duration: 5000,
         });
       }
@@ -67,28 +68,27 @@ export default function WaitlistSection() {
   };
 
   return (
-    <section id="waitlist" className="relative scroll-mt-28 px-4 py-16 sm:py-20">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-primary/[0.06] to-transparent" aria-hidden />
+    <section id="waitlist" className="relative scroll-mt-28 px-4 py-16 sm:py-20" aria-labelledby="waitlist-heading">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#e0287f]/10 to-transparent" aria-hidden />
       <div className="relative z-10 mx-auto max-w-xl">
-        <div className="rounded-[1.75rem] border border-border bg-card px-6 py-10 text-center shadow-[0_24px_60px_rgba(80,30,50,0.08)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.35)] md:px-12">
-          <Mail className="mx-auto mb-4 h-8 w-8 text-primary" />
+        <div className="rounded-[1.75rem] border border-[#f1c45e]/30 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(27,22,32,0.4))] px-6 py-10 text-center shadow-[0_24px_60px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.16)] md:px-12">
+          <Mail className="mx-auto mb-4 h-8 w-8 text-[#ff8ac4]" />
 
-          <h2 className="mb-2 font-gothic text-2xl font-bold text-foreground md:text-3xl">
-            Join the <span className="gradient-vice-text">waitlist</span>
+          <h2 id="waitlist-heading" className="mb-4 font-gothic text-2xl font-bold text-[#F4EEF2] md:text-3xl">
+            Join the <span className="lf-gradient-text">waitlist</span>
           </h2>
 
-          <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-            Adults 18+ only. Leave your email. We will write when you can make a companion.
-          </p>
-          <p className="mb-6 text-xs leading-relaxed text-muted-foreground">
-            We plan to give early signups a lower price and bonus credits when plans open. This form does not charge you.
+          <LandingActions location="close" showButton={false} />
+
+          <p className="mb-6 mt-4 text-sm leading-relaxed text-muted-foreground">
+            Adults 18+ only. Leave your email.
           </p>
 
           {isSuccess ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle className="h-12 w-12 text-primary" />
               <p className="font-gothic text-2xl text-foreground">You&apos;re on the list.</p>
-              <p className="text-sm text-muted-foreground">We&apos;ll email you when you can sign up.</p>
+              <p className="text-sm text-muted-foreground">We saved your email. We&apos;ll write when beta access is ready.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
@@ -107,7 +107,7 @@ export default function WaitlistSection() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex min-h-12 min-w-[140px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:scale-[1.02] active:scale-[0.99] disabled:opacity-50"
+                className="lf-gloss-btn flex min-h-12 min-w-[140px] items-center justify-center gap-2 rounded-xl px-8 py-3 font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.99] disabled:opacity-50"
               >
                 {isLoading ? (
                   <>

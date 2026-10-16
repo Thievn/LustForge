@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BadgeCheck, CreditCard, Shield, UserRound } from "lucide-react";
+import { BadgeCheck, Bell, Shield, UserRound } from "lucide-react";
 import { LandingHeading, Reveal } from "@/components/landing/Reveal";
 
 const BADGES = [
@@ -19,9 +19,9 @@ const BADGES = [
     body: "Chats stay on your account so the thread can continue. We don't sell personal data.",
   },
   {
-    icon: CreditCard,
-    title: "Checkout, not stored cards",
-    body: "Forge Coins are bought with card or crypto. LustForge doesn't store your card number.",
+    icon: Bell,
+    title: "Discreet",
+    body: "A notification can show her name, or only the word LustForge.",
   },
 ] as const;
 

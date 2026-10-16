@@ -3,9 +3,12 @@ import { scrollToLandingId, trackLandingCta } from "@/lib/landingScroll";
 
 export function LandingFooter() {
   return (
-    <footer className="mt-4 border-t border-border px-4 py-12">
-      <div className="mx-auto max-w-3xl space-y-4 text-center text-xs leading-relaxed text-muted-foreground">
-        <p>Adults only, 18 and over. Companions are fictional AI characters. You make them.</p>
+    <footer className="mt-4 border-t border-[#f1c45e]/15 px-4 py-12">
+      <div className="mx-auto max-w-3xl space-y-4 text-center text-xs leading-relaxed text-[#B8A9BC]">
+        <p className="font-wordmark text-lg text-[#F4EEF2]">
+          Lust<b className="text-[#ff8ac4]">Forge</b>
+        </p>
+        <p>Adults only, 18 and over. Companions are fictional and 21 or older.</p>
         <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
           <Link to="/terms-of-service" className="text-foreground/80 underline-offset-2 hover:underline">
             Terms
