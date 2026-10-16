@@ -17,7 +17,7 @@ export function LandingExampleTexts() {
           id="texts-heading"
           eyebrow="Notes"
           title="She can write first"
-          lede="Set a morning and an evening. The note arrives from her, in the conversation."
+          lede="A morning and an evening. The note arrives from her."
         />
         <ul className="mt-8 space-y-3">
           {LANDING_EXAMPLE_TEXTS.map((item, index) => (

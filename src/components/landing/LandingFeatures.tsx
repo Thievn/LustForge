@@ -33,30 +33,30 @@ type Feature = {
 };
 
 const CURRENT: Feature[] = [
-  { icon: MessageCircle, title: "Companion chat", body: "A private thread that stays on your account." },
-  { icon: ImageIcon, title: "In-chat pictures", body: "Ask for a picture. It arrives in the conversation." },
-  { icon: Lock, title: "Private photo reactions", body: "Send a photo for her to react to. It stays between you." },
-  { icon: Sparkles, title: "Gallery and editor", body: "Save pictures, then refine them with Grok Enhance." },
-  { icon: Gem, title: "Velvet Vault", body: "Unveil treasures to dress and delight your companions." },
-  { icon: PersonStanding, title: "Poses", body: "Choose how she stands, sits, or looks back." },
+  { icon: MessageCircle, title: "Companion chat", body: "A thread that is still there when you come back." },
+  { icon: ImageIcon, title: "In-chat pictures", body: "Ask for a picture. It shows up in the chat." },
+  { icon: Lock, title: "Private photo reactions", body: "Send a photo. Her reply stays between you." },
+  { icon: Sparkles, title: "Gallery and editor", body: "Save the pictures, then refine them with Grok Enhance." },
+  { icon: Gem, title: "Velvet Vault", body: "Treasures to dress her in." },
+  { icon: PersonStanding, title: "Poses", body: "How she stands, sits, or looks back." },
   { icon: Clapperboard, title: "Scenarios", body: "Start from a scene, or write the one you want." },
-  { icon: WandSparkles, title: "Creator wizard", body: "Build a companion in steps: look, personality, and name." },
-  { icon: Smartphone, title: "Install as an app", body: "Add LustForge to your home screen and open it full screen." },
-  { icon: Sun, title: "Morning and night notes", body: "She can reach out at the times you choose." },
-  { icon: Users, title: "Group chat", body: "Bring more than one companion into the same conversation." },
-  { icon: Heart, title: "Memories and dates", body: "Keep what matters, and pick a scene to spend time in." },
-  { icon: Gamepad2, title: "Optional toys", body: "Connect a toy if you want. The chat works without one." },
+  { icon: WandSparkles, title: "Create someone", body: "A look, a personality, and a name." },
+  { icon: Smartphone, title: "On your home screen", body: "Open LustForge like an app." },
+  { icon: Sun, title: "Morning and night notes", body: "She can write first, at the times you choose." },
+  { icon: Users, title: "Group chat", body: "More than one of them, in the same conversation." },
+  { icon: Heart, title: "Memories and dates", body: "Keep what matters. Stay in the scene you pick." },
+  { icon: Gamepad2, title: "Optional toys", body: "A toy if you want one. The chat is enough on its own." },
   { icon: Shield, title: "Safe word", body: "One word, or the stop button, ends the scene." },
-  { icon: Bell, title: "Discreet alerts", body: "A notification can show her name, or only LustForge." },
+  { icon: Bell, title: "Discreet alerts", body: "Her name, or only LustForge." },
 ];
 
 const SOON: Feature[] = [
-  { icon: Phone, title: "Voice calls", body: "Talk with her out loud, from the app.", soon: true },
-  { icon: Video, title: "Video clips", body: "Short clips inside the chat.", soon: true },
+  { icon: Phone, title: "Voice calls", body: "Talk with her out loud.", soon: true },
+  { icon: Video, title: "Video clips", body: "Short clips in the chat.", soon: true },
   { icon: Mic, title: "Voice notes", body: "A message you can hear when you are away.", soon: true },
   { icon: Sparkles, title: "Challenges", body: "Little dares between you and her.", soon: true },
   { icon: Gift, title: "Gift shop", body: "Something to send when words are not enough.", soon: true },
-  { icon: ImageIcon, title: "Creator showcase", body: "A room for the faces you want to keep in view.", soon: true },
+  { icon: ImageIcon, title: "Creator showcase", body: "The faces you want close.", soon: true },
   { icon: Orbit, title: "The Nexus", soon: true },
 ];
 
@@ -95,9 +95,9 @@ export function LandingFeatures() {
       <div className="mx-auto max-w-6xl">
         <LandingHeading
           id="features-heading"
-          eyebrow="The product"
-          title="What you can do with LustForge"
-          lede="Talk, ask for pictures, edit them, unveil a treasure, or create someone new."
+          eyebrow="With her"
+          title="What you can do together"
+          lede="Talk, pictures, and someone you make yourself."
         />
         <ul className="mt-8 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
           {CURRENT.map((feature, index) => (

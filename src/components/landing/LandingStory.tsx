@@ -16,7 +16,7 @@ export function LandingStory() {
           id="phones-heading"
           eyebrow="On your phone"
           title="Four ways to spend time with her"
-          lede="A conversation, a picture you can edit, a companion you create, and a treasure from the Velvet Vault. The background is the color you picked above."
+          lede="A conversation, a picture you can change, someone you create, and a treasure from the Velvet Vault."
         />
         <ul className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
           {PHONES.map((phone) => (

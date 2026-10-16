@@ -1,39 +1,24 @@
 import { Link } from "react-router-dom";
-import { scrollToLandingId, trackLandingCta } from "@/lib/landingScroll";
 
 export function LandingFooter() {
   return (
     <footer className="mt-4 border-t border-[#f1c45e]/15 px-4 py-12">
-      <div className="mx-auto max-w-3xl space-y-4 text-center text-xs leading-relaxed text-[#B8A9BC]">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
         <p className="font-wordmark text-lg text-[#F4EEF2]">
           Lust<b className="text-[#ff8ac4]">Forge</b>
         </p>
-        <p>Adults only, 18 and over. Companions are fictional and 21 or older.</p>
-        <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+        <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-[#B8A9BC]" aria-label="Footer">
           <Link to="/terms-of-service" className="text-foreground/80 underline-offset-2 hover:underline">
             Terms
           </Link>
           <Link to="/privacy-policy" className="text-foreground/80 underline-offset-2 hover:underline">
             Privacy
           </Link>
-          <Link to="/18-plus-disclaimer" className="text-foreground/80 underline-offset-2 hover:underline">
-            18+ disclaimer
-          </Link>
           <a href="mailto:support@lustforge.app" className="text-foreground/80 underline-offset-2 hover:underline">
-            support@lustforge.app
+            Contact
           </a>
-          <button
-            type="button"
-            onClick={() => {
-              trackLandingCta("footer");
-              scrollToLandingId("waitlist");
-            }}
-            className="text-foreground/80 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            Join the waitlist
-          </button>
-        </p>
-        <p>© {new Date().getFullYear()} LustForge</p>
+        </nav>
+        <p className="text-xs text-[#B8A9BC]">© {new Date().getFullYear()} LustForge</p>
       </div>
     </footer>
   );

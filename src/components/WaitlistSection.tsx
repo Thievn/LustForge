@@ -81,7 +81,7 @@ export default function WaitlistSection() {
           <LandingActions location="close" showButton={false} />
 
           <p className="mb-6 mt-4 text-sm leading-relaxed text-muted-foreground">
-            Adults 18+ only. Leave your email.
+            Leave your email. We&apos;ll write when it&apos;s your turn.
           </p>
 
           {isSuccess ? (

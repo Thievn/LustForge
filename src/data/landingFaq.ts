@@ -8,14 +8,12 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
   {
     id: "what",
     question: "What is LustForge?",
-    answer:
-      "LustForge is an AI companion app for adults. You make a fictional companion, then text them and ask for pictures.",
+    answer: "LustForge is an AI companion app for adults. Create someone, talk with them, and ask for pictures.",
   },
   {
     id: "who",
     question: "Who is it for?",
-    answer:
-      "Adults 18 and older. You confirm your age before you enter. Companions are fictional characters, not real people, and each one is 21 or older.",
+    answer: "Adults only, 18 and over.",
   },
   {
     id: "access",
@@ -26,31 +24,26 @@ export const LANDING_FAQ: readonly LandingFaqItem[] = [
   {
     id: "voice",
     question: "Can I hear them and see pictures?",
-    answer:
-      "You can ask for a picture in the chat, and it uses the face you made. Voice calls are on the way.",
+    answer: "Ask for a picture in the chat. Voice calls are on the way.",
   },
   {
     id: "toy",
     question: "Do I need a toy?",
-    answer:
-      "No. Lovense sync is optional. If you connect a toy, the chat can control it. Your safe word, or the stop button in chat, turns toy control off right away.",
+    answer: "No. A toy is optional. If you connect one, the chat can follow along. Your safe word, or the stop button, ends it.",
   },
   {
     id: "safe-word",
     question: "What is the safe word?",
-    answer:
-      "A word you set in Preferences. Say it in chat or on a call, or tap the stop button. The scene stops, and so does any toy control. Until you change it, the word is RED.",
+    answer: "A word you choose. Say it, or tap stop, and the scene ends. Until you change it, the word is RED.",
   },
   {
     id: "privacy",
     question: "What happens to my chats and my data?",
-    answer:
-      "Chats are saved to your account so you can leave and come back. We use your email for the waitlist or your account. We do not sell personal data. The Privacy Policy has the details.",
+    answer: "Chats stay on your account so you can come back. We use your email to reach you. We do not sell personal data.",
   },
   {
     id: "discreet",
     question: "Can the notification stay discreet?",
-    answer:
-      "Yes. A notification can show her name, or only the word LustForge. You can also add LustForge to your phone home screen so it opens full screen.",
+    answer: "Yes. It can show her name, or only LustForge.",
   },
 ];

@@ -1,14 +1,22 @@
-import React from 'react';
+import { Link } from "react-router-dom";
+import { LegalPage } from "@/components/legal/LegalPage";
 
-const EighteenPlusDisclaimer: React.FC = () => {
+const EighteenPlusDisclaimer = () => {
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">18+ Disclaimer</h1>
-      <p className="mb-4">This website contains adult content intended for viewers 18 years of age or older.</p>
-      <p className="mb-4">By accessing this site, you confirm that you are at least 18 years old and agree to view such material.</p>
-      <p className="mb-4">If you are under 18, please leave this site immediately.</p>
-      {/* Add more details as needed */}
-    </div>
+    <LegalPage title="Adult content notice">
+      <p>
+        LustForge includes adult sexual content, mature themes, and AI companions. It is intended only for adults.
+      </p>
+      <p>Adults only, 18 and over. You must be at least 18 years old to use this site and app.</p>
+      <p>
+        By entering, you confirm that you are 18 or older and that viewing this material is legal where you are. If you
+        are under 18, leave now.
+      </p>
+      <p>
+        This notice is part of our <Link to="/terms-of-service">Terms of Service</Link>. Questions:{" "}
+        <a href="mailto:support@lustforge.app">support@lustforge.app</a>
+      </p>
+    </LegalPage>
   );
 };
 

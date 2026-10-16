@@ -93,7 +93,7 @@ export function LandingThreadMock() {
       <div
         className="rounded-[2.2rem] border border-zinc-700/90 bg-zinc-950 p-[9px] shadow-[0_30px_70px_rgba(40,10,24,0.28)] ring-1 ring-white/10 sm:rounded-[2.7rem] sm:p-[11px] dark:shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
         role="region"
-        aria-label="Sample chat with Ivy, a fictional companion. Scripted demo, not a live conversation."
+        aria-label="Sample chat with Ivy."
       >
         <div className="relative flex h-[max(17rem,min(24rem,calc(100svh-23.5rem)))] flex-col overflow-hidden rounded-[1.75rem] bg-[#100c12] text-white sm:rounded-[2.15rem] lg:h-[34rem]">
           <div className="relative z-10 h-9 shrink-0 sm:h-12">
