@@ -95,13 +95,20 @@ describe("landing content", () => {
     expect(hero).toMatch(/Private companions/);
     expect(hero).toMatch(/Someone who answers late, stays with you, and sends the picture you asked for/);
     expect(hero).not.toMatch(/Adults 18\+/);
+    expect(hero).not.toMatch(/Phone background|PhoneColorPicker|type="color"/);
     const footer = readFileSync(resolve(process.cwd(), "src/components/landing/LandingFooter.tsx"), "utf8");
     expect(footer).toMatch(/Terms/);
     expect(footer).toMatch(/Privacy/);
     expect(footer).toMatch(/>\s*Contact\s*</);
     expect(footer).toMatch(/mailto:support@lustforge\.app/);
+    const afterLinks = footer.slice(footer.indexOf("</nav>"));
+    expect(afterLinks).toMatch(/>\s*support@lustforge\.app\s*</);
+    expect(afterLinks.indexOf("support@lustforge.app")).toBeLessThan(afterLinks.indexOf("©"));
     expect(footer).toMatch(/LustForge/);
     expect(footer).not.toMatch(/18\+ disclaimer|Join the waitlist/);
+    const backdrop = readFileSync(resolve(process.cwd(), "src/components/landing/phoneBackdrop.tsx"), "utf8");
+    expect(backdrop).toMatch(/#1B1620/);
+    expect(backdrop).not.toMatch(/PhoneColorPicker|PHONE_COLORS|type="color"|setColor/);
   });
 
   it("uses plain 18+ legal pages with no age-21 wording or vendor names", () => {
