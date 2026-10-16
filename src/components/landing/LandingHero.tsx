@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { LandingActions } from "@/components/landing/LandingCta";
 import { LockPhone } from "@/components/landing/LandingPhones";
-import { PhoneColorPicker } from "@/components/landing/phoneBackdrop";
 import { scrollToLandingId, trackLandingCta } from "@/lib/landingScroll";
 
 const secondaryCta =
@@ -33,7 +32,6 @@ export function LandingHero() {
         </button>
       </div>
       <div className="mx-auto w-full max-w-[320px] lg:max-w-none">
-        <PhoneColorPicker className="mb-4 text-center lg:text-left" />
         <LockPhone />
       </div>
     </header>
