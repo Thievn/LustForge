@@ -5,12 +5,13 @@ import { classifyEditText } from "../_shared/studioGrok.ts";
 import { gate, json } from "../_shared/studioHttp.ts";
 import { isLustforgeAdminUser } from "../_shared/requireSessionUser.ts";
 import { submitWorkflow } from "../_shared/studioRunpod.ts";
-import { bytesFromImageUrl } from "../_shared/storageArchive.ts";
+import { bytesFromImageUrl, durableImageRef } from "../_shared/storageArchive.ts";
 import { EXPLICIT_UPLOAD_MESSAGE, parseDataUrl, publicStudioError, type SourceTag } from "../_shared/studioSafety.ts";
-import { poseCountsAsUpload, resolveImage, weakest } from "../_shared/studioStore.ts";
+import { archiveSourceBytes, poseCountsAsUpload, resolveImage, weakest } from "../_shared/studioStore.ts";
 import { POSE_SET } from "../_shared/studioPoseIds.ts";
 import { editLocksPixels, isClothingEdit, ORIENTATION_NEGATIVE, qwenEdit, withOrientationGuard } from "../_shared/studioWorkflows.ts";
-import { resolveStackedEdit } from "../_shared/stackedEdit.ts";
+import { assertOwnedCompanion } from "../_shared/ownedCompanion.ts";
+import { editGalleryListing, resolveStackedEdit } from "../_shared/stackedEdit.ts";
 
 function b64(bytes: Uint8Array): string {
   let binary = "";
@@ -133,8 +134,21 @@ Deno.serve(async (req) => {
 
     const variations = resolved.variations;
     const strength = Math.max(0.2, Math.min(1, Number(body.strength ?? 1) || 1));
+    const companionId = String(body.companionId ?? "").trim() || null;
+    const owned = await assertOwnedCompanion(svc, user.id, companionId);
+    if (!owned.ok) return json({ error: owned.error, code: owned.code }, owned.status);
     const charge = await chargeStudio(svc, user, variations);
     if (!charge.ok) return json({ error: charge.error, code: charge.code }, charge.status);
+    let subjectUrl = durableImageRef(String(body.subjectUrl ?? ""));
+    if (!subjectUrl) {
+      try {
+        subjectUrl = await archiveSourceBytes(svc, user.id, subject.bytes, subject.contentType);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`studio edit source archive failed: ${message}`);
+        subjectUrl = null;
+      }
+    }
 
     const images = [{ name: "subject.png", image: b64(subject.bytes) }];
     if (outfits[0]) images.push({ name: "outfit.png", image: b64(outfits[0].bytes) });
@@ -148,7 +162,7 @@ Deno.serve(async (req) => {
     const negative = isClothingEdit(guardTool, userText) ? ORIENTATION_NEGATIVE : "";
     const flags = { outfit: Boolean(outfits[0]), pose: Boolean(poseBytes), mask: Boolean(maskParsed) };
     const lock = editLocksPixels(tool) || Boolean(outfits[0]) || Boolean(maskParsed);
-    const companionId = String(body.companionId ?? "").trim() || null;
+    const listing = editGalleryListing({ pose: Boolean(poseId) || Boolean(poseBytes), tool });
     const baseSeed = Math.floor(Math.random() * 1_000_000_000);
     const jobs: Array<Record<string, unknown>> = [];
     let submitted = 0;
@@ -157,10 +171,6 @@ Deno.serve(async (req) => {
         const seed = baseSeed + i;
         const workflow = qwenEdit(prompt, { seed, denoise: strength, images: flags, lock, negative });
         const runpodId = await submitWorkflow(workflow, images);
-        const subjectUrlRaw = String(body.subjectUrl ?? "").trim();
-        const subjectUrl = subjectUrlRaw.startsWith("http") || subjectUrlRaw.startsWith("storage://")
-          ? subjectUrlRaw.slice(0, 2000)
-          : null;
         const jobRow = {
           user_id: user.id,
           runpod_id: runpodId,
@@ -172,10 +182,17 @@ Deno.serve(async (req) => {
           charge_mode: charge.mode,
           seed,
           subject_url: subjectUrl,
+          gallery_listing: listing,
         };
-        let inserted = await svc.from("studio_jobs").insert(jobRow).select("id, status, seed").single();
+        let jobInsert: Record<string, unknown> = { ...jobRow };
+        let inserted = await svc.from("studio_jobs").insert(jobInsert).select("id, status, seed").single();
+        if (inserted.error && /gallery_listing/i.test(inserted.error.message ?? "")) {
+          const { gallery_listing: _listing, ...withoutListing } = jobInsert;
+          jobInsert = withoutListing;
+          inserted = await svc.from("studio_jobs").insert(jobInsert).select("id, status, seed").single();
+        }
         if (inserted.error && /subject_url|column/i.test(inserted.error.message ?? "")) {
-          const { subject_url: _subject, ...basic } = jobRow;
+          const { subject_url: _subject, gallery_listing: _listing, ...basic } = jobInsert;
           inserted = await svc.from("studio_jobs").insert(basic).select("id, status, seed").single();
         }
         if (inserted.error || !inserted.data) throw new Error(inserted.error?.message || "Could not record the job");

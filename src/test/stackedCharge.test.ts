@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  editGalleryListing,
   quoteStackedEdit,
   resolveStackedEdit,
   settleStackedCharge,
@@ -40,5 +41,14 @@ describe("stacked edit charge", () => {
     expect(stackedEditReady({ hasImage: false, instruction: "x", outfitCount: 0, poseId: null, mask: false, includeFix: false, background: false }).error).toMatch(/picture/i);
     expect(stackedEditReady({ hasImage: true, instruction: "", outfitCount: 0, poseId: null, mask: false, includeFix: false, background: false, treasureCount: 1 }).ok).toBe(true);
     expect(stackedEditReady({ hasImage: true, instruction: "", outfitCount: 0, poseId: "stand_hips", mask: false, includeFix: false, background: false }).ok).toBe(true);
+  });
+
+  it("lists a pose as its own picture and a clothing edit as a compare", () => {
+    expect(editGalleryListing({ pose: true, tool: "outfit" })).toBe("picture");
+    expect(editGalleryListing({ tool: "pose" })).toBe("picture");
+    expect(editGalleryListing({ pose: false, tool: "outfit" })).toBe("compare");
+    expect(editGalleryListing({ tool: "prompt" })).toBe("compare");
+    expect(editGalleryListing({ tool: "fix" })).toBe("compare");
+    expect(editGalleryListing({ tool: "brush" })).toBe("compare");
   });
 });

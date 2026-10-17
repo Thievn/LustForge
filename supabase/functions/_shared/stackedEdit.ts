@@ -71,6 +71,12 @@ export function quoteStackedEdit(input: { admin: boolean; stacked?: boolean; var
   return { credits: chargeCount, label, chargeCount };
 }
 
+/** A new pose is its own picture. Clothing, fix, mask, background, and prompt edits stay a compare of the source. */
+export function editGalleryListing(input: { pose?: boolean; tool?: string | null }): "compare" | "picture" {
+  if (input.pose || input.tool === "pose") return "picture";
+  return "compare";
+}
+
 export function stackedEditReady(input: {
   hasImage: boolean;
   instruction: string;

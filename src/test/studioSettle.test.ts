@@ -25,11 +25,14 @@ import {
   STUDIO_OPEN_JOB_MAX_MS,
   studioJobExpired,
 } from "../../supabase/functions/_shared/studioJobOutcome";
-import { readRunpod } from "../../supabase/functions/_shared/studioRunpod";
-import { settleStudioJob, sweepOpenStudioJobs } from "../../supabase/functions/_shared/studioSettle";
+import { bytesFromRunpodOutput, readRunpod } from "../../supabase/functions/_shared/studioRunpod";
+import { saveStudioImage } from "../../supabase/functions/_shared/studioStore";
+import { editGalleryListingFromJob, editSourceImageUrl, settleStudioJob, sweepOpenStudioJobs } from "../../supabase/functions/_shared/studioSettle";
 
 const refund = vi.mocked(refundOne);
 const read = vi.mocked(readRunpod);
+const save = vi.mocked(saveStudioImage);
+const outputBytes = vi.mocked(bytesFromRunpodOutput);
 
 function ago(ms: number) {
   return new Date(Date.now() - ms).toISOString();
@@ -153,4 +156,83 @@ describe("studio sweep", () => {
     expect(refund).not.toHaveBeenCalled();
     expect(updates[0]).toMatchObject({ status: "FAILED", refunded: true });
   });
+
+  it("writes the edit's original onto the gallery image and leaves generates without one", async () => {
+    outputBytes.mockResolvedValue(new Uint8Array([1, 2, 3]));
+    save.mockResolvedValue({
+      assetId: "asset-1",
+      imageUrl: "storage://lf-chat-media/user-1/studio/out.png",
+      signedUrl: "https://signed.example/out.png",
+      tag: "lab.sig",
+      bucket: "lf-chat-media",
+      path: "user-1/studio/out.png",
+    });
+    const { svc } = settleSvc();
+    const source = "storage://lf-chat-media/user-1/studio/before.jpg";
+    const settled = await settleStudioJob(
+      svc,
+      job({ kind: "edit", source_tag: "lab", prompt: "shorter hair", subject_url: source, companion_id: null }),
+      { status: "COMPLETED", output: {} },
+    );
+    expect(settled.status).toBe("COMPLETED");
+    expect(settled.subjectUrl).toBe("https://signed.example/before.jpg");
+    expect(save).toHaveBeenCalledWith(svc, expect.objectContaining({
+      kind: "edit",
+      sourceImageUrl: source,
+      galleryListing: "compare",
+      userId: "user-1",
+    }));
+    expect(settled.listing).toBe("compare");
+
+    save.mockClear();
+    outputBytes.mockResolvedValue(new Uint8Array([4]));
+    const { svc: generateSvc } = settleSvc();
+    await settleStudioJob(
+      generateSvc,
+      job({ kind: "generate", subject_url: source }),
+      { status: "COMPLETED", output: {} },
+    );
+    expect(save).toHaveBeenCalledWith(generateSvc, expect.objectContaining({ kind: "generate", sourceImageUrl: null, galleryListing: null }));
+  });
 });
+
+describe("edit source link", () => {
+  it("keeps a storage path and collapses a signed Supabase URL", () => {
+    const stored = "storage://lf-chat-media/user-1/studio/before.jpg";
+    expect(editSourceImageUrl({ kind: "edit", subject_url: stored })).toBe(stored);
+    expect(editSourceImageUrl({
+      kind: "edit",
+      subject_url: "https://abc.supabase.co/storage/v1/object/sign/lf-chat-media/user-1/studio/before.jpg?token=expired",
+    })).toBe(stored);
+    expect(editSourceImageUrl({ kind: "generate", subject_url: stored })).toBeNull();
+    expect(editSourceImageUrl({ kind: "edit", subject_url: "" })).toBeNull();
+    expect(editGalleryListingFromJob({ kind: "edit", gallery_listing: "picture" })).toBe("picture");
+    expect(editGalleryListingFromJob({ kind: "edit" })).toBe("compare");
+    expect(editGalleryListingFromJob({ kind: "generate", gallery_listing: "picture" })).toBeNull();
+  });
+});
+
+function settleSvc() {
+  const svc = {
+    from(table: string) {
+      if (table !== "studio_jobs") throw new Error(`unexpected table ${table}`);
+      return {
+        update() {
+          return {
+            eq() {
+              return Promise.resolve({ error: null });
+            },
+          };
+        },
+      };
+    },
+    storage: {
+      from() {
+        return {
+          createSignedUrl: async () => ({ data: { signedUrl: "https://signed.example/before.jpg" } }),
+        };
+      },
+    },
+  };
+  return { svc };
+}
